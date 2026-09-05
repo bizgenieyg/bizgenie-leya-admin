@@ -11,7 +11,10 @@ function failure(message: string, status: number) {
 
 export async function proxyWaha(request: Request, operation: Operation): Promise<Response> {
   // Reject cross-origin mutations before exercising the privileged backend credential.
-  if (request.method === 'POST' && request.headers.get('origin') !== new URL(request.url).origin) {
+  const expectedOrigin = new URL(request.url);
+  // Next.js may reconstruct request.url with its internal hostname.
+  expectedOrigin.host = request.headers.get('host') ?? expectedOrigin.host;
+  if (request.method === 'POST' && request.headers.get('origin') !== expectedOrigin.origin) {
     return failure('Запрос отклонён. Обновите страницу.', 403);
   }
 

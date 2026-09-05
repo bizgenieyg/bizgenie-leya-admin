@@ -95,3 +95,11 @@ test('missing session returns a local status without inventing a backend endpoin
   const response = await proxy(new Request('https://admin.example/api/waha/status'), 'status');
   assert.deepEqual(await response.json(), { status: 'NOT_CREATED' });
 });
+
+test('accepts browser origin matching incoming Host when Next uses an internal hostname', async () => {
+  const { proxy } = fixture({ user: null });
+  const response = await proxy(new Request('http://localhost:3014/api/waha/create', {
+    method: 'POST', headers: { host: '127.0.0.1:3014', origin: 'http://127.0.0.1:3014' },
+  }), 'create');
+  assert.equal(response.status, 401);
+});
