@@ -4,7 +4,13 @@ import { requireRole } from '@/lib/onboarding/roles';
 
 import { createClient } from '@/lib/supabase/server';
 
-type Operation = 'create' | 'status' | 'qr';
+const operations = {
+  create: { path: '/api/admin/waha/create', method: 'POST' },
+  status: { path: '/api/admin/waha/status', method: 'GET' },
+  qr: { path: '/api/admin/waha/qr', method: 'GET' },
+  reconnect: { path: '/api/admin/waha/reconnect', method: 'POST' },
+} as const;
+type Operation = keyof typeof operations;
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 
 function failure(message: string, status: number) {
@@ -44,10 +50,10 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
       console.error('waha_proxy_configuration_missing', { operation });
       return failure('Подключение WhatsApp пока недоступно. Попробуйте позже.', 503);
     }
-    const url = new URL(`/api/admin/waha/${operation}`, baseUrl);
+    const url = new URL(operations[operation].path, baseUrl);
     if (operation !== 'create') url.searchParams.set('tenantId', tenantId);
     const upstream = await fetch(url, {
-      method: operation === 'create' ? 'POST' : 'GET',
+      method: operations[operation].method,
       headers: {
         Authorization: `Bearer ${secret}`,
         Accept: operation === 'qr' ? 'image/png' : 'application/json',
@@ -61,19 +67,29 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
     if (!upstream.ok) {
       // Never log headers, URLs, response bodies or exception messages containing secrets/QR data.
       console.error('waha_proxy_upstream_failed', { operation, status: upstream.status });
-      if (upstream.status === 404 && operation === 'status') return Response.json({ status: 'NOT_CREATED' }, { headers });
+      if (upstream.status === 404 && operation === 'status') {
+        const body = await upstream.text();
+        // A route/proxy HTML 404 is not proof that the tenant has no session.
+        if (!body.trim() || (upstream.headers.get('content-type')?.includes('application/json') && JSON.parse(body)?.error === 'WhatsApp session not found')) {
+          return Response.json({ status: 'NOT_CREATED' }, { headers });
+        }
+      }
       return failure(operation === 'qr' ? 'QR пока недоступен. Попробуйте обновить его.' : 'Не удалось связаться с WhatsApp. Попробуйте ещё раз.', 502);
     }
     if (operation === 'qr') {
       const contentType = upstream.headers.get('content-type') ?? '';
       if (!contentType.toLowerCase().startsWith('image/')) throw new Error('Invalid QR response');
-      return new Response(await upstream.arrayBuffer(), { headers: { ...headers, 'Content-Type': contentType, 'Content-Security-Policy': "default-src 'none'; sandbox" } });
+      return new Response(upstream.body, { headers: { ...headers, 'Content-Type': contentType, 'Content-Security-Policy': "default-src 'none'; sandbox" } });
     }
-    const data = await upstream.json();
+    const body = await upstream.text();
+    const data = body.trim() ? JSON.parse(body) : null;
+    if (operation === 'status' && (data === null || (typeof data === 'object' && Object.keys(data).length === 0))) {
+      return Response.json({ status: 'NOT_CREATED' }, { headers });
+    }
     const status = operation === 'status' ? data?.status?.status : data?.status;
     if (typeof status !== 'string') throw new Error('Invalid status response');
     // Only send the status needed by the UI, not arbitrary admin API data.
-    return Response.json({ status }, { headers });
+    return Response.json({ status }, { status: upstream.status, headers });
   } catch {
     console.error('waha_proxy_request_failed', { operation });
     return failure('Сервис подключения временно недоступен. Попробуйте ещё раз.', 502);

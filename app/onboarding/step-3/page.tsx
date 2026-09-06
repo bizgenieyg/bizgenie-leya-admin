@@ -1,143 +1,120 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import { beginConnection, requestStatus, isConnected, isFailed, backendUnavailable } from '@/lib/waha/connection';
 import { buttonClass, StepFrame } from '../step-frame';
-
-const connected = (status: string) => status === 'WORKING' || status === 'CONNECTED';
-const labels: Record<string, string> = {
-  IDLE: 'Подключите WhatsApp вашего бизнеса.',
-  NOT_CREATED: 'Сессия ещё не создана. Нажмите «Подключить WhatsApp».',
-  STARTING: 'Запускаем WhatsApp…',
-  SCAN_QR_CODE: 'Отсканируйте QR в WhatsApp: Настройки → Связанные устройства → Привязка устройства.',
-  WORKING: 'Подключено', CONNECTED: 'Подключено',
-  STOPPED: 'Сессия остановлена. Попробуйте подключиться снова.',
-  FAILED: 'Не удалось подключиться. Попробуйте ещё раз.',
-  DISCONNECTED: 'WhatsApp отключён. Попробуйте подключиться снова.',
-};
-
-async function requestStatus(path: string, signal: AbortSignal, method = 'GET') {
-  const response = await fetch(path, { method, signal, cache: 'no-store' });
-  if (!response.ok) throw new Error(response.status === 401 ? 'Сессия истекла. Войдите снова.' : response.status === 409 ? 'Не удалось однозначно определить текущий бизнес.' : 'Не удалось подключиться к WhatsApp. Попробуйте ещё раз.');
-  const data = await response.json();
-  if (typeof data.status !== 'string') throw new Error('Не удалось получить статус WhatsApp.');
-  return data.status.toUpperCase() as string;
-}
 
 export default function OnboardingStepThreePage() {
   const [status, setStatus] = useState('IDLE');
-  const [qr, setQr] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [attempt, setAttempt] = useState(0);
   const [expired, setExpired] = useState(false);
+  const [qrTimestamp, setQrTimestamp] = useState(0);
+  const [qrError, setQrError] = useState(false);
+  const [attempt, setAttempt] = useState<{ retry: boolean } | null>(null);
   const active = useRef<AbortController | null>(null);
-  const qrUrl = useRef('');
-
-  function clearQr() {
-    if (qrUrl.current) URL.revokeObjectURL(qrUrl.current);
-    qrUrl.current = '';
-    setQr('');
-  }
-
-  useEffect(() => () => {
-    active.current?.abort();
-    if (qrUrl.current) URL.revokeObjectURL(qrUrl.current);
-  }, []);
+  const scanning = status === 'SCAN_QR_CODE' && !expired;
 
   useEffect(() => {
     if (!attempt) return;
     const controller = new AbortController();
     active.current = controller;
     let inFlight = false;
-    const timeout = window.setTimeout(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const timeout = setTimeout(() => {
       controller.abort();
-      window.clearInterval(interval);
-      clearQr();
+      clearInterval(interval);
       setExpired(true);
+      setError('');
       setBusy(false);
     }, 180000);
+    setExpired(false);
+    setError('');
+    setBusy(true);
+    setStatus('IDLE');
+
+    function accept(next: string) {
+      setStatus(next);
+      setError('');
+      if (isConnected(next) || isFailed(next)) {
+        clearInterval(interval);
+        clearTimeout(timeout);
+        return false;
+      }
+      return true;
+    }
 
     async function poll() {
       if (inFlight || controller.signal.aborted) return;
       inFlight = true;
       try {
-        const nextStatus = await requestStatus('/api/waha/status', controller.signal);
-        if (controller.signal.aborted) return;
-        setStatus(nextStatus);
-        setError('');
-        if (connected(nextStatus)) {
-          window.clearInterval(interval);
-          window.clearTimeout(timeout);
-          clearQr();
-          return;
-        }
-        if (nextStatus === 'SCAN_QR_CODE' && !qrUrl.current) {
-          const response = await fetch('/api/waha/qr', { signal: controller.signal, cache: 'no-store' });
-          if (!response.ok) throw new Error('QR пока недоступен. Ожидаем новый код…');
-          const blob = await response.blob();
-          if (controller.signal.aborted) return;
-          qrUrl.current = URL.createObjectURL(blob);
-          setQr(qrUrl.current);
-        } else if (nextStatus !== 'SCAN_QR_CODE') {
-          clearQr();
-        }
+        const next = await requestStatus('/api/waha/status', controller.signal);
+        if (!controller.signal.aborted) accept(next);
       } catch (error) {
-        if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Не удалось проверить подключение.');
+        if (!controller.signal.aborted) setError(error instanceof Error ? error.message : backendUnavailable);
       } finally { inFlight = false; }
     }
-    const interval = window.setInterval(() => void poll(), 3000);
-    void poll();
-    return () => { controller.abort(); window.clearInterval(interval); window.clearTimeout(timeout); };
+
+    async function start() {
+      try {
+        const next = await beginConnection(controller.signal, attempt!.retry);
+        if (!controller.signal.aborted && accept(next)) interval = setInterval(() => void poll(), 3000);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setError(error instanceof Error ? error.message : backendUnavailable);
+          clearTimeout(timeout);
+        }
+      } finally { if (!controller.signal.aborted) setBusy(false); }
+    }
+    void start();
+    return () => { controller.abort(); clearInterval(interval); clearTimeout(timeout); };
   }, [attempt]);
 
-  async function start() {
-    if (busy) return;
-    active.current?.abort();
-    setAttempt(0);
-    const controller = new AbortController();
-    active.current = controller;
-    setBusy(true);
-    setError('');
-    setExpired(false);
-    clearQr();
-    try {
-      // An existing connected session must not be restarted.
-      let nextStatus = await requestStatus('/api/waha/status', controller.signal);
-      if (!connected(nextStatus) && nextStatus !== 'SCAN_QR_CODE' && nextStatus !== 'STARTING') {
-        nextStatus = await requestStatus('/api/waha/create', controller.signal, 'POST');
-      }
-      if (controller.signal.aborted) return;
-      setStatus(nextStatus);
-      if (!connected(nextStatus)) setAttempt((current) => current + 1);
-    } catch (error) {
-      if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Не удалось начать подключение.');
-    } finally { if (!controller.signal.aborted) setBusy(false); }
-  }
+  useEffect(() => {
+    if (!scanning) return;
+    function refresh() { setQrTimestamp(Date.now()); setQrError(false); }
+    refresh();
+    const timer = setInterval(refresh, 20000);
+    return () => clearInterval(timer);
+  }, [scanning, attempt]);
 
-  function refreshQr() {
+  function connect(retry: boolean) {
     active.current?.abort();
-    clearQr();
-    setError('');
-    setExpired(false);
-    setAttempt((current) => current + 1);
+    setAttempt({ retry });
   }
 
   return (
     <StepFrame step={3} title="Подключение WhatsApp">
-      <p role="status" className={`mb-5 text-sm ${connected(status) ? 'font-medium text-green-600' : 'text-gray-600'}`}>
-        {expired ? 'Время ожидания истекло. Обновите QR, чтобы повторить попытку.' : busy ? 'Подключаем WhatsApp…' : labels[status] ?? 'Ожидаем готовности WhatsApp…'}
+      <p role="status" className={`mb-5 text-sm ${isConnected(status) ? 'font-medium text-green-600' : 'text-gray-600'}`}>
+        {expired ? 'Истекло время ожидания. Нажмите «Подключить WhatsApp», чтобы повторить проверку.'
+          : busy ? 'Подключаем WhatsApp…'
+          : isConnected(status) ? 'Подключено'
+          : isFailed(status) ? 'Не удалось подключиться'
+          : status === 'IDLE' ? 'Подключите WhatsApp вашего бизнеса.'
+          : scanning ? 'Ожидаем сканирования QR-кода.' : 'Ожидаем готовности WhatsApp…'}
       </p>
-      {qr ? <Image unoptimized src={qr} width={280} height={280} alt="QR-код для подключения WhatsApp" className="mx-auto mb-5" /> : null}
+      {scanning ? <section className="mb-5">
+        <h2 className="mb-3 text-lg font-semibold">Как подключить</h2>
+        <ol className="mb-5 list-decimal space-y-2 pl-5 text-sm text-gray-600">
+          <li>Откройте WhatsApp на телефоне, к номеру которого подключаем помощника</li>
+          <li>Настройки → Связанные устройства → Привязка устройства</li>
+          <li>Наведите камеру на QR-код ниже</li>
+        </ol>
+        {/* Native img preserves the authenticated same-origin binary QR route. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img key={qrTimestamp} src={`/api/waha/qr?ts=${qrTimestamp}`} width={280} height={280} alt="QR-код для подключения WhatsApp" className="mx-auto mb-3" onLoad={() => setQrError(false)} onError={() => setQrError(true)} />
+        {qrError ? <p role="alert" className="mb-3 text-sm text-red-600">Не удалось загрузить QR-код. Обновите код или попробуйте позже.</p> : null}
+        <p className="mb-3 text-sm text-gray-500">Код обновляется автоматически. Если не сработало — нажмите «Обновить код».</p>
+        <button type="button" className="rounded-lg border px-4 py-3 text-blue-600" onClick={() => { setQrTimestamp(Date.now()); setQrError(false); }}>Обновить код</button>
+      </section> : null}
       {error ? <p role="alert" className="mb-5 text-sm text-red-600">{error}</p> : null}
-      {!connected(status) ? <div className="flex flex-wrap gap-3">
-        <button type="button" className={buttonClass} disabled={busy} onClick={() => void start()}>Подключить WhatsApp</button>
-        {attempt > 0 ? <button type="button" className="rounded-lg border px-4 py-3 text-blue-600 disabled:opacity-50" disabled={busy} onClick={refreshQr}>Обновить QR</button> : null}
-      </div> : null}
+      {!isConnected(status) ? <button type="button" className={buttonClass} disabled={busy} onClick={() => connect(isFailed(status))}>
+        {isFailed(status) ? 'Попробовать заново' : 'Подключить WhatsApp'}
+      </button> : null}
       <div className="mt-8 flex items-center justify-between gap-4">
         <Link className="text-sm text-blue-600" href="/onboarding/step-4">Пропустить</Link>
-        {connected(status) ? <Link className={buttonClass} href="/onboarding/step-4">Далее →</Link> : null}
+        {isConnected(status) ? <Link className={buttonClass} href="/onboarding/step-4">Далее →</Link> : null}
       </div>
     </StepFrame>
   );

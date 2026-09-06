@@ -52,17 +52,18 @@ Set these **server-only** variables in Vercel and redeploy:
 - `LEIA_API_URL=https://leya.bizgenie.site`
 - `LEIA_ADMIN_API_KEY`: the same value as backend `ADMIN_SECRET` (never use a `NEXT_PUBLIC_` prefix).
 
-The browser calls only `/api/waha/create`, `/api/waha/status`, and `/api/waha/qr` on this Next.js app. Every route validates `auth.getUser()` using the existing Supabase SSR client and resolves the sole membership from `tenant_users` by authenticated `user_id`. Missing/ambiguous memberships and viewer roles are rejected. Client bodies/query parameters never select a tenant. Middleware is unchanged: the page is already protected, and API handlers perform their own authentication and return JSON 401 responses.
+The browser calls only `/api/waha/create`, `/api/waha/status`, `/api/waha/qr`, and `/api/waha/reconnect` on this Next.js app. Every route validates `auth.getUser()` using the existing Supabase SSR client and resolves the sole membership from `tenant_users` by authenticated `user_id`. Missing/ambiguous memberships and viewer roles are rejected. Client bodies/query parameters never select a tenant. Middleware is unchanged: the page is already protected, and API handlers perform their own authentication and return JSON 401 responses.
 
 Backend contracts verified in `src/routes/admin.ts`, `src/utils/admin-auth.ts`, `src/services/waha-admin.service.ts`, and the WhatsApp provider:
 - `POST /api/admin/waha/create`: JSON `{ tenantId }`; response `{ session, status: string }`.
 - `GET /api/admin/waha/status?tenantId=...`: response `{ session, status: { status: string, connected?: boolean } }`.
 - `GET /api/admin/waha/qr?tenantId=...`: binary image with backend Content-Type (provider requests PNG).
+- `POST /api/admin/waha/reconnect?tenantId=...`: no JSON body; response `{ session, status: string }`.
 - All calls use `Authorization: Bearer <LEIA_ADMIN_API_KEY>`, accepted by backend `requireAdmin` against `ADMIN_SECRET`.
 
 The proxy returns only normalized status or binary QR, disables caching, rejects upstream redirects, and limits each upstream fetch to 10 seconds. Logs contain only fixed event names, operation and HTTP status; no secrets, QR contents or raw upstream bodies. The create route also checks request Origin.
 
-Click Connect to inspect/reuse an existing session or create/start one. Status polling runs every 3 seconds without overlapping requests, for at most 3 minutes per attempt. WORKING/CONNECTED stops polling and enables Next. Refresh QR fetches the current QR during a new polling attempt; Skip never creates a session. Navigation aborts pending browser requests and releases the QR object URL.
+Connect first checks status. Only NOT_CREATED (an explicit session-not-found 404 or an empty backend response) triggers create. An HTML/route 404 is a backend error, not proof of a missing session. SCAN_QR_CODE shows QR immediately; WORKING/CONNECTED shows Connected and Next; FAILED/STOPPED shows a retry button. Retry checks status again and uses reconnect for a failed/stopped session. Unknown existing statuses never trigger create. Backend reconnect stops/starts the same session; automatic disconnect/create is not used because disconnect logs out and deletes it. Status polling runs every 3 seconds without overlap, for at most 3 minutes including initial checks, and stops on success, session failure, or unmount. QR is a native same-origin image at `/api/waha/qr?ts=<timestamp>`, refreshed every 20 seconds only while SCAN_QR_CODE. Manual refresh updates that timestamp without extending the polling deadline. The full phone instruction remains visible with the QR. Skip never creates a session.
 
 Checks: `npm run build`, `npm run lint`, `npm run typecheck`, `node --test tests/*.test.cjs`.
 
@@ -123,3 +124,11 @@ Step 1 now issues one RPC, stores the returned tenant UUID, and navigates to ste
 Tests: `node --test tests/*.test.cjs`. The dev-only PGlite dependency runs real PostgreSQL in memory using a fixture copied from relevant backend 001 tables and migration 022. Tests apply 023 twice, compare unchanged SELECT policies, force a late module failure to verify rollback, check authenticated/anonymous RPC execution, and exercise owner/admin/viewer/foreign-tenant writes across every covered table. This isolated execution is not an application to Supabase and does not verify the deployed schema or its actual grants.
 
 TODO: identify 022's actual application procedure, apply 023 using it, then verify live step 1 and viewer restrictions. Until then, production retains its current policies and the new RPC is unavailable unless separately installed.
+
+### WAHA connection regression checks
+
+The explicit proxy path map always resolves `/api/admin/waha/{create,status,qr,reconnect}` from the configured `LEIA_API_URL`; create sends tenantId in JSON, the other operations use the query. Tenant identity remains derived from server-side Auth membership. QR bodies stream through with the original Content-Type; create preserves HTTP 201. Raw backend errors are never displayed. Backend unavailability, session failure, and polling timeout have separate UI messages.
+
+`tests/waha-connection.test.cjs` covers create/reuse/reconnect decisions and backend failures; `tests/waha-polling.test.cjs` uses controlled timers to verify status at 3 seconds, image refresh at 20 seconds, the three-minute deadline, and cleanup on WORKING/unmount. Proxy tests distinguish a route 404 from a missing session and verify all paths, payload placement, image bytes, and authorization.
+
+Deployment TODO: verify Vercel's server-only `LEIA_API_URL` points to the intended Leia backend (normally `https://leya.bizgenie.site`) and complete real phone pairing. Local source paths already matched the backend mount; the previous source defect was broad status-to-create handling and ambiguous 404 classification, not a reproduced wrong path. Live production environment values and pairing were not changed by this patch.

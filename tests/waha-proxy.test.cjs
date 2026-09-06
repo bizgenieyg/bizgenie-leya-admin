@@ -106,3 +106,35 @@ test('accepts browser origin matching incoming Host when Next uses an internal h
   }), 'create');
   assert.equal(response.status, 401);
 });
+
+test('reconnect posts tenantId in query without forwarding client body', async () => {
+  const { proxy, calls } = fixture();
+  const response = await proxy(post(), 'reconnect');
+  assert.equal(response.status, 200);
+  assert.equal(calls[0].url, 'https://backend.example/api/admin/waha/reconnect?tenantId=tenant-a');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(calls[0].options.body, undefined);
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer test-secret');
+});
+
+test('create preserves backend 201', async () => {
+  const { proxy } = fixture({ upstream: Response.json({ status: 'STARTING' }, { status: 201 }) });
+  assert.equal((await proxy(post(), 'create')).status, 201);
+});
+
+for (const upstream of [new Response('Cannot GET /bad/path', { status: 404, headers: { 'content-type': 'text/html' } }), Response.json({ error: 'Route not found' }, { status: 404 })]) {
+  test('route 404 is not treated as an absent session', async () => {
+    const { proxy } = fixture({ upstream });
+    const response = await proxy(new Request('https://admin.example/api/waha/status'), 'status');
+    assert.equal(response.status, 502);
+    assert.doesNotMatch(await response.text(), /NOT_CREATED/);
+  });
+}
+
+for (const upstream of [Response.json({ error: 'WhatsApp session not found' }, { status: 404 }), new Response(null, { status: 204 }), Response.json(null), Response.json({})]) {
+  test('recognizes explicit missing-session or empty status responses', async () => {
+    const { proxy } = fixture({ upstream });
+    const response = await proxy(new Request('https://admin.example/api/waha/status'), 'status');
+    assert.deepEqual(await response.json(), { status: 'NOT_CREATED' });
+  });
+}
