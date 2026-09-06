@@ -72,3 +72,22 @@ WhatsApp TODO:
 - No endpoint forces QR regeneration; Refresh retrieves the currently available QR without disconnecting/restarting the session.
 - Multi-tenant accounts need a server-side current-tenant selection mechanism; this implementation fails closed when membership is ambiguous.
 - Configure the server environment in Vercel and run live pairing acceptance checks.
+
+## Email confirmation and password recovery
+
+Public routes: `/login`, `/forgot-password`, `/auth/callback`. Protected route: `/reset-password` (middleware plus server-side `getUser()`).
+
+Signup uses the current browser origin plus `/auth/callback` as `emailRedirectTo`. With confirmation enabled, a successful signup without a session displays the check-email screen and a signup resend button. With confirmation disabled, signup redirects directly to step 1. Callback exchanges the PKCE `code` with the existing cookie-based server client; success defaults to step 1, or a safe same-origin `next` path. Recovery uses the same exchange and `/reset-password`. Callback errors are mapped to fixed Russian login messages; auth codes, tokens and raw upstream descriptions are never logged or reflected.
+
+Password recovery always displays the same acknowledgement regardless of whether the email exists or the request failed. Reset requires matching passwords and an active authenticated session before `updateUser`, then redirects to step 1. Supabase enforces the project's actual password policy. No unverified numeric minimum is hardcoded: the public Auth settings endpoint does not expose it, and the dashboard required sign-in during implementation. A minimum reported by Supabase's weak-password error is displayed in Russian.
+
+The Supabase redirect allow-list must permit `/auth/callback` and `/auth/callback?next=/reset-password` on each supported application origin; a bare Site URL alone does not cover those paths. Open PKCE email links in the same browser that requested them so the verifier cookie is available.
+
+`getOnboardingTenant()` now returns `role` and a bound `requireRole(['owner', 'admin'])` guard. Step 2 and all step 4 writes check it before mutation. WAHA uses the same exported guard on the server. Roles come from `022_tenant_users.sql`: owner, admin, viewer.
+
+Auth verification: `node --test tests/*.test.cjs` covers callback success/failure, cookie writes, recovery and safe redirects; signup with/without session and resend; identical password-recovery responses; password confirmation/update; role rejection and WAHA regressions. Auth services are mocked; live mailbox delivery and real account updates are not exercised.
+
+Remaining follow-up:
+- Verify the numeric minimum in Supabase's Email provider settings if client-side minimum-length validation is desired; backend policy is authoritative already.
+- Run live signup → email confirmation and forgot-password → email link → password reset on the deployed origin.
+- Migration 022 currently grants business writes based on membership, without a role predicate. The new client guard blocks viewer mutations in this UI, but database-enforced role restrictions require a separate RLS migration (not changed here).

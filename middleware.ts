@@ -42,5 +42,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/onboarding/:path*'],
+  // /auth/callback and /forgot-password are public and excluded from this matcher.
+  matcher: ['/admin/:path*', '/onboarding/:path*', '/reset-password/:path*'],
 };

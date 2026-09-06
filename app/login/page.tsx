@@ -1,6 +1,8 @@
 'use client';
 
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { confirmationErrors } from '@/lib/auth/redirect';
 import { useRouter } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/client';
@@ -14,6 +16,26 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const [confirmationEmail, setConfirmationEmail] = useState('');
+  const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get('error');
+    if (reason && confirmationErrors[reason]) setError(confirmationErrors[reason]);
+  }, []);
+
+  async function resendConfirmation() {
+    if (loading) return;
+    setLoading(true);
+    setError('');
+    setNotice('');
+    try {
+      const { error } = await createClient().auth.resend({ type: 'signup', email: confirmationEmail, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
+      if (error) setError('Не удалось отправить письмо. Подождите немного и попробуйте ещё раз.');
+      else setNotice('Письмо отправлено повторно.');
+    } catch { setError('Не удалось отправить письмо. Попробуйте ещё раз.'); }
+    finally { setLoading(false); }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,19 +43,28 @@ export default function LoginPage() {
     setError('');
     const supabase = createClient();
 
-    const result =
-      mode === 'login'
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+    try {
+      const result =
+        mode === 'login'
+          ? await supabase.auth.signInWithPassword({ email, password })
+          : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
 
-    if (result.error) {
-      setError(result.error.message);
-      setLoading(false);
-      return;
-    }
+      if (result.error) {
+        setError(result.error.message);
+        setLoading(false);
+        return;
+      }
 
-    router.replace(mode === 'login' ? '/admin' : '/onboarding/step-1');
-    router.refresh();
+      if (mode === 'signup' && result.data.session === null) {
+        setConfirmationEmail(email);
+        setPassword('');
+        return;
+      }
+
+      router.replace(mode === 'login' ? '/admin' : '/onboarding/step-1');
+      router.refresh();
+    } catch { setError('Не удалось выполнить запрос. Попробуйте ещё раз.'); }
+    finally { setLoading(false); }
   }
 
   function toggleMode() {
@@ -41,11 +72,24 @@ export default function LoginPage() {
     setError('');
   }
 
+  if (confirmationEmail) return (
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
+        <h1 className="mb-4 text-2xl font-bold text-gray-900">Проверьте почту</h1>
+        <p className="mb-6 break-words text-sm text-gray-600">Проверьте почту: мы отправили ссылку для подтверждения на {confirmationEmail}</p>
+        {error ? <p role="alert" className="mb-4 text-sm text-red-600">{error}</p> : null}
+        {notice ? <p role="status" className="mb-4 text-sm text-green-600">{notice}</p> : null}
+        <button type="button" disabled={loading} onClick={() => void resendConfirmation()} className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50">{loading ? 'Загрузка...' : 'Отправить ещё раз'}</button>
+        <Link href="/login" onClick={() => { setConfirmationEmail(''); setMode('login'); setError(''); }} className="mt-4 block text-center text-sm text-blue-600">Войти</Link>
+      </section>
+    </main>
+  );
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
       <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          {mode === 'login' ? 'Войти в Лею' : 'Начать бесплатный триал'}
+          {mode === 'login' ? 'Вход в кабинет' : 'Создать аккаунт'}
         </h1>
         <p className="mb-6 text-sm text-gray-500">
           {mode === 'login'
@@ -80,7 +124,6 @@ export default function LoginPage() {
               className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
               id="password"
-              minLength={6}
               onChange={(event) => setPassword(event.target.value)}
               required
               type="password"
@@ -99,9 +142,11 @@ export default function LoginPage() {
             disabled={loading}
             type="submit"
           >
-            {loading ? 'Загрузка...' : mode === 'login' ? 'Войти' : 'Начать триал'}
+            {loading ? 'Загрузка...' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}
           </button>
         </form>
+
+        {mode === 'login' ? <Link href="/forgot-password" className="mt-4 block text-center text-sm text-blue-600">Забыли пароль?</Link> : null}
 
         <button
           className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700"
@@ -109,7 +154,7 @@ export default function LoginPage() {
           onClick={toggleMode}
           type="button"
         >
-          {mode === 'login' ? 'Нет аккаунта? Начать триал' : 'Уже есть аккаунт? Войти'}
+          {mode === 'login' ? 'Создать аккаунт' : 'Уже есть аккаунт? Войти'}
         </button>
       </section>
     </main>

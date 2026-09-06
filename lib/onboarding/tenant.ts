@@ -1,5 +1,13 @@
 import { createClient } from '@/lib/supabase/client';
 
+export type TenantRole = 'owner' | 'admin' | 'viewer';
+
+export function requireRole(allowed: readonly TenantRole[], role: unknown): asserts role is TenantRole {
+  if (typeof role !== 'string' || !allowed.includes(role as TenantRole)) {
+    throw new Error('Недостаточно прав для изменения настроек бизнеса.');
+  }
+}
+
 export async function getOnboardingTenant() {
   const supabase = createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -9,11 +17,12 @@ export async function getOnboardingTenant() {
 
   // The stored selection is only a hint; membership must be verified for this user.
   const selected = sessionStorage.getItem('onboarding_tenant_id');
-  let query = supabase.from('tenant_users').select('tenant_id').eq('user_id', user.id);
+  let query = supabase.from('tenant_users').select('tenant_id, role').eq('user_id', user.id);
   if (selected) query = query.eq('tenant_id', selected);
   const { data, error } = await query.limit(2);
   if (error) throw new Error('Не удалось проверить доступ к бизнесу. Попробуйте ещё раз.');
   if (!data?.length) throw new Error('Бизнес не найден или недоступен. Вернитесь к шагу 1.');
   if (data.length !== 1) throw new Error('Не удалось однозначно определить текущий бизнес. Откройте onboarding в исходной вкладке.');
-  return { supabase, tenantId: data[0].tenant_id as string };
+  const role = data[0].role as TenantRole;
+  return { supabase, tenantId: data[0].tenant_id as string, role, requireRole: (allowed: readonly TenantRole[]) => requireRole(allowed, role) };
 }

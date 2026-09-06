@@ -47,7 +47,8 @@ export default function OnboardingStepFourPage() {
     setBusy(true);
     setError('');
     try {
-      const { supabase, tenantId: currentTenantId } = await getOnboardingTenant();
+      const { supabase, tenantId: currentTenantId, requireRole } = await getOnboardingTenant();
+      requireRole(['owner', 'admin']);
       if (currentTenantId !== tenantId) throw new Error('Текущий бизнес изменился. Обновите страницу.');
       const values = { question: question.trim(), answer: answer.trim() };
       const query = editingId
@@ -67,7 +68,8 @@ export default function OnboardingStepFourPage() {
     setBusy(true);
     setError('');
     try {
-      const { supabase, tenantId: currentTenantId } = await getOnboardingTenant();
+      const { supabase, tenantId: currentTenantId, requireRole } = await getOnboardingTenant();
+      requireRole(['owner', 'admin']);
       if (currentTenantId !== tenantId) throw new Error('Текущий бизнес изменился. Обновите страницу.');
       const { data, error } = await supabase.from('knowledge_items').delete()
         .eq('tenant_id', tenantId).eq('id', id).select('id').single();

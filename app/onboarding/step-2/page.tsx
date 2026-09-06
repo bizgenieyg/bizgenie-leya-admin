@@ -49,7 +49,8 @@ export default function OnboardingStepTwoPage() {
     setSaving(true);
     setError('');
     try {
-      const { supabase, tenantId: currentTenantId } = await getOnboardingTenant();
+      const { supabase, tenantId: currentTenantId, requireRole } = await getOnboardingTenant();
+      requireRole(['owner', 'admin']);
       if (currentTenantId !== tenantId) throw new Error('Текущий бизнес изменился. Обновите страницу.');
       const { data, error } = await supabase.from('assistant_profiles').update({
         assistant_name: name.trim(), allowed_languages: allowedLanguages,

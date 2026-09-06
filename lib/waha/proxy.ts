@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { requireRole } from '@/lib/onboarding/tenant';
+
 import { createClient } from '@/lib/supabase/server';
 
 type Operation = 'create' | 'status' | 'qr';
@@ -32,7 +34,9 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
     if (!memberships?.length) return failure('Бизнес не найден или недоступен.', 403);
     if (memberships.length !== 1) return failure('Не удалось однозначно определить текущий бизнес.', 409);
     const { tenant_id: tenantId, role } = memberships[0];
-    if (role !== 'owner' && role !== 'admin') return failure('Подключение доступно владельцу или администратору бизнеса.', 403);
+    try { requireRole(['owner', 'admin'], role); } catch {
+      return failure('Подключение доступно владельцу или администратору бизнеса.', 403);
+    }
 
     const baseUrl = process.env.LEIA_API_URL;
     const secret = process.env.LEIA_ADMIN_API_KEY;

@@ -26,13 +26,13 @@ function scenario({ selected = null, user = { id: 'user-a' }, memberships = [], 
     require: () => ({ createClient: () => supabase }),
     sessionStorage: { getItem: () => selected },
   });
-  return { resolve: exports.getOnboardingTenant, calls };
+  return { resolve: exports.getOnboardingTenant, requireRole: exports.requireRole, calls };
 }
 
 test('verifies stored tenant against authenticated user membership', async () => {
-  const { resolve, calls } = scenario({ selected: 'tenant-a', memberships: [{ tenant_id: 'tenant-a' }] });
+  const { resolve, calls } = scenario({ selected: 'tenant-a', memberships: [{ tenant_id: 'tenant-a', role: 'owner' }] });
   assert.equal((await resolve()).tenantId, 'tenant-a');
-  assert.deepEqual(calls, [['from', 'tenant_users'], ['select', 'tenant_id'], ['eq', 'user_id', 'user-a'], ['eq', 'tenant_id', 'tenant-a'], ['limit', 2]]);
+  assert.deepEqual(calls, [['from', 'tenant_users'], ['select', 'tenant_id, role'], ['eq', 'user_id', 'user-a'], ['eq', 'tenant_id', 'tenant-a'], ['limit', 2]]);
 });
 
 test('rejects a foreign stored tenant with no matching membership', async () => {
@@ -41,12 +41,12 @@ test('rejects a foreign stored tenant with no matching membership', async () => 
 });
 
 test('uses the sole membership when no tenant is stored', async () => {
-  const { resolve } = scenario({ memberships: [{ tenant_id: 'tenant-a' }] });
+  const { resolve } = scenario({ memberships: [{ tenant_id: 'tenant-a', role: 'owner' }] });
   assert.equal((await resolve()).tenantId, 'tenant-a');
 });
 
 test('rejects ambiguous memberships instead of selecting an arbitrary tenant', async () => {
-  const { resolve } = scenario({ memberships: [{ tenant_id: 'tenant-a' }, { tenant_id: 'tenant-b' }] });
+  const { resolve } = scenario({ memberships: [{ tenant_id: 'tenant-a', role: 'owner' }, { tenant_id: 'tenant-b' }] });
   await assert.rejects(resolve(), /однозначно/);
 });
 
@@ -60,3 +60,13 @@ test('fails closed on membership query errors', async () => {
   const { resolve } = scenario({ queryError: { message: 'denied' } });
   await assert.rejects(resolve(), /проверить доступ/);
 });
+
+for (const role of ['owner', 'admin', 'viewer', 'unknown', null]) {
+  test(`central role guard handles ${role}`, async () => {
+    const { resolve } = scenario({ memberships: [{ tenant_id: 'tenant-a', role }] });
+    const tenant = await resolve();
+    assert.equal(tenant.role, role);
+    if (role === 'owner' || role === 'admin') assert.doesNotThrow(() => tenant.requireRole(['owner', 'admin']));
+    else assert.throws(() => tenant.requireRole(['owner', 'admin']), /Недостаточно прав/);
+  });
+}
