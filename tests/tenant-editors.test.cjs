@@ -84,14 +84,3 @@ for (const component of ['assistant-settings', 'knowledge-editor']) {
     assert.match(text(app.render()), /Недостаточно прав/);
   });
 }
-
-for (const confirm of [false, true]) {
-  test(`WhatsApp disconnect ${confirm ? 'confirmed' : 'cancelled'}`, async () => {
-    const app = editor('whatsapp-status', { confirm }); await app.settle();
-    assert.match(text(app.render()), /Подключено/);
-    nodes(app.render()).find(node => node.type === 'button' && text(node) === 'Отключить').props.onClick();
-    await app.settle();
-    assert.equal(app.requests.filter(request => request.method === 'POST').length, confirm ? 1 : 0);
-    assert.match(text(app.render()), confirm ? /Не подключено/ : /Подключено/);
-  });
-}

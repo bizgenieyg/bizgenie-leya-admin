@@ -146,3 +146,35 @@ Deployment TODO: verify Vercel's server-only `LEIA_API_URL` points to the intend
 Tests cover shared editor saves in both contexts, FAQ CRUD, viewer mutation rejection, confirmation cancellation/success, and disconnect proxy authorization/contract. The backend status contract currently returns only status/connected, without a phone number, so the UI does not invent one.
 
 Cabinet TODO: expose a phone number in the backend status contract if it should appear next to Connected; complete live pairing/disconnect acceptance tests after the existing backend session-registration problem is resolved. This cabinet task does not change the backend or repair WAHA session records.
+
+## Shared WhatsApp session states
+
+Step 3 and the cabinet render `components/tenant/whatsapp-connection.tsx`.
+The cabinet wrapper only determines whether mutation controls are available.
+Server-side tenant lookup and owner/admin authorization stay in the existing
+proxy; no tenant identifier is accepted from the browser.
+
+The backend now returns `{ status, qrAvailable, reason? }` (the proxy also accepts
+the old nested status response during rollout). Five WAHA Core 2026.6.2 statuses:
+STOPPED → Отключено/reconnect; STARTING → Подключаем.../spinner/poll;
+SCAN_QR_CODE → instructions and auto-refreshing QR; WORKING → Подключено/Next
+or confirmed disconnect; FAILED → Не удалось подключиться/safe reason/reconnect.
+NOT_CREATED is a local absence marker and is the only state that permits create.
+Unknown status text is displayed as received and offers reconnect.
+The initial page load only reads status; it does not create a session.
+
+Polling runs every 3 seconds, QR refresh every 20 seconds, capped at 3 minutes.
+Terminal states and unmount cancel timers/requests. A timeout offers a fresh
+status check. Backend HTTP 4xx remains a request error, not backend unavailable;
+QR HTTP 409 retains the current status. Only network failures/5xx display
+“Бэкенд недоступен”.
+
+Checks: `node --test tests/*.test.cjs`, `npm run build`, `npm run lint`,
+`npm run typecheck`. Tests cover every state in both screens, polling deadlines,
+unmount, read-only viewers, disconnect confirmation, duplicate-create prevention,
+4xx/5xx distinctions and tenant isolation.
+
+Deployment note: use the backend commit with normalized status/idempotent create.
+Live WAHA image version and GOWS markOnline support still require server
+verification; see the backend README correction (2026.6.2 does not support the
+top-level markOnline field for GOWS).

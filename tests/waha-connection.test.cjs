@@ -27,7 +27,7 @@ test('only missing session triggers create', async () => {
   assert.equal(await begin(new AbortController().signal, false), 'STARTING');
   assert.deepEqual(calls, [{ path: '/api/waha/status', method: 'GET' }, { path: '/api/waha/create', method: 'POST' }]);
 });
-for (const status of ['FAILED', 'STOPPED']) {
+for (const status of ['FAILED', 'STOPPED', 'FUTURE_STATE']) {
   test(`retry reconnects ${status} without create/disconnect`, async () => {
     const { begin, calls } = fixture(status);
     await begin(new AbortController().signal, true);
@@ -44,3 +44,10 @@ test('backend failure never triggers create and is sanitized', async () => {
   await assert.rejects(begin(new AbortController().signal, false), /Бэкенд недоступен/);
   assert.equal(calls.length, 1);
 });
+
+for (const code of [400, 404, 409, 422]) {
+  test(`HTTP ${code} is not labelled backend unavailable`, async () => {
+    const { begin } = fixture(null, code);
+    await assert.rejects(begin(new AbortController().signal, false), error => !error.message.includes('Бэкенд недоступен'));
+  });
+}

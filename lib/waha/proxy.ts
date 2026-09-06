@@ -75,6 +75,11 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
           return Response.json({ status: 'NOT_CREATED' }, { headers });
         }
       }
+      if (upstream.status === 409 && operation === 'qr') {
+        const data = await upstream.json();
+        if (typeof data.status === 'string') return Response.json({ status: data.status, qrAvailable: false }, { status: 409, headers });
+      }
+      if (upstream.status < 500) return failure('Не удалось выполнить действие WhatsApp. Обновите статус подключения.', upstream.status);
       return failure(operation === 'qr' ? 'QR пока недоступен. Попробуйте обновить его.' : 'Не удалось связаться с WhatsApp. Попробуйте ещё раз.', 502);
     }
     if (operation === 'qr') {
@@ -91,10 +96,12 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
       if (data?.disconnected !== true) throw new Error('Invalid disconnect response');
       return Response.json({ status: 'DISCONNECTED' }, { headers });
     }
-    const status = operation === 'status' ? data?.status?.status : data?.status;
+    const status = typeof data?.status === 'string' ? data.status : data?.status?.status;
     if (typeof status !== 'string') throw new Error('Invalid status response');
     // Only send the status needed by the UI, not arbitrary admin API data.
-    return Response.json({ status }, { status: upstream.status, headers });
+    return Response.json({ status, qrAvailable: status === 'SCAN_QR_CODE' && data?.qrAvailable !== false,
+      ...(status === 'FAILED' && typeof data?.reason === 'string' ? { reason: data.reason.slice(0, 300) } : {})
+    }, { status: upstream.status, headers });
   } catch {
     console.error('waha_proxy_request_failed', { operation });
     return failure('Сервис подключения временно недоступен. Попробуйте ещё раз.', 502);

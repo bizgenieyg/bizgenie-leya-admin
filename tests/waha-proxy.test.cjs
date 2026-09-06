@@ -47,14 +47,14 @@ test('create derives tenant from authenticated membership, never client body', a
   assert.deepEqual(JSON.parse(calls[0].options.body), { tenantId: 'tenant-a' });
   assert.equal(calls[0].options.cache, 'no-store');
   assert.equal(calls[0].options.redirect, 'error');
-  assert.deepEqual(await response.json(), { status: 'STARTING' });
+  assert.deepEqual(await response.json(), { status: 'STARTING', qrAvailable: false });
 });
 
 test('status uses query tenant and normalizes nested backend contract', async () => {
   const { proxy, calls } = fixture({ upstream: Response.json({ session: 'private-session', status: { status: 'WORKING', connected: true } }) });
   const response = await proxy(new Request('https://admin.example/api/waha/status?tenantId=foreign'), 'status');
   assert.equal(calls[0].url, 'https://backend.example/api/admin/waha/status?tenantId=tenant-a');
-  assert.deepEqual(await response.json(), { status: 'WORKING' });
+  assert.deepEqual(await response.json(), { status: 'WORKING', qrAvailable: false });
 });
 
 test('QR preserves binary image and prevents caching', async () => {
@@ -126,7 +126,7 @@ for (const upstream of [new Response('Cannot GET /bad/path', { status: 404, head
   test('route 404 is not treated as an absent session', async () => {
     const { proxy } = fixture({ upstream });
     const response = await proxy(new Request('https://admin.example/api/waha/status'), 'status');
-    assert.equal(response.status, 502);
+    assert.equal(response.status, 404);
     assert.doesNotMatch(await response.text(), /NOT_CREATED/);
   });
 }
@@ -154,4 +154,27 @@ test('viewer may read status but cannot disconnect', async () => {
   const write = fixture({ memberships: [{ tenant_id: 'tenant-a', role: 'viewer' }] });
   assert.equal((await write.proxy(post(), 'disconnect')).status, 403);
   assert.equal(write.calls.length, 0);
+});
+
+for (const status of ['STOPPED', 'STARTING', 'SCAN_QR_CODE', 'WORKING', 'FAILED', 'FUTURE']) {
+  test(`proxy preserves normalized ${status} without treating it as unavailable`, async () => {
+    const { proxy } = fixture({ upstream: Response.json({ status, qrAvailable: status === 'SCAN_QR_CODE' }) });
+    const response = await proxy(new Request('https://admin.example/api/waha/status'), 'status');
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { status, qrAvailable: status === 'SCAN_QR_CODE' });
+  });
+}
+test('QR conflict preserves status and does not become 502', async () => {
+  const { proxy } = fixture({ upstream: Response.json({ status: 'FAILED', qrAvailable: false, error: 'private' }, { status: 409 }) });
+  const response = await proxy(new Request('https://admin.example/api/waha/qr'), 'qr');
+  assert.equal(response.status, 409);
+  assert.deepEqual(await response.json(), { status: 'FAILED', qrAvailable: false });
+});
+
+test('FAILED forwards the backend safe reason without arbitrary fields', async () => {
+  const { proxy } = fixture({ upstream: Response.json({ status: 'FAILED', qrAvailable: false, reason: 'WAHA не удалось получить состояние подключения.', internal: 'secret' }) });
+  const response = await proxy(new Request('https://admin.example/api/waha/status'), 'status');
+  const data = await response.json();
+  assert.equal(data.reason, 'WAHA не удалось получить состояние подключения.');
+  assert.equal(data.internal, undefined);
 });
