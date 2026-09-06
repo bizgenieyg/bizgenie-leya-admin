@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { requireRole } from '@/lib/onboarding/tenant';
+import { requireRole } from '@/lib/onboarding/roles';
 
 import { createClient } from '@/lib/supabase/server';
 

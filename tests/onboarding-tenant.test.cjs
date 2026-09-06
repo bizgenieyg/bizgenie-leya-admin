@@ -4,6 +4,9 @@ const { test } = require('node:test');
 const vm = require('node:vm');
 const ts = require('typescript');
 
+const roleModule = {};
+vm.runInNewContext(ts.transpileModule(readFileSync('lib/onboarding/roles.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: roleModule });
+
 const compiled = ts.transpileModule(
   readFileSync(new URL('../lib/onboarding/tenant.ts', `file://${__filename}`), 'utf8'),
   { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } },
@@ -23,10 +26,10 @@ function scenario({ selected = null, user = { id: 'user-a' }, memberships = [], 
   const exports = {};
   vm.runInNewContext(compiled, {
     exports,
-    require: () => ({ createClient: () => supabase }),
+    require: (name) => name === './roles' ? roleModule : ({ createClient: () => supabase }),
     sessionStorage: { getItem: () => selected },
   });
-  return { resolve: exports.getOnboardingTenant, requireRole: exports.requireRole, calls };
+  return { resolve: exports.getOnboardingTenant, calls };
 }
 
 test('verifies stored tenant against authenticated user membership', async () => {

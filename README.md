@@ -90,4 +90,36 @@ Auth verification: `node --test tests/*.test.cjs` covers callback success/failur
 Remaining follow-up:
 - Verify the numeric minimum in Supabase's Email provider settings if client-side minimum-length validation is desired; backend policy is authoritative already.
 - Run live signup → email confirmation and forgot-password → email link → password reset on the deployed origin.
-- Migration 022 currently grants business writes based on membership, without a role predicate. The new client guard blocks viewer mutations in this UI, but database-enforced role restrictions require a separate RLS migration (not changed here).
+- Apply the prepared migration 023 to enforce database-level owner/admin writes; it has not been applied to the deployed database.
+
+## Atomic tenant creation — migration 023
+
+Exact executable SQL: `023_create_tenant_with_owner.sql` (next to `022_tenant_users.sql`).
+
+**Application status: NOT APPLIED to the deployed database.** README and the original commit `2cece7d` describe 022 as a standalone owner handoff, not an executed migration. Neither repository's available Git history or scripts records whether it was applied through SQL Editor, CLI, or another script. Therefore no application method was inferred and no production migration was run. Establish the actual 022 procedure before applying 023. The new step 1 requires this RPC to exist; code deployment alone does not resolve the production error.
+
+Function signature:
+```sql
+public.create_tenant_with_owner(
+  p_name text,
+  p_plan text,
+  p_business_name text,
+  p_language text,
+  p_status text,
+  p_trial_ends_at timestamptz
+) returns uuid
+```
+
+The SECURITY DEFINER function has `SET search_path = public`, fully qualified tables, an `auth.uid()` check, and EXECUTE granted only to authenticated callers (PUBLIC/anon revoked). It creates the tenant, authenticated owner's membership, default assistant profile and the same three module settings previously created by step 1, all in one transaction. Inputs correspond to existing step-1 fields; `p_plan` maps to `tenants.tier`. No new table columns are introduced. Required names, existing language/plan choices and trial/status consistency are validated.
+
+Write policies from 022 are replaced using DROP POLICY IF EXISTS + CREATE POLICY for all ten tables: assistant_profiles, clients, client_profiles, conversations, messages, knowledge_items, module_settings, usage_events, agent_actions, scheduled_jobs. Tenants receives the same role restriction for UPDATE/DELETE, with INSERT unconditionally denied. INSERT uses WITH CHECK, UPDATE uses USING and WITH CHECK, DELETE uses USING. Every role predicate selects membership for `auth.uid()` with `role IN ('owner','admin')`; tenants uses `id`, other tables use `tenant_id`. Restrictive guards prevent other permissive write policies from weakening these rules. SELECT policies remain unchanged.
+
+Known broad bootstrap policies from backend 004 are removed. Direct tenant_users INSERT/UPDATE/DELETE privileges are revoked from anon/authenticated, preventing membership forgery or self-promotion. This preserves 022's original read-only client membership model. Existing SELECT policies and backend bypass roles are unaffected.
+
+Prerequisites: backend schema 001, nullable tenants.phone as in 004, and 022. The migration is repeatable. Apply using the verified historical process for 022; do not assume `supabase db push` manages these standalone files.
+
+Step 1 now issues one RPC, stores the returned tenant UUID, and navigates to step 2. Module initialization has moved into that RPC. Errors are human-readable; development-only logs contain fixed messages/error codes. Plan names and descriptions remain, prices are removed. The role guard is now in `lib/onboarding/roles.ts` with no browser-client imports; step 2/4 still use it as a UX guard. The sole backend URL configuration is server-only `LEIA_API_URL`.
+
+Tests: `node --test tests/*.test.cjs`. The dev-only PGlite dependency runs real PostgreSQL in memory using a fixture copied from relevant backend 001 tables and migration 022. Tests apply 023 twice, compare unchanged SELECT policies, force a late module failure to verify rollback, check authenticated/anonymous RPC execution, and exercise owner/admin/viewer/foreign-tenant writes across every covered table. This isolated execution is not an application to Supabase and does not verify the deployed schema or its actual grants.
+
+TODO: identify 022's actual application procedure, apply 023 using it, then verify live step 1 and viewer restrictions. Until then, production retains its current policies and the new RPC is unavailable unless separately installed.

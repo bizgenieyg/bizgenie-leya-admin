@@ -6,12 +6,11 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 const TIERS = [
-  { id: 'starter', name: 'Starter', price: '₪199/мес', description: 'FAQ + эскалация + отчёт' },
-  { id: 'pro', name: 'Pro', price: '₪299/мес', description: '+ запись, напоминания, Promises' },
+  { id: 'starter', name: 'Starter', description: 'FAQ + эскалация + отчёт' },
+  { id: 'pro', name: 'Pro', description: '+ запись, напоминания, Promises' },
   {
     id: 'trial',
     name: '14 дней триал',
-    price: 'Бесплатно',
     description: 'Полный Pro на 2 недели',
   },
 ] as const;
@@ -35,81 +34,40 @@ export default function OnboardingStepOnePage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError('');
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        router.replace('/login');
+        router.refresh();
+        return;
+      }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+      const { data: tenantId, error: createError } = await supabase.rpc('create_tenant_with_owner', {
+        p_name: ownerName.trim(),
+        p_plan: tier,
+        p_business_name: businessName.trim(),
+        p_language: language,
+        p_status: tier === 'trial' ? 'trial' : 'active',
+        p_trial_ends_at: trialEndDate(tier),
+      });
+      if (createError || typeof tenantId !== 'string' || !tenantId) {
+        if (process.env.NODE_ENV === 'development') console.error('Tenant creation failed', { code: createError?.code });
+        setError('Не удалось создать бизнес. Попробуйте ещё раз.');
+        return;
+      }
 
-    if (userError || !user) {
-      router.replace('/login');
-      router.refresh();
-      return;
-    }
-
-    const { data: tenant, error: tenantError } = await supabase
-      .from('tenants')
-      .insert({
-        name: ownerName.trim(),
-        business_name: businessName.trim(),
-        language,
-        tier,
-        status: tier === 'trial' ? 'trial' : 'active',
-        trial_ends_at: trialEndDate(tier),
-      })
-      .select('id')
-      .single();
-
-    if (tenantError || !tenant) {
-      setError(tenantError?.message ?? 'Не удалось создать бизнес. Попробуйте ещё раз.');
+      sessionStorage.setItem('onboarding_tenant_id', tenantId);
+      router.push('/onboarding/step-2');
+    } catch {
+      if (process.env.NODE_ENV === 'development') console.error('Tenant creation request failed');
+      setError('Не удалось создать бизнес. Попробуйте ещё раз.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { error: linkError } = await supabase.from('tenant_users').insert({
-      user_id: user.id,
-      tenant_id: tenant.id,
-      role: 'owner',
-    });
-
-    if (linkError) {
-      setError(linkError.message);
-      setLoading(false);
-      return;
-    }
-
-    const { error: profileError } = await supabase
-      .from('assistant_profiles')
-      .insert({ tenant_id: tenant.id });
-
-    if (profileError) {
-      setError(profileError.message);
-      setLoading(false);
-      return;
-    }
-
-    const { error: modulesError } = await supabase.from('module_settings').insert([
-      { tenant_id: tenant.id, module_name: 'knowledge', enabled: true },
-      { tenant_id: tenant.id, module_name: 'escalation', enabled: true },
-      {
-        tenant_id: tenant.id,
-        module_name: 'reports',
-        enabled: true,
-        limits: { report_frequency: 'weekly' },
-      },
-    ]);
-
-    if (modulesError) {
-      setError(modulesError.message);
-      setLoading(false);
-      return;
-    }
-
-    sessionStorage.setItem('onboarding_tenant_id', tenant.id);
-    router.push('/onboarding/step-2');
   }
 
   return (
@@ -198,7 +156,6 @@ export default function OnboardingStepOnePage() {
                     <span className="block text-sm font-medium text-gray-900">{tierOption.name}</span>
                     <span className="block text-xs text-gray-500">{tierOption.description}</span>
                   </span>
-                  <span className="text-sm font-medium text-blue-600">{tierOption.price}</span>
                 </label>
               ))}
             </div>

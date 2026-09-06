@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 
 const roleModule = {};
-vm.runInNewContext(ts.transpileModule(readFileSync('lib/onboarding/tenant.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: roleModule, require: () => ({}) });
+vm.runInNewContext(ts.transpileModule(readFileSync('lib/onboarding/roles.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: roleModule, require: () => ({}) });
 
 const compiled = ts.transpileModule(readFileSync('lib/waha/proxy.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
@@ -24,7 +24,7 @@ function fixture({ user = { id: 'user-a' }, memberships = [{ tenant_id: 'tenant-
     exports, Response, URL, AbortSignal,
     console: { error() {} },
     process: { env: { LEIA_API_URL: 'https://backend.example', LEIA_ADMIN_API_KEY: 'test-secret' } },
-    require: (name) => name === 'server-only' ? {} : name === '@/lib/onboarding/tenant' ? roleModule : { createClient: () => ({
+    require: (name) => name === 'server-only' ? {} : name === '@/lib/onboarding/roles' ? roleModule : { createClient: () => ({
       auth: { getUser: async () => ({ data: { user } }) },
       from: () => query,
     }) },
