@@ -138,3 +138,20 @@ for (const upstream of [Response.json({ error: 'WhatsApp session not found' }, {
     assert.deepEqual(await response.json(), { status: 'NOT_CREATED' });
   });
 }
+
+test('disconnect uses query tenant and normalizes confirmed backend response', async () => {
+  const { proxy, calls } = fixture({ upstream: Response.json({ session: 'private-session', disconnected: true }) });
+  const response = await proxy(post(), 'disconnect');
+  assert.equal(calls[0].url, 'https://backend.example/api/admin/waha/disconnect?tenantId=tenant-a');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(calls[0].options.body, undefined);
+  assert.deepEqual(await response.json(), { status: 'DISCONNECTED' });
+});
+
+test('viewer may read status but cannot disconnect', async () => {
+  const read = fixture({ memberships: [{ tenant_id: 'tenant-a', role: 'viewer' }], upstream: Response.json({ status: { status: 'WORKING' } }) });
+  assert.equal((await read.proxy(new Request('https://admin.example/api/waha/status'), 'status')).status, 200);
+  const write = fixture({ memberships: [{ tenant_id: 'tenant-a', role: 'viewer' }] });
+  assert.equal((await write.proxy(post(), 'disconnect')).status, 403);
+  assert.equal(write.calls.length, 0);
+});

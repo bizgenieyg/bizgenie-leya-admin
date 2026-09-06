@@ -8,6 +8,7 @@ const operations = {
   create: { path: '/api/admin/waha/create', method: 'POST' },
   status: { path: '/api/admin/waha/status', method: 'GET' },
   qr: { path: '/api/admin/waha/qr', method: 'GET' },
+  disconnect: { path: '/api/admin/waha/disconnect', method: 'POST' },
   reconnect: { path: '/api/admin/waha/reconnect', method: 'POST' },
 } as const;
 type Operation = keyof typeof operations;
@@ -40,7 +41,7 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
     if (!memberships?.length) return failure('Бизнес не найден или недоступен.', 403);
     if (memberships.length !== 1) return failure('Не удалось однозначно определить текущий бизнес.', 409);
     const { tenant_id: tenantId, role } = memberships[0];
-    try { requireRole(['owner', 'admin'], role); } catch {
+    try { requireRole(operation === 'status' ? ['owner', 'admin', 'viewer'] : ['owner', 'admin'], role); } catch {
       return failure('Подключение доступно владельцу или администратору бизнеса.', 403);
     }
 
@@ -85,6 +86,10 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
     const data = body.trim() ? JSON.parse(body) : null;
     if (operation === 'status' && (data === null || (typeof data === 'object' && Object.keys(data).length === 0))) {
       return Response.json({ status: 'NOT_CREATED' }, { headers });
+    }
+    if (operation === 'disconnect') {
+      if (data?.disconnected !== true) throw new Error('Invalid disconnect response');
+      return Response.json({ status: 'DISCONNECTED' }, { headers });
     }
     const status = operation === 'status' ? data?.status?.status : data?.status;
     if (typeof status !== 'string') throw new Error('Invalid status response');

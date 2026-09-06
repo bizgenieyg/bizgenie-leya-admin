@@ -41,7 +41,7 @@ Manual verification with an authenticated tenant account:
 
 TODO:
 - Greeting has no column in `assistant_profiles` migrations 001–004, so no greeting input is implemented.
-- `/admin` does not exist in this foundation yet; Finish targets that requested route, which currently returns 404. Dashboard implementation remains out of scope.
+- `/admin` is the permanent tenant cabinet; Finish opens it even with zero FAQ.
 
 
 Automated tenant resolution checks: `node --test tests/onboarding-tenant.test.cjs` (mocked Auth and membership responses; these do not replace live RLS/CRUD verification).
@@ -132,3 +132,17 @@ The explicit proxy path map always resolves `/api/admin/waha/{create,status,qr,r
 `tests/waha-connection.test.cjs` covers create/reuse/reconnect decisions and backend failures; `tests/waha-polling.test.cjs` uses controlled timers to verify status at 3 seconds, image refresh at 20 seconds, the three-minute deadline, and cleanup on WORKING/unmount. Proxy tests distinguish a route 404 from a missing session and verify all paths, payload placement, image bytes, and authorization.
 
 Deployment TODO: verify Vercel's server-only `LEIA_API_URL` points to the intended Leia backend (normally `https://leya.bizgenie.site`) and complete real phone pairing. Local source paths already matched the backend mount; the previous source defect was broad status-to-create handling and ambiguous 404 classification, not a reproduced wrong path. Live production environment values and pairing were not changed by this patch.
+
+## Tenant cabinet
+
+`/admin` is covered by the existing `/admin/:path*` middleware matcher. It contains only WhatsApp status, FAQ, and assistant settings.
+
+- `components/tenant/assistant-settings.tsx` is the former step-2 form, shared by `/admin` and the thin step-2 wrapper. In onboarding it advances to step 3; in the cabinet it saves in place with a confirmation message.
+- `components/tenant/knowledge-editor.tsx` is the former step-4 CRUD editor, shared by `/admin` and the thin step-4 wrapper. Onboarding navigation is preserved. The cabinet displays “Пока нет ни одного вопроса” with an Add question button when empty.
+- Both editors use the existing tenant resolver, explicit tenant filters, `requireRole`, and Supabase clients. Viewer forms are read-only; mutation handlers recheck permission. Existing role guard policies for assistant_profiles and knowledge_items were confirmed present in the deployed database during this task (read-only inspection).
+- `components/tenant/whatsapp-status.tsx` reuses the existing status request helper and connected-state predicate. It fetches status on mount, links to step 3 for connection, and confirms before disconnecting. No automatic disconnect or session creation occurs on page load.
+- `/api/waha/disconnect` extends the existing server proxy: POST `/api/admin/waha/disconnect?tenantId=...`, Authorization Bearer admin key, no client-supplied tenant ID. Backend `{ disconnected: true }` is normalized to DISCONNECTED. Owner/admin is required for disconnect; viewer can read status.
+
+Tests cover shared editor saves in both contexts, FAQ CRUD, viewer mutation rejection, confirmation cancellation/success, and disconnect proxy authorization/contract. The backend status contract currently returns only status/connected, without a phone number, so the UI does not invent one.
+
+Cabinet TODO: expose a phone number in the backend status contract if it should appear next to Connected; complete live pairing/disconnect acceptance tests after the existing backend session-registration problem is resolved. This cabinet task does not change the backend or repair WAHA session records.
