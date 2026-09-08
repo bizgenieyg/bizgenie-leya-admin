@@ -109,10 +109,11 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
     {expired || error ? <button type="button" disabled={busy} className={buttonClass} onClick={() => run('read')}>Проверить статус</button>
       : canEdit && !busy && !shouldPoll(state.status) && !isConnected(state.status) && state.status
         ? <button type="button" className={buttonClass} onClick={() => run('connect')}>{actionLabel(state.status)}</button> : null}
+    {cabinet && canEdit ? <Link className="block text-sm text-blue-600" href="/onboarding/owner">Настройки владельца</Link> : null}
     {cabinet && canEdit && isConnected(state.status) ? <button type="button" disabled={busy} className="rounded-lg border border-red-200 px-4 py-3 text-red-600 disabled:opacity-50" onClick={() => run('disconnect')}>Отключить</button> : null}
     {!cabinet ? <div className="mt-8 flex items-center justify-between gap-4">
       <Link className="text-sm text-blue-600" href="/onboarding/step-4">Пропустить</Link>
-      {isConnected(state.status) ? <Link className={buttonClass} href="/onboarding/step-4">Далее →</Link> : null}
+      {isConnected(state.status) ? <Link className={buttonClass} href="/onboarding/owner">Далее →</Link> : null}
     </div> : null}
   </>;
 }
