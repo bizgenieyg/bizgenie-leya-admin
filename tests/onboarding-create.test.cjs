@@ -45,36 +45,35 @@ function text(tree) {
   if (tree && typeof tree === 'object') return text(tree.props?.children);
   return typeof tree === 'string' ? tree : '';
 }
-async function submit(app, tier = 'trial') {
+async function submit(app) {
   const tree = app.render();
   for (const [id, value] of [['owner-name', ' Owner '], ['business-name', ' Business ']]) {
     nodes(tree).find(node => node.props.id === id).props.onChange({ target: { value } });
   }
-  nodes(tree).find(node => node.type === 'input' && node.props.value === tier).props.onChange();
   await nodes(app.render()).find(node => node.type === 'form').props.onSubmit({ preventDefault() {} });
 }
 
-for (const tier of ['starter', 'pro', 'trial']) {
-  test(`step 1 creates ${tier} with a single RPC`, async () => {
-    const app = fixture();
-    await submit(app, tier);
-    assert.equal(app.calls.length, 1);
-    assert.equal(app.calls[0].name, 'create_tenant_with_owner');
-    const args = app.calls[0].args;
-    assert.equal(args.p_name, 'Owner');
-    assert.equal(args.p_business_name, 'Business');
-    assert.equal(args.p_plan, tier);
-    assert.equal(args.p_language, 'he');
-    assert.equal(args.p_status, tier === 'trial' ? 'trial' : 'active');
-    if (tier === 'trial') assert.ok(Math.abs(Date.parse(args.p_trial_ends_at) - Date.now() - 14 * 86400000) < 5000);
-    else assert.equal(args.p_trial_ends_at, null);
-    assert.deepEqual(app.stored, [['onboarding_tenant_id', 'tenant-id']]);
-    assert.deepEqual(app.navigation, ['/onboarding/step-2']);
-    assert.doesNotMatch(text(app.render()), /₪|Бесплатно/);
-    assert.match(text(app.render()), /Starter/);
-    assert.match(text(app.render()), /Полный Pro на 2 недели/);
-  });
-}
+test('step 1 creates a tenant with a single plan-less RPC and no tariff choice', async () => {
+  const app = fixture();
+  await submit(app);
+  assert.equal(app.calls.length, 1);
+  assert.equal(app.calls[0].name, 'create_tenant_with_owner');
+  const args = app.calls[0].args;
+  assert.equal(args.p_name, 'Owner');
+  assert.equal(args.p_business_name, 'Business');
+  assert.equal(args.p_language, 'he');
+  assert.equal(Object.keys(args).length, 3);
+  // Plan/status/trial are never sent from the client.
+  for (const key of ['p_plan', 'p_status', 'p_trial_ends_at', 'p_tier']) {
+    assert.equal(key in args, false, `${key} must not be sent`);
+  }
+  assert.deepEqual(app.stored, [['onboarding_tenant_id', 'tenant-id']]);
+  assert.deepEqual(app.navigation, ['/onboarding/step-2']);
+  // No tariff selector text on the page.
+  const page = text(app.render());
+  assert.doesNotMatch(page, /Тариф|Starter|Pro|триал|₪/i);
+});
+
 for (const options of [{ error: { message: 'private backend error', code: '42501' } }, { throws: true }]) {
   test(`step 1 sanitizes failure ${JSON.stringify(options)}`, async () => {
     const app = fixture(options);
@@ -86,6 +85,17 @@ for (const options of [{ error: { message: 'private backend error', code: '42501
     assert.equal(app.logs.length, 0);
   });
 }
+
+test('step 1 shows a clear message when the per-account business limit is reached', async () => {
+  const app = fixture({ error: { message: 'Business limit reached for this account', code: '54000', hint: 'max_tenants_per_owner' } });
+  await submit(app);
+  const page = text(app.render());
+  assert.match(page, /уже привязан бизнес/);
+  assert.doesNotMatch(page, /Business limit reached/);
+  assert.equal(app.navigation.length, 0);
+  assert.equal(app.stored.length, 0);
+});
+
 test('step 1 does not call RPC without authentication', async () => {
   const app = fixture({ user: null });
   await submit(app);

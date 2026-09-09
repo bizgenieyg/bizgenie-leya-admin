@@ -5,29 +5,10 @@ import { useRouter } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/client';
 
-const TIERS = [
-  { id: 'starter', name: 'Starter', description: 'FAQ + эскалация + отчёт' },
-  { id: 'pro', name: 'Pro', description: '+ запись, напоминания, Promises' },
-  {
-    id: 'trial',
-    name: '14 дней триал',
-    description: 'Полный Pro на 2 недели',
-  },
-] as const;
-
-type Tier = (typeof TIERS)[number]['id'];
-
-function trialEndDate(tier: Tier) {
-  return tier === 'trial'
-    ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-    : null;
-}
-
 export default function OnboardingStepOnePage() {
   const [ownerName, setOwnerName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [language, setLanguage] = useState('he');
-  const [tier, setTier] = useState<Tier>('trial');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -46,17 +27,19 @@ export default function OnboardingStepOnePage() {
         return;
       }
 
+      // Plan is assigned by the system (starter); it is never chosen here.
       const { data: tenantId, error: createError } = await supabase.rpc('create_tenant_with_owner', {
         p_name: ownerName.trim(),
-        p_plan: tier,
         p_business_name: businessName.trim(),
         p_language: language,
-        p_status: tier === 'trial' ? 'trial' : 'active',
-        p_trial_ends_at: trialEndDate(tier),
       });
       if (createError || typeof tenantId !== 'string' || !tenantId) {
         if (process.env.NODE_ENV === 'development') console.error('Tenant creation failed', { code: createError?.code });
-        setError('Не удалось создать бизнес. Попробуйте ещё раз.');
+        setError(
+          createError?.code === '54000' || createError?.hint === 'max_tenants_per_owner'
+            ? 'К вашему аккаунту уже привязан бизнес. Чтобы добавить ещё один, напишите оператору платформы.'
+            : 'Не удалось создать бизнес. Попробуйте ещё раз.',
+        );
         return;
       }
 
@@ -133,33 +116,6 @@ export default function OnboardingStepOnePage() {
               <option value="en">English</option>
             </select>
           </div>
-
-          <fieldset>
-            <legend className="mb-2 block text-sm font-medium text-gray-700">Тариф</legend>
-            <div className="space-y-2">
-              {TIERS.map((tierOption) => (
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 ${
-                    tier === tierOption.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                  }`}
-                  key={tierOption.id}
-                >
-                  <input
-                    checked={tier === tierOption.id}
-                    disabled={loading}
-                    name="tier"
-                    onChange={() => setTier(tierOption.id)}
-                    type="radio"
-                    value={tierOption.id}
-                  />
-                  <span className="flex-1">
-                    <span className="block text-sm font-medium text-gray-900">{tierOption.name}</span>
-                    <span className="block text-xs text-gray-500">{tierOption.description}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
 
           {error ? (
             <p aria-live="polite" className="text-sm text-red-600" role="alert">
