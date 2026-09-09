@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireRole } from '@/lib/onboarding/roles';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
-const editable = ['time_zone','weekly_schedule','auto_replies_paused','translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','auto_resume_hours','deferred_max_age_hours','context_message_count','context_retention_hours','enabled_agents','intent_confidence_threshold','route_stickiness_hours','campaign_routes','source_routes'];
+const editable = ['time_zone','weekly_schedule','auto_replies_paused','translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','auto_resume_hours','deferred_max_age_hours','context_message_count','context_retention_hours','enabled_agents','intent_confidence_threshold','route_stickiness_hours','reception_max_messages','campaign_routes','source_routes'];
 const system = ['messages_per_month','voice_minutes_per_month','warning_percent','plan'];
 async function proxy(request: Request) {
  const fail=(error:string,status:number)=>Response.json({error},{status,headers});
