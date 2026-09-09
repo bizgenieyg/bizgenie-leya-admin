@@ -1,7 +1,11 @@
 begin;
 
--- Prerequisites: backend schema 001, 022_tenant_users.sql, 023_create_tenant_with_owner.sql.
--- Apply with the same verified process used for 022/023.
+-- Numbering: backend (bizgenie-leya) and this repo apply migrations to the SAME Supabase
+-- database, so they share ONE integer sequence. Backend is at 033; this is 034. Do not
+-- reuse a number that exists in either repo.
+--
+-- Prerequisites: backend schema 001, this repo's 022_tenant_users.sql and
+-- 023_create_tenant_with_owner.sql. Apply with the same verified process used for 022/023.
 
 -- Security fix: 023's create_tenant_with_owner let any authenticated user pick their own
 -- plan (starter/pro/trial) and create unlimited tenants — self-service around billing.
@@ -23,9 +27,7 @@ insert into public.system_config (key, value) values
   ('max_tenants_per_owner', '1'::jsonb)
 on conflict (key) do nothing;
 
--- Replace the 6-arg version from 023 with a 3-arg version that takes no plan/status/trial.
-drop function if exists public.create_tenant_with_owner(text, text, text, text, text, timestamptz);
-
+-- New canonical signature: no plan / status / trial from the client.
 create or replace function public.create_tenant_with_owner(
   p_name text,
   p_business_name text,
@@ -87,5 +89,28 @@ $function$;
 
 revoke all on function public.create_tenant_with_owner(text, text, text) from public, anon;
 grant execute on function public.create_tenant_with_owner(text, text, text) to authenticated;
+
+-- Deploy-order safety: the onboarding app (Vercel) redeploys AFTER this migration is
+-- applied. Until it does, the still-live build calls the old 6-arg signature. Keep that
+-- signature as a thin compatibility shim that DISCARDS the client's plan/status/trial and
+-- delegates to the new 3-arg version, so both builds work during the window and no plan is
+-- ever chosen by the client. Migration 035 drops this shim once the new build is live.
+create or replace function public.create_tenant_with_owner(
+  p_name text,
+  p_plan text,
+  p_business_name text,
+  p_language text,
+  p_status text,
+  p_trial_ends_at timestamptz
+) returns uuid
+language sql
+security invoker
+set search_path = public
+as $function$
+  select public.create_tenant_with_owner(p_name, p_business_name, p_language);
+$function$;
+
+revoke all on function public.create_tenant_with_owner(text, text, text, text, text, timestamptz) from public, anon;
+grant execute on function public.create_tenant_with_owner(text, text, text, text, text, timestamptz) to authenticated;
 
 commit;
