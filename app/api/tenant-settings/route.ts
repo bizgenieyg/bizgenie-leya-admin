@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { requireRole } from '@/lib/onboarding/roles';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
-const editable = ['messages_per_month','voice_minutes_per_month','warning_percent','time_zone','quiet_hours_start','quiet_hours_end','auto_replies_paused','translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','enabled_agents','default_agent'];
+const editable = ['time_zone','weekly_schedule','auto_replies_paused','translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','enabled_agents','default_agent'];
+const system = ['messages_per_month','voice_minutes_per_month','warning_percent','plan'];
 async function proxy(request: Request) {
  const fail=(error:string,status:number)=>Response.json({error},{status,headers});
  try {
@@ -20,14 +21,15 @@ async function proxy(request: Request) {
    return fetch(url,{method,headers:{Authorization:`Bearer ${process.env.LEIA_ADMIN_API_KEY}`,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store',redirect:'error',signal:AbortSignal.timeout(15000)});
   };
   if(request.method==='PATCH'){
-   const input=await request.json();if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!editable.includes(key)))return fail('Недопустимые настройки.',400);
+   const input=await request.json();if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>system.includes(key)))return fail('Лимиты и тариф меняет только оператор платформы.',403);
+   if(Object.keys(input).some(key=>!editable.includes(key)))return fail('Недопустимые настройки.',400);
    const saved=await call('/api/admin/tenant-settings','PATCH',input);
    if(!saved.ok)return fail(saved.status===400?'Проверьте настройки: время закрытия должно быть позже напоминания, агент по умолчанию должен быть включён.':'Не удалось сохранить настройки.',saved.status);
    return Response.json({saved:true},{headers});
   }
   const [settings,usage]=await Promise.all([call('/api/admin/tenant-settings'),call('/api/admin/usage')]);
   if(!settings.ok||!usage.ok)return fail('Не удалось загрузить настройки и расход.',502);
-  const raw=await settings.json();const safe=Object.fromEntries([...editable,'owner_phone','paired'].map(key=>[key,raw[key]]));
+  const raw=await settings.json();const safe=Object.fromEntries([...editable,...system,'owner_phone','paired','exceptions','supported_time_zones'].map(key=>[key,raw[key]]));
   return Response.json({settings:safe,usage:await usage.json()},{headers});
  }catch{console.error('tenant_settings_proxy_failed');return fail('Сервис временно недоступен.',502);}
 }
