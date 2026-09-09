@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireRole } from '@/lib/onboarding/roles';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
-const editable = ['time_zone','weekly_schedule','auto_replies_paused','translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','auto_resume_hours','deferred_max_age_hours','context_message_count','context_retention_hours','enabled_agents','default_agent'];
+const editable = ['time_zone','weekly_schedule','auto_replies_paused','translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','auto_resume_hours','deferred_max_age_hours','context_message_count','context_retention_hours','enabled_agents','intent_confidence_threshold','route_stickiness_hours','campaign_routes','source_routes'];
 const system = ['messages_per_month','voice_minutes_per_month','warning_percent','plan'];
 async function proxy(request: Request) {
  const fail=(error:string,status:number)=>Response.json({error},{status,headers});
@@ -24,7 +24,7 @@ async function proxy(request: Request) {
    const input=await request.json();if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>system.includes(key)))return fail('Лимиты и тариф меняет только оператор платформы.',403);
    if(Object.keys(input).some(key=>!editable.includes(key)))return fail('Недопустимые настройки.',400);
    const saved=await call('/api/admin/tenant-settings','PATCH',input);
-   if(!saved.ok)return fail(saved.status===400?'Проверьте настройки: время закрытия должно быть позже напоминания, агент по умолчанию должен быть включён.':'Не удалось сохранить настройки.',saved.status);
+   if(!saved.ok)return fail(saved.status===400?'Проверьте значения настроек и выбранных агентов.':'Не удалось сохранить настройки.',saved.status);
    return Response.json({saved:true},{headers});
   }
   const [settings,usage]=await Promise.all([call('/api/admin/tenant-settings'),call('/api/admin/usage')]);
