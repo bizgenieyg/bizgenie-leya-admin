@@ -1,6 +1,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { requireRole } from '@/lib/onboarding/roles';
+import { normalizeTenantSettings } from '@/lib/tenant-settings/normalize';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 const editable = ['time_zone','weekly_schedule','auto_replies_paused','translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','auto_resume_hours','deferred_max_age_hours','context_message_count','context_retention_hours','enabled_agents','intent_confidence_threshold','route_stickiness_hours','reception_max_messages','campaign_routes','source_routes'];
@@ -29,7 +30,7 @@ async function proxy(request: Request) {
   }
   const [settings,usage]=await Promise.all([call('/api/admin/tenant-settings'),call('/api/admin/usage')]);
   if(!settings.ok||!usage.ok)return fail('Не удалось загрузить настройки и расход.',502);
-  const raw=await settings.json();const safe=Object.fromEntries([...editable,...system,'owner_phone','paired','exceptions','supported_time_zones'].map(key=>[key,raw[key]]));
+  const raw=normalizeTenantSettings(await settings.json());const safe=Object.fromEntries([...editable,...system,'owner_phone','paired','exceptions','supported_time_zones','templates'].map(key=>[key,raw[key as keyof typeof raw]]));
   return Response.json({settings:safe,usage:await usage.json()},{headers});
  }catch{console.error('tenant_settings_proxy_failed');return fail('Сервис временно недоступен.',502);}
 }
