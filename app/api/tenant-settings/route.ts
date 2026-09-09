@@ -5,7 +5,7 @@ import { normalizeTenantSettings } from '@/lib/tenant-settings/normalize';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 const editable = ['time_zone','weekly_schedule','auto_replies_paused','enabled_agents'];
-const operatorOnly = ['translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','auto_resume_hours','deferred_max_age_hours','context_message_count','context_retention_hours','intent_confidence_threshold','route_stickiness_hours','reception_max_messages','campaign_routes','source_routes','templates'];
+const operatorOnly = ['translate_owner_answer','escalation_remind_minutes','escalation_close_minutes','auto_resume_hours','deferred_max_age_hours','context_message_count','context_retention_hours','message_retention_days','intent_confidence_threshold','route_stickiness_hours','reception_max_messages','campaign_routes','source_routes','templates'];
 const system = ['messages_per_month','voice_minutes_per_month','warning_percent','plan'];
 async function proxy(request: Request) {
  const fail=(error:string,status:number)=>Response.json({error},{status,headers});
