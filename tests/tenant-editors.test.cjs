@@ -40,6 +40,7 @@ function editor(name, { onboarding = false, writable = true, confirm = true } = 
     if (path === 'next/navigation') return { useRouter: () => ({ push: path => navigation.push(path) }) };
     if (path === '@/lib/waha/connection') return { isConnected: status => status === 'WORKING', backendUnavailable: 'Недоступен', requestStatus: async (path, _signal, method = 'GET') => { requests.push({ path, method }); return method === 'POST' ? 'DISCONNECTED' : 'WORKING'; } };
     if (path === '@/lib/onboarding/tenant') return { getOnboardingTenant: async () => ({ supabase, tenantId: 'tenant-a', requireRole() { if (!writable) throw new Error('Недостаточно прав'); } }) };
+    if (path === '@/lib/i18n') { const words={settingsSaved:'Настройки сохранены.',noQuestionsAtAll:'Пока нет ни одного вопроса',addQuestion:'Добавить вопрос',edit:'Редактировать',delete:'Удалить',loading:'Загрузка...',save:'Сохранить',saving:'Сохранение...',add:'Добавить'}; return {useI18n:()=>({t:key=>words[key]||key})}; }
     return {};
   } });
   const render = () => { if (dirty) { dirty = false; index = 0; tree = exports.default({ onboarding }); while (effects.length) effects.shift()(); } return tree; };

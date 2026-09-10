@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 
 import './globals.css';
+import {I18nProvider} from '@/lib/i18n';
 
 export const metadata: Metadata = {
-  title: 'Leia Admin',
-  description: 'Leia tenant administration',
+  title: 'Leya Admin',
+  description: 'Leya tenant administration',
 };
 
 export default function RootLayout({
@@ -13,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="ru" suppressHydrationWarning>
+      <body><I18nProvider>{children}</I18nProvider></body>
     </html>
   );
 }

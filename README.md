@@ -1,11 +1,11 @@
-# Leia Admin
+# Leya Admin
 
-Next.js 14 App Router foundation for the Leia tenant admin panel.
+Next.js 14 App Router foundation for the Leya tenant admin panel.
 
 ## Local setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Fill in the Supabase project URL, public anon key, and Leia backend URL.
+2. Fill in the Supabase project URL, public anon key, and Leya backend URL.
 3. Run `npm install`.
 4. Run `npm run dev`.
 
@@ -131,7 +131,7 @@ The explicit proxy path map always resolves `/api/admin/waha/{create,status,qr,r
 
 `tests/waha-connection.test.cjs` covers create/reuse/reconnect decisions and backend failures; `tests/waha-polling.test.cjs` uses controlled timers to verify status at 3 seconds, image refresh at 20 seconds, the three-minute deadline, and cleanup on WORKING/unmount. Proxy tests distinguish a route 404 from a missing session and verify all paths, payload placement, image bytes, and authorization.
 
-Deployment TODO: verify Vercel's server-only `LEIA_API_URL` points to the intended Leia backend (normally `https://leya.bizgenie.site`) and complete real phone pairing. Local source paths already matched the backend mount; the previous source defect was broad status-to-create handling and ambiguous 404 classification, not a reproduced wrong path. Live production environment values and pairing were not changed by this patch.
+Deployment TODO: verify Vercel's server-only `LEIA_API_URL` points to the intended Leya backend (normally `https://leya.bizgenie.site`) and complete real phone pairing. Local source paths already matched the backend mount; the previous source defect was broad status-to-create handling and ambiguous 404 classification, not a reproduced wrong path. Live production environment values and pairing were not changed by this patch.
 
 ## Tenant cabinet
 

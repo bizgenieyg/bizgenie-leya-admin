@@ -42,6 +42,7 @@ function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = tr
           return { status, qrAvailable: status === 'SCAN_QR_CODE' };
         },
       };
+      if (name === '@/lib/i18n') { const words={disconnect:'Отключить',disconnectConfirm:'Отключить WhatsApp?',next:'Далее',skip:'Пропустить',ownerSettings:'Настройки владельца',checkStatus:'Проверить статус',waitExpired:'Истекло время ожидания',statusNotCreated:'Не подключено',statusStopped:'Отключено',statusStarting:'Подключаем...',statusScan:'Ожидаем сканирования QR-кода.',statusWorking:'Подключено',statusFailed:'Не удалось подключиться',connectWhatsApp:'Подключить WhatsApp',connect:'Подключить',retry:'Попробовать заново'}; return {useI18n:()=>({t:key=>words[key]||key})}; }
       return {};
     },
   });
