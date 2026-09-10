@@ -3,7 +3,7 @@ const { readFileSync } = require('node:fs');
 const { test } = require('node:test');
 const { PGlite } = require('@electric-sql/pglite');
 
-const migration = readFileSync('023_create_tenant_with_owner.sql', 'utf8');
+const migration = readFileSync('tests/fixtures/023_create_tenant_with_owner.sql', 'utf8');
 const owner = '10000000-0000-4000-8000-000000000001';
 const admin = '10000000-0000-4000-8000-000000000002';
 const viewer = '10000000-0000-4000-8000-000000000003';
@@ -14,7 +14,7 @@ test('023 transaction and RLS integration', async (t) => {
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec(readFileSync('tests/fixtures/onboarding-schema.sql', 'utf8'));
-  await db.exec(readFileSync('022_tenant_users.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/022_tenant_users.sql', 'utf8'));
   await db.exec(`
     grant select, insert, update, delete on all tables in schema public to authenticated;
     alter table tenants enable row level security;

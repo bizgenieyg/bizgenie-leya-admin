@@ -16,7 +16,7 @@ async function as(db, user, sql, params = [], role = 'authenticated') {
 async function setup() {
   const db = new PGlite();
   await db.exec(readFileSync('tests/fixtures/onboarding-schema.sql', 'utf8'));
-  await db.exec(readFileSync('022_tenant_users.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/022_tenant_users.sql', 'utf8'));
   await db.exec(`
     grant select, insert, update, delete on all tables in schema public to authenticated;
     alter table tenants enable row level security;
@@ -26,10 +26,10 @@ async function setup() {
     create policy "Users can create own tenant links" on tenant_users for insert to authenticated with check (user_id = auth.uid());
     insert into auth.users values ('${userA}'), ('${userB}');
   `);
-  await db.exec(readFileSync('023_create_tenant_with_owner.sql', 'utf8'));
-  await db.exec(readFileSync('034_tenant_provisioning_limits.sql', 'utf8'));
-  await db.exec(readFileSync('036_tenant_creation_advisory_lock.sql', 'utf8'));
-  await db.exec(readFileSync('036_tenant_creation_advisory_lock.sql', 'utf8')); // idempotent
+  await db.exec(readFileSync('tests/fixtures/023_create_tenant_with_owner.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/034_tenant_provisioning_limits.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/036_tenant_creation_advisory_lock.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/036_tenant_creation_advisory_lock.sql', 'utf8')); // idempotent
   return db;
 }
 

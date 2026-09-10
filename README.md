@@ -13,7 +13,7 @@ The frontend must never receive a Supabase service-role key.
 
 ## Database handoff
 
-`022_tenant_users.sql` is a standalone migration for the owner to review and apply to the Leia Supabase project. It is not applied by this repository.
+Production migrations are maintained only in the backend repository at `bizgenie-leya/supabase/migrations`. This repository keeps reduced schema fixtures under `tests/fixtures` for integration tests.
 
 ## Checks
 
@@ -95,7 +95,7 @@ Remaining follow-up:
 
 ## Atomic tenant creation — migration 023
 
-Exact executable SQL: `023_create_tenant_with_owner.sql` (next to `022_tenant_users.sql`).
+The executable onboarding SQL is maintained in `bizgenie-leya/supabase/migrations`; test copies live under `tests/fixtures`.
 
 **Application status: NOT APPLIED to the deployed database.** README and the original commit `2cece7d` describe 022 as a standalone owner handoff, not an executed migration. Neither repository's available Git history or scripts records whether it was applied through SQL Editor, CLI, or another script. Therefore no application method was inferred and no production migration was run. Establish the actual 022 procedure before applying 023. The new step 1 requires this RPC to exist; code deployment alone does not resolve the production error.
 

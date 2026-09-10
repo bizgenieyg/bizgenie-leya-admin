@@ -19,7 +19,7 @@ test('034 forces the system plan, caps businesses per account and keeps a 6-arg 
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec(readFileSync('tests/fixtures/onboarding-schema.sql', 'utf8'));
-  await db.exec(readFileSync('022_tenant_users.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/022_tenant_users.sql', 'utf8'));
   await db.exec(`
     grant select, insert, update, delete on all tables in schema public to authenticated;
     alter table tenants enable row level security;
@@ -29,9 +29,9 @@ test('034 forces the system plan, caps businesses per account and keeps a 6-arg 
     create policy "Users can create own tenant links" on tenant_users for insert to authenticated with check (user_id = auth.uid());
     insert into auth.users values ('${userA}'), ('${userB}'), ('${userC}');
   `);
-  await db.exec(readFileSync('023_create_tenant_with_owner.sql', 'utf8'));
-  await db.exec(readFileSync('034_tenant_provisioning_limits.sql', 'utf8'));
-  await db.exec(readFileSync('034_tenant_provisioning_limits.sql', 'utf8')); // idempotent
+  await db.exec(readFileSync('tests/fixtures/023_create_tenant_with_owner.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/034_tenant_provisioning_limits.sql', 'utf8'));
+  await db.exec(readFileSync('tests/fixtures/034_tenant_provisioning_limits.sql', 'utf8')); // idempotent
 
   const rpc3 = 'select public.create_tenant_with_owner($1,$2,$3) as id';
   const rpc6 = 'select public.create_tenant_with_owner($1,$2,$3,$4,$5,$6) as id';
@@ -75,7 +75,7 @@ test('034 forces the system plan, caps businesses per account and keeps a 6-arg 
   });
 
   await t.test('035 removes the 6-arg shim once the app is redeployed', async () => {
-    await db.exec(readFileSync('035_drop_legacy_create_tenant_signature.sql', 'utf8'));
+    await db.exec(readFileSync('tests/fixtures/035_drop_legacy_create_tenant_signature.sql', 'utf8'));
     await assert.rejects(
       as(db, userC, "select public.create_tenant_with_owner('n','pro','b','ru','active',null)"),
       /does not exist/,
