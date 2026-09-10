@@ -1,0 +1,3 @@
+import {tenantBackend} from '@/lib/backend/tenant-proxy';
+export const dynamic='force-dynamic';
+export async function GET(request:Request){try{const auth=await tenantBackend(request);if('error'in auth)return auth.error;const incoming=new URL(request.url),suffix=new URLSearchParams();for(const key of ['from','to']){const value=incoming.searchParams.get(key);if(value)suffix.set(key,value);}const r=await auth.call(`/api/admin/owner-summary?${suffix}`);return Response.json(r.ok?await r.json():{error:'Не удалось загрузить сводку.'},{status:r.status});}catch{return Response.json({error:'Сервис временно недоступен.'},{status:502});}}
