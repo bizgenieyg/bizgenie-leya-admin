@@ -21,7 +21,7 @@ Run `npm run typecheck`, `npm run lint`, and `npm run build`.
 
 ## Onboarding steps 2–4
 
-- `/onboarding/step-2` loads and updates the existing assistant profile. Name is required; supported reply languages are selected as an array (`he`, `ru`, `en`). Tone and style are free text.
+- `/onboarding/step-2` loads and updates the existing assistant profile. Name is required; supported reply languages are selected as an array (`he`, `ru`, `en`). Tone is selected from the database-constrained product values; reply style remains free text.
 - `/onboarding/step-3` connects WhatsApp through authenticated Next.js proxies and allows skipping to step 4.
 - `/onboarding/step-4` lists tenant knowledge items and supports adding, editing, and deleting question/answer pairs. Finish navigates to `/admin`, including with zero FAQ.
 - Tenant selection from step 1's session storage is verified against `tenant_users` for `auth.getUser()`. Without a stored selection, exactly one membership is required. All business reads, updates, and deletes explicitly filter `tenant_id`; inserts include it. Existing anon/Auth clients and RLS enforce access.
