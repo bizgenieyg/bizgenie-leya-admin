@@ -24,7 +24,7 @@ function fixture({ user = { id: 'user-a' }, memberships = [{ tenant_id: 'tenant-
     exports, Response, URL, AbortSignal,
     console: { error() {} },
     process: { env: { LEIA_API_URL: 'https://backend.example', LEIA_ADMIN_API_KEY: 'test-secret' } },
-    require: (name) => name === 'server-only' ? {} : name === '@/lib/onboarding/roles' ? roleModule : { createClient: () => ({
+    require: (name) => name === 'server-only' ? {} : name.includes('leya-env') ? {readLeyaBackendEnv:()=>({apiUrl:'https://backend.example',adminApiKey:'test-secret'})} : name === '@/lib/onboarding/roles' ? roleModule : { createClient: () => ({
       auth: { getUser: async () => ({ data: { user } }) },
       from: () => query,
     }) },

@@ -8,7 +8,7 @@ const roles={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/onboar
 function load(role='owner',user={id:'authenticated-user'}){
   const calls=[];const exports={};
   const db={auth:{getUser:async()=>({data:{user},error:null})},from(){return{select(){return this;},eq(field,value){assert.equal(field,'user_id');assert.equal(value,'authenticated-user');return this;},limit:async()=>({data:[{tenant_id:'server-tenant',role}],error:null})};}};
-  vm.runInNewContext(compiled,{exports,require:name=>name.includes('roles')?roles:{createClient:()=>db},URL,Response,AbortSignal,console:{error(){}},process:{env:{LEIA_API_URL:'https://backend.invalid',LEIA_ADMIN_API_KEY:'server-secret'}},fetch:async(url,options)=>{calls.push({url:String(url),options});return Response.json({pairingCommand:'ПОДТВЕРДИТЬ test'});}});
+  vm.runInNewContext(compiled,{exports,require:name=>name.includes('leya-env')?{readLeyaBackendEnv:()=>({apiUrl:'https://backend.invalid',adminApiKey:'server-secret'})}:name.includes('roles')?roles:{createClient:()=>db},URL,Response,AbortSignal,console:{error(){}},process:{env:{}},fetch:async(url,options)=>{calls.push({url:String(url),options});return Response.json({pairingCommand:'ПОДТВЕРДИТЬ test'});}});
   return{...exports,calls};
 }
 const request=(origin='https://admin.invalid')=>new Request('https://admin.invalid/api/owner-settings',{method:'POST',headers:{host:'admin.invalid',origin,'Content-Type':'application/json'},body:JSON.stringify({tenantId:'attacker-tenant',phone:'972500000001',timeZone:'Europe/Berlin',quietStart:'20:00',quietEnd:'09:00'})});

@@ -49,8 +49,8 @@ Automated tenant resolution checks: `node --test tests/onboarding-tenant.test.cj
 ## WhatsApp QR connection
 
 Set these **server-only** variables in Vercel and redeploy:
-- `LEIA_API_URL=https://leya.bizgenie.site`
-- `LEIA_ADMIN_API_KEY`: the same value as backend `ADMIN_SECRET` (never use a `NEXT_PUBLIC_` prefix).
+- `LEYA_API_URL=https://leya.bizgenie.site`
+- `LEYA_ADMIN_API_KEY`: the same value as backend `ADMIN_SECRET` (never use a `NEXT_PUBLIC_` prefix).
 
 The browser calls only `/api/waha/create`, `/api/waha/status`, `/api/waha/qr`, and `/api/waha/reconnect` on this Next.js app. Every route validates `auth.getUser()` using the existing Supabase SSR client and resolves the sole membership from `tenant_users` by authenticated `user_id`. Missing/ambiguous memberships and viewer roles are rejected. Client bodies/query parameters never select a tenant. Middleware is unchanged: the page is already protected, and API handlers perform their own authentication and return JSON 401 responses.
 
@@ -59,7 +59,7 @@ Backend contracts verified in `src/routes/admin.ts`, `src/utils/admin-auth.ts`, 
 - `GET /api/admin/waha/status?tenantId=...`: response `{ session, status: { status: string, connected?: boolean } }`.
 - `GET /api/admin/waha/qr?tenantId=...`: binary image with backend Content-Type (provider requests PNG).
 - `POST /api/admin/waha/reconnect?tenantId=...`: no JSON body; response `{ session, status: string }`.
-- All calls use `Authorization: Bearer <LEIA_ADMIN_API_KEY>`, accepted by backend `requireAdmin` against `ADMIN_SECRET`.
+- All calls use `Authorization: Bearer <LEYA_ADMIN_API_KEY>`, accepted by backend `requireAdmin` against `ADMIN_SECRET`.
 
 The proxy returns only normalized status or binary QR, disables caching, rejects upstream redirects, and limits each upstream fetch to 10 seconds. Logs contain only fixed event names, operation and HTTP status; no secrets, QR contents or raw upstream bodies. The create route also checks request Origin.
 
@@ -119,7 +119,7 @@ Known broad bootstrap policies from backend 004 are removed. Direct tenant_users
 
 Prerequisites: backend schema 001, nullable tenants.phone as in 004, and 022. The migration is repeatable. Apply using the verified historical process for 022; do not assume `supabase db push` manages these standalone files.
 
-Step 1 now issues one RPC, stores the returned tenant UUID, and navigates to step 2. Module initialization has moved into that RPC. Errors are human-readable; development-only logs contain fixed messages/error codes. Plan names and descriptions remain, prices are removed. The role guard is now in `lib/onboarding/roles.ts` with no browser-client imports; step 2/4 still use it as a UX guard. The sole backend URL configuration is server-only `LEIA_API_URL`.
+Step 1 now issues one RPC, stores the returned tenant UUID, and navigates to step 2. Module initialization has moved into that RPC. Errors are human-readable; development-only logs contain fixed messages/error codes. Plan names and descriptions remain, prices are removed. The role guard is now in `lib/onboarding/roles.ts` with no browser-client imports; step 2/4 still use it as a UX guard. The sole backend URL configuration is server-only `LEYA_API_URL`.
 
 Tests: `node --test tests/*.test.cjs`. The dev-only PGlite dependency runs real PostgreSQL in memory using a fixture copied from relevant backend 001 tables and migration 022. Tests apply 023 twice, compare unchanged SELECT policies, force a late module failure to verify rollback, check authenticated/anonymous RPC execution, and exercise owner/admin/viewer/foreign-tenant writes across every covered table. This isolated execution is not an application to Supabase and does not verify the deployed schema or its actual grants.
 
@@ -127,11 +127,11 @@ TODO: identify 022's actual application procedure, apply 023 using it, then veri
 
 ### WAHA connection regression checks
 
-The explicit proxy path map always resolves `/api/admin/waha/{create,status,qr,reconnect}` from the configured `LEIA_API_URL`; create sends tenantId in JSON, the other operations use the query. Tenant identity remains derived from server-side Auth membership. QR bodies stream through with the original Content-Type; create preserves HTTP 201. Raw backend errors are never displayed. Backend unavailability, session failure, and polling timeout have separate UI messages.
+The explicit proxy path map always resolves `/api/admin/waha/{create,status,qr,reconnect}` from the configured `LEYA_API_URL`; create sends tenantId in JSON, the other operations use the query. Tenant identity remains derived from server-side Auth membership. QR bodies stream through with the original Content-Type; create preserves HTTP 201. Raw backend errors are never displayed. Backend unavailability, session failure, and polling timeout have separate UI messages.
 
 `tests/waha-connection.test.cjs` covers create/reuse/reconnect decisions and backend failures; `tests/waha-polling.test.cjs` uses controlled timers to verify status at 3 seconds, image refresh at 20 seconds, the three-minute deadline, and cleanup on WORKING/unmount. Proxy tests distinguish a route 404 from a missing session and verify all paths, payload placement, image bytes, and authorization.
 
-Deployment TODO: verify Vercel's server-only `LEIA_API_URL` points to the intended Leya backend (normally `https://leya.bizgenie.site`) and complete real phone pairing. Local source paths already matched the backend mount; the previous source defect was broad status-to-create handling and ambiguous 404 classification, not a reproduced wrong path. Live production environment values and pairing were not changed by this patch.
+Deployment TODO: verify Vercel's server-only `LEYA_API_URL` points to the intended Leya backend (normally `https://leya.bizgenie.site`) and complete real phone pairing. Local source paths already matched the backend mount; the previous source defect was broad status-to-create handling and ambiguous 404 classification, not a reproduced wrong path. Live production environment values and pairing were not changed by this patch.
 
 ## Tenant cabinet
 
@@ -178,3 +178,7 @@ Deployment note: use the backend commit with normalized status/idempotent create
 Live WAHA image version and GOWS markOnline support still require server
 verification; see the backend README correction (2026.6.2 does not support the
 top-level markOnline field for GOWS).
+
+### Stage 1 environment-name compatibility
+
+Server proxies prefer `LEYA_API_URL` and `LEYA_ADMIN_API_KEY`. During the migration window they fall back to deprecated `LEIA_API_URL` and `LEIA_ADMIN_API_KEY` and emit a deprecation warning without logging values. If both names are present, the `LEYA_*` value wins. The aliases will be removed only in stage 2 after the VPS and Vercel environments are confirmed.

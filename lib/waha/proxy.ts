@@ -3,6 +3,7 @@ import 'server-only';
 import { requireRole } from '@/lib/onboarding/roles';
 
 import { createClient } from '@/lib/supabase/server';
+import {readLeyaBackendEnv} from '@/lib/backend/leya-env';
 
 const operations = {
   create: { path: '/api/admin/waha/create', method: 'POST' },
@@ -45,8 +46,7 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
       return failure('Подключение доступно владельцу или администратору бизнеса.', 403);
     }
 
-    const baseUrl = process.env.LEIA_API_URL;
-    const secret = process.env.LEIA_ADMIN_API_KEY;
+    const {apiUrl:baseUrl,adminApiKey:secret}=readLeyaBackendEnv();
     if (!baseUrl || !secret) {
       console.error('waha_proxy_configuration_missing', { operation });
       return failure('Подключение WhatsApp пока недоступно. Попробуйте позже.', 503);
