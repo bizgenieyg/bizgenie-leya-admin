@@ -9,7 +9,7 @@ import {Button,ConfirmDialog,ErrorState,Spinner} from '@/components/ui/primitive
 
 export default function WhatsAppConnection({ cabinet = false, canEdit = true }: { cabinet?: boolean; canEdit?: boolean }) {
   const {t}=useI18n();
-  const statusText=(status:string)=>({NOT_CREATED:t('statusNotCreated'),STOPPED:t('statusStopped'),DISCONNECTED:t('statusStopped'),STARTING:t('statusStarting'),SCAN_QR_CODE:t('statusScan'),WORKING:t('statusWorking'),FAILED:t('statusFailed')}[status]??status);
+  const statusText=(status:string)=>({NOT_CREATED:t('statusNotCreated'),STOPPED:t('statusStopped'),DISCONNECTED:t('statusStopped'),STARTING:t('statusStarting'),SCAN_QR_CODE:t('statusScan'),WORKING:t('statusWorking'),FAILED:t('statusFailed')}[status]??t('statusUnknown'));
   const actionText=(status:string)=>status==='NOT_CREATED'?t('connectWhatsApp'):['STOPPED','DISCONNECTED'].includes(status)?t('connect'):t('retry');
   const [state, setState] = useState<SessionState>({ status: '', qrAvailable: false });
   const [error, setError] = useState('');

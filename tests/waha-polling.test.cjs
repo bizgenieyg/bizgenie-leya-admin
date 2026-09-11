@@ -42,7 +42,7 @@ function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = tr
           return { status, qrAvailable: status === 'SCAN_QR_CODE' };
         },
       };
-      if (name === '@/lib/i18n') { const words={disconnect:'Отключить',disconnectConfirm:'Отключить WhatsApp?',next:'Далее',skip:'Пропустить',ownerSettings:'Настройки владельца',checkStatus:'Проверить статус',waitExpired:'Истекло время ожидания',statusNotCreated:'Не подключено',statusStopped:'Отключено',statusStarting:'Подключаем...',statusScan:'Ожидаем сканирования QR-кода.',statusWorking:'Подключено',statusFailed:'Не удалось подключиться',connectWhatsApp:'Подключить WhatsApp',connect:'Подключить',retry:'Попробовать заново'}; return {useI18n:()=>({t:key=>words[key]||key})}; }
+      if (name === '@/lib/i18n') { const words={disconnect:'Отключить',disconnectConfirm:'Отключить WhatsApp?',next:'Далее',skip:'Пропустить',ownerSettings:'Настройки владельца',checkStatus:'Проверить статус',waitExpired:'Истекло время ожидания',statusNotCreated:'Не подключено',statusStopped:'Отключено',statusStarting:'Подключаем...',statusScan:'Ожидаем сканирования QR-кода.',statusWorking:'Подключено',statusFailed:'Не удалось подключиться',statusUnknown:'Состояние подключения уточняется',connectWhatsApp:'Подключить WhatsApp',connect:'Подключить',retry:'Попробовать заново'}; return {useI18n:()=>({t:key=>words[key]||key})}; }
       if (name === '@/components/ui/primitives') return { Spinner:()=>jsx('span',{className:'animate-spin'}), ErrorState:({message})=>jsx('p',{children:message}), Button:({children,...props})=>jsx('button',{...props,children}), ConfirmDialog:({open,onCancel,onConfirm,children})=>open?jsx('section',{children:[children,jsx('button',{onClick:onCancel,children:'cancel'}),jsx('button',{onClick:onConfirm,children:'confirm'})]}):null };
       return {};
     },
@@ -115,7 +115,7 @@ for (const cabinet of [false, true]) {
     ['SCAN_QR_CODE', 'Ожидаем сканирования', null],
     ['WORKING', 'Подключено', cabinet ? 'Отключить' : null],
     ['FAILED', 'Не удалось подключиться', 'Попробовать заново'],
-    ['FUTURE_STATUS', 'FUTURE_STATUS', 'Попробовать заново'],
+    ['FUTURE_STATUS', 'Состояние подключения уточняется', 'Попробовать заново'],
   ]) {
     test(`${cabinet ? 'cabinet' : 'onboarding'} displays ${status} with correct actions`, async () => {
       const app = harness({ initialStatus: status, cabinet }); await app.start();

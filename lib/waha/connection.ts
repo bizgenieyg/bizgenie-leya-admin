@@ -12,7 +12,7 @@ export function statusLabel(status: string) {
     case 'SCAN_QR_CODE': return 'Ожидаем сканирования QR-кода.';
     case 'WORKING': return 'Подключено';
     case 'FAILED': return 'Не удалось подключиться';
-    default: return status;
+    default: return 'Состояние подключения уточняется';
   }
 }
 export function actionLabel(status: string) {

@@ -8,5 +8,5 @@ export async function tenantBackend(request:Request,roles:readonly TenantRole[]=
  try{requireRole(roles,membership.data[0].role);}catch{return{error:Response.json({error:'Недостаточно прав.'},{status:403})} as const;}
  const{apiUrl,adminApiKey}=readLeyaBackendEnv();if(!apiUrl||!adminApiKey)return{error:Response.json({error:'Сервис временно недоступен.'},{status:503})} as const;
  const call=async(path:string,init:RequestInit={})=>{const url=new URL(path,apiUrl);url.searchParams.set('tenantId',membership.data[0].tenant_id);return fetch(url,{...init,headers:{Authorization:`Bearer ${adminApiKey}`,'Content-Type':'application/json',...(init.headers??{})},cache:'no-store',redirect:'error',signal:AbortSignal.timeout(15000)});};
- return{call,tenantId:membership.data[0].tenant_id} as const;
+ return{call,tenantId:membership.data[0].tenant_id,db} as const;
 }

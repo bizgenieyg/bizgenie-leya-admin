@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import {type ReactNode} from 'react';
+import {type ReactNode,useEffect,useState} from 'react';
 import {useI18n} from '@/lib/i18n';
 import ThemeToggle from './theme-toggle';
 
 const items = [
   {href: '/admin', key: 'homeNav', icon: 'home'},
   {href: '/admin/clients', key: 'clientsLink', icon: 'people'},
-  {href: '/admin#knowledge', key: 'knowledgeNav', icon: 'book'},
+  {href: '/admin/knowledge', key: 'knowledgeNav', icon: 'book'},
   {href: '/admin/settings', key: 'settingsNav', icon: 'settings'},
 ] as const;
 
@@ -26,18 +26,21 @@ function Icon({name}: {name: string}) {
 export default function AppShell({children}: {children: ReactNode}) {
   const pathname = usePathname();
   const {t, locale, setLocale} = useI18n();
+  const [collapsed,setCollapsed]=useState(false);
+  useEffect(()=>setCollapsed(localStorage.getItem('leya-sidebar-collapsed')==='true'),[]);
+  const toggleCollapsed=()=>setCollapsed(value=>{const next=!value;localStorage.setItem('leya-sidebar-collapsed',String(next));return next});
   const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : href.includes('#') ? false : pathname.startsWith(href);
-  return <div className="app-shell">
+  return <div className={`app-shell ${collapsed?'sidebar-collapsed':''}`}>
     <aside className="side-nav">
-      <Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span>Leya</span></Link>
+      <div className="side-brand"><Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span className="collapsible-label">Leya</span></Link><button type="button" className="collapse-button" onClick={toggleCollapsed} aria-label={collapsed?t('expandNavigation'):t('collapseNavigation')} title={collapsed?t('expandNavigation'):t('collapseNavigation')}><span className="direction-icon">‹</span></button></div>
       <nav className="nav-list" aria-label={t('mainNav')}>
         {items.map(item => {
           const active = isActive(item.href);
-          return <Link key={item.href} href={item.href} className={`nav-item ${active ? 'active' : ''}`}><Icon name={item.icon}/><span>{t(item.key)}</span></Link>;
+          return <Link key={item.href} href={item.href} title={collapsed?t(item.key):undefined} className={`nav-item ${active ? 'active' : ''}`}><Icon name={item.icon}/><span className="collapsible-label">{t(item.key)}</span></Link>;
         })}
       </nav>
       <div className="side-controls"><ThemeToggle/><select aria-label={t('cabinetLanguage')} value={locale} onChange={e=>setLocale(e.target.value as 'ru'|'he'|'en')}><option value="ru">RU</option><option value="he">עב</option><option value="en">EN</option></select></div><div className="side-foot">
-        <div className="avatar" aria-hidden="true">L</div><div><strong>{t('businessName')}</strong><small>{t('ownerRole')}</small></div>
+        <div className="avatar" aria-hidden="true">L</div><div className="collapsible-label"><strong>{t('businessName')}</strong><small>{t('ownerRole')}</small></div>
       </div>
     </aside>
     <div className="app-main">

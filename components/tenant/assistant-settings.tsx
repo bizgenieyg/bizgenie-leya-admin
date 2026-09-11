@@ -34,7 +34,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
         if (cancelled) return;
         setName(data.assistant_name ?? '');
         setAllowedLanguages(data.allowed_languages ?? []);
-        setTone(data.tone ?? '');
+        setTone(data.tone === 'friendly_professional' ? data.tone : 'friendly_professional');
         setStyle(data.style_profile_md ?? '');
         setTenantId(tenantId);
         try { requireRole(['owner', 'admin']); setCanEdit(true); } catch { setCanEdit(false); }
@@ -87,7 +87,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
             ))}</div>
           </fieldset>
           <div><label htmlFor="tone" className="text-sm font-medium text-gray-700">{t('tone')}</label>
-            <input id="tone" className={inputClass} value={tone} onChange={(event) => setTone(event.target.value)} /></div>
+            <select id="tone" className={inputClass} value={tone} onChange={(event) => setTone(event.target.value)}><option value="friendly_professional">{t('toneFriendlyProfessional')}</option></select><p className="field-help">{t('toneFriendlyProfessionalHelp')}</p></div>
           <div><label htmlFor="style" className="text-sm font-medium text-gray-700">{t('answerStyle')}</label>
             <textarea id="style" className={inputClass} rows={4} value={style} onChange={(event) => setStyle(event.target.value)} /></div>
         </fieldset>
