@@ -32,7 +32,7 @@ export default function AppShell({children}: {children: ReactNode}) {
   const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : href.includes('#') ? false : pathname.startsWith(href);
   return <div className={`app-shell ${collapsed?'sidebar-collapsed':''}`}>
     <aside className="side-nav">
-      <div className="side-brand"><Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span className="collapsible-label">Leya</span></Link><button type="button" className="collapse-button" onClick={toggleCollapsed} aria-label={collapsed?t('expandNavigation'):t('collapseNavigation')} title={collapsed?t('expandNavigation'):t('collapseNavigation')}><span className="direction-icon">‹</span></button></div>
+      <div className="side-brand"><Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span className="collapsible-label">Leya</span></Link><button type="button" className="collapse-button" onClick={toggleCollapsed} aria-label={collapsed?t('expandNavigation'):t('collapseNavigation')} title={collapsed?t('expandNavigation'):t('collapseNavigation')}><span className="direction-icon">{collapsed?'›':'‹'}</span></button></div>
       <nav className="nav-list" aria-label={t('mainNav')}>
         {items.map(item => {
           const active = isActive(item.href);
