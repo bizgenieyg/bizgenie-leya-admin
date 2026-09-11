@@ -24,6 +24,8 @@ function form(path, auth) {
       } };
       if (name === 'next/navigation') return { useRouter: () => ({ replace: (path) => navigation.push(path), refresh() {} }) };
       if (name === '@/lib/supabase/client') return { createClient: () => ({ auth }) };
+      if (name === '@/lib/i18n') return { useI18n: () => ({ t: (key, vars = {}) => ({signupAction:'Создать аккаунт',confirmationSent:`Проверьте почту: мы отправили ссылку для подтверждения на ${vars.email ?? ''}`,resend:'Отправить ещё раз',resetSent:'Если такой аккаунт есть, письмо отправлено',passwordMismatch:'Пароли не совпадают.'}[key] || key) }) };
+      if (name === '@/components/ui/public-shell') return { default: ({ children }) => jsx('main', { children }) };
       return {};
     },
   });

@@ -26,6 +26,8 @@ function fixture({ error = null, user = {}, throws = false } = {}) {
         return [state[slot], (next) => { state[slot] = next; }];
       } };
       if (name === 'next/navigation') return { useRouter: () => ({ push: (path) => navigation.push(path), replace: (path) => navigation.push(path), refresh() {} }) };
+      if (name === '@/lib/i18n') return { useI18n: () => ({ t: key => ({createBusinessError:'Не удалось создать бизнес. Попробуйте ещё раз.',businessExists:'К вашему аккаунту уже привязан бизнес.'}[key] || key) }) };
+      if (name === '../step-frame') return { StepFrame: ({ children }) => jsx('main', { children }), inputClass: 'field-control', buttonClass: 'button primary' };
       return { createClient: () => ({ auth: { getUser: async () => ({ data: { user }, error: null }) }, rpc: async (name, args) => {
         calls.push({ name, args });
         if (throws) throw new Error('private backend error');

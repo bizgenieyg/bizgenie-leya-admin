@@ -4,8 +4,11 @@ import { type FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/client';
+import {useI18n} from '@/lib/i18n';
+import {StepFrame,inputClass,buttonClass} from '../step-frame';
 
 export default function OnboardingStepOnePage() {
+  const {t}=useI18n();
   const [ownerName, setOwnerName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [language, setLanguage] = useState('he');
@@ -37,8 +40,8 @@ export default function OnboardingStepOnePage() {
         if (process.env.NODE_ENV === 'development') console.error('Tenant creation failed', { code: createError?.code });
         setError(
           createError?.code === '54000' || createError?.hint === 'max_tenants_per_owner'
-            ? 'К вашему аккаунту уже привязан бизнес. Чтобы добавить ещё один, напишите оператору платформы.'
-            : 'Не удалось создать бизнес. Попробуйте ещё раз.',
+            ? t('businessExists')
+            : t('createBusinessError'),
         );
         return;
       }
@@ -47,39 +50,25 @@ export default function OnboardingStepOnePage() {
       router.push('/onboarding/step-2');
     } catch {
       if (process.env.NODE_ENV === 'development') console.error('Tenant creation request failed');
-      setError('Не удалось создать бизнес. Попробуйте ещё раз.');
+      setError(t('createBusinessError'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-12">
-      <section className="mx-auto max-w-lg rounded-2xl bg-white p-8 shadow-sm">
-        <div className="mb-8">
-          <div aria-label="Шаг 1 из 4" className="mb-4 flex gap-2">
-            {[1, 2, 3, 4].map((step) => (
-              <div
-                className={`h-1 flex-1 rounded-full ${step === 1 ? 'bg-blue-600' : 'bg-gray-200'}`}
-                key={step}
-              />
-            ))}
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Расскажите о вашем бизнесе</h1>
-          <p className="mt-1 text-sm text-gray-500">Шаг 1 из 4</p>
-        </div>
-
+    <StepFrame step={1} title={t('onboardingBusinessTitle')}>
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="owner-name">
-              Ваше имя
+              {t('ownerName')}
             </label>
             <input
-              className="mt-1 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass}
               disabled={loading}
               id="owner-name"
               onChange={(event) => setOwnerName(event.target.value)}
-              placeholder="Анна"
+              placeholder={t('ownerNameExample')}
               required
               value={ownerName}
             />
@@ -87,14 +76,14 @@ export default function OnboardingStepOnePage() {
 
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="business-name">
-              Название бизнеса
+              {t('businessLabel')}
             </label>
             <input
-              className="mt-1 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass}
               disabled={loading}
               id="business-name"
               onChange={(event) => setBusinessName(event.target.value)}
-              placeholder="Студия Анны"
+              placeholder={t('businessExample')}
               required
               value={businessName}
             />
@@ -102,17 +91,17 @@ export default function OnboardingStepOnePage() {
 
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="language">
-              Основной язык
+              {t('primaryLanguage')}
             </label>
             <select
-              className="mt-1 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass}
               disabled={loading}
               id="language"
               onChange={(event) => setLanguage(event.target.value)}
               value={language}
             >
               <option value="he">עברית</option>
-              <option value="ru">Русский</option>
+              <option value="ru">{t('russian')}</option>
               <option value="en">English</option>
             </select>
           </div>
@@ -124,14 +113,13 @@ export default function OnboardingStepOnePage() {
           ) : null}
 
           <button
-            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`${buttonClass} full`}
             disabled={!ownerName.trim() || !businessName.trim() || loading}
             type="submit"
           >
-            {loading ? 'Сохранение...' : 'Далее →'}
+            {loading ? t('saving') : <>{t('next')} <span className="direction-icon">→</span></>}
           </button>
         </form>
-      </section>
-    </main>
+    </StepFrame>
   );
 }

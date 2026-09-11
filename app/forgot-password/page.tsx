@@ -3,8 +3,11 @@
 import { type FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import {useI18n} from '@/lib/i18n';
+import PublicShell from '@/components/ui/public-shell';
 
 export default function ForgotPasswordPage() {
+  const {t}=useI18n();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -23,18 +26,16 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">Восстановление пароля</h1>
-        {sent ? <p role="status" className="text-sm text-gray-600">Если такой аккаунт есть, письмо отправлено</p> : (
+    <PublicShell>
+        <h1>{t('resetTitle')}</h1>
+        {sent ? <p role="status" className="auth-copy">{t('resetSent')}</p> : (
           <form onSubmit={submit} className="space-y-4">
-            <div><label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">Email</label>
+            <div><label htmlFor="email" className="field-label">{t('email')}</label>
               <input id="email" type="email" autoComplete="email" required disabled={loading} value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
-            <button type="submit" disabled={loading} className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50">{loading ? 'Загрузка...' : 'Отправить ссылку'}</button>
+            <button type="submit" disabled={loading} className="button primary full">{loading ? t('loading') : t('sendLink')}</button>
           </form>
         )}
-        <Link href="/login" className="mt-4 block text-center text-sm text-blue-600">Войти</Link>
-      </section>
-    </main>
+        <Link href="/login" className="text-link centered">{t('loginAction')}</Link>
+    </PublicShell>
   );
 }

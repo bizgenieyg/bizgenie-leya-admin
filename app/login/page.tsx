@@ -6,10 +6,13 @@ import { confirmationErrors } from '@/lib/auth/redirect';
 import { useRouter } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/client';
+import {useI18n} from '@/lib/i18n';
+import PublicShell from '@/components/ui/public-shell';
 
 type AuthMode = 'login' | 'signup';
 
 export default function LoginPage() {
+  const {t}=useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<AuthMode>('login');
@@ -31,9 +34,9 @@ export default function LoginPage() {
     setNotice('');
     try {
       const { error } = await createClient().auth.resend({ type: 'signup', email: confirmationEmail, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
-      if (error) setError('Не удалось отправить письмо. Подождите немного и попробуйте ещё раз.');
-      else setNotice('Письмо отправлено повторно.');
-    } catch { setError('Не удалось отправить письмо. Попробуйте ещё раз.'); }
+      if (error) setError(t('sendMailError'));
+      else setNotice(t('mailResent'));
+    } catch { setError(t('sendMailError')); }
     finally { setLoading(false); }
   }
 
@@ -63,7 +66,7 @@ export default function LoginPage() {
 
       router.replace(mode === 'login' ? '/admin' : '/onboarding/step-1');
       router.refresh();
-    } catch { setError('Не удалось выполнить запрос. Попробуйте ещё раз.'); }
+    } catch { setError(t('requestError')); }
     finally { setLoading(false); }
   }
 
@@ -73,34 +76,29 @@ export default function LoginPage() {
   }
 
   if (confirmationEmail) return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-        <h1 className="mb-4 text-2xl font-bold text-gray-900">Проверьте почту</h1>
-        <p className="mb-6 break-words text-sm text-gray-600">Проверьте почту: мы отправили ссылку для подтверждения на {confirmationEmail}</p>
+    <PublicShell>
+        <h1>{t('checkEmail')}</h1>
+        <p className="auth-copy">{t('confirmationSent',{email:confirmationEmail})}</p>
         {error ? <p role="alert" className="mb-4 text-sm text-red-600">{error}</p> : null}
         {notice ? <p role="status" className="mb-4 text-sm text-green-600">{notice}</p> : null}
-        <button type="button" disabled={loading} onClick={() => void resendConfirmation()} className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50">{loading ? 'Загрузка...' : 'Отправить ещё раз'}</button>
-        <Link href="/login" onClick={() => { setConfirmationEmail(''); setMode('login'); setError(''); }} className="mt-4 block text-center text-sm text-blue-600">Войти</Link>
-      </section>
-    </main>
+        <button type="button" disabled={loading} onClick={() => void resendConfirmation()} className="button primary full">{loading ? t('loading') : t('resend')}</button>
+        <Link href="/login" onClick={() => { setConfirmationEmail(''); setMode('login'); setError(''); }} className="text-link centered">{t('loginAction')}</Link>
+    </PublicShell>
   );
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          {mode === 'login' ? 'Вход в кабинет' : 'Создать аккаунт'}
+    <PublicShell>
+        <h1>
+          {mode === 'login' ? t('loginTitle') : t('signupTitle')}
         </h1>
-        <p className="mb-6 text-sm text-gray-500">
-          {mode === 'login'
-            ? 'Войдите в аккаунт специалиста'
-            : '14 дней бесплатно. Без кредитной карты.'}
+        <p className="auth-copy">
+          {mode === 'login' ? t('loginSubtitle') : t('signupSubtitle')}
         </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="email">
-              Email
+              {t('email')}
             </label>
             <input
               autoComplete="email"
@@ -117,7 +115,7 @@ export default function LoginPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="password">
-              Пароль
+              {t('password')}
             </label>
             <input
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -142,11 +140,11 @@ export default function LoginPage() {
             disabled={loading}
             type="submit"
           >
-            {loading ? 'Загрузка...' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}
+            {loading ? t('loading') : mode === 'login' ? t('loginAction') : t('signupAction')}
           </button>
         </form>
 
-        {mode === 'login' ? <Link href="/forgot-password" className="mt-4 block text-center text-sm text-blue-600">Забыли пароль?</Link> : null}
+        {mode === 'login' ? <Link href="/forgot-password" className="text-link centered">{t('forgotPassword')}</Link> : null}
 
         <button
           className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700"
@@ -154,9 +152,8 @@ export default function LoginPage() {
           onClick={toggleMode}
           type="button"
         >
-          {mode === 'login' ? 'Создать аккаунт' : 'Уже есть аккаунт? Войти'}
+          {mode === 'login' ? t('signupAction') : t('alreadyRegistered')}
         </button>
-      </section>
-    </main>
+    </PublicShell>
   );
 }

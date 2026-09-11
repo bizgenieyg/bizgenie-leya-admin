@@ -43,6 +43,7 @@ function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = tr
         },
       };
       if (name === '@/lib/i18n') { const words={disconnect:'Отключить',disconnectConfirm:'Отключить WhatsApp?',next:'Далее',skip:'Пропустить',ownerSettings:'Настройки владельца',checkStatus:'Проверить статус',waitExpired:'Истекло время ожидания',statusNotCreated:'Не подключено',statusStopped:'Отключено',statusStarting:'Подключаем...',statusScan:'Ожидаем сканирования QR-кода.',statusWorking:'Подключено',statusFailed:'Не удалось подключиться',connectWhatsApp:'Подключить WhatsApp',connect:'Подключить',retry:'Попробовать заново'}; return {useI18n:()=>({t:key=>words[key]||key})}; }
+      if (name === '@/components/ui/primitives') return { Spinner:()=>jsx('span',{className:'animate-spin'}), ErrorState:({message})=>jsx('p',{children:message}), Button:({children,...props})=>jsx('button',{...props,children}), ConfirmDialog:({open,onCancel,onConfirm,children})=>open?jsx('section',{children:[children,jsx('button',{onClick:onCancel,children:'cancel'}),jsx('button',{onClick:onConfirm,children:'confirm'})]}):null };
       return {};
     },
   });
@@ -119,29 +120,30 @@ for (const cabinet of [false, true]) {
     test(`${cabinet ? 'cabinet' : 'onboarding'} displays ${status} with correct actions`, async () => {
       const app = harness({ initialStatus: status, cabinet }); await app.start();
       assert.ok(text(app.render()).includes(label));
-      const buttons = nodes(app.render()).filter(node => node.type === 'button').map(text);
+      const buttons = nodes(app.render()).filter(node => node.type === 'button' || (typeof node.type === 'function' && node.props?.onClick)).map(text);
       if (action) assert.ok(buttons.includes(action));
       else assert.ok(!buttons.includes('Подключить WhatsApp') && !buttons.includes('Попробовать заново'));
       assert.equal(app.calls.filter(call => call.kind === 'start').length, 0);
       assert.equal(Boolean(image(app)), status === 'SCAN_QR_CODE');
-      if (status === 'STARTING') assert.ok(nodes(app.render()).some(node => node.props.className?.includes('animate-spin')));
+      if (status === 'STARTING') assert.ok(nodes(app.render()).some(node => node.props.className?.includes('animate-spin') || node.type?.name === 'Spinner'));
       app.unmount();
     });
   }
 }
-for (const confirm of [false, true]) {
-  test(`shared cabinet disconnect ${confirm ? 'confirmed' : 'cancelled'}`, async () => {
-    const app = harness({ initialStatus: 'WORKING', cabinet: true, confirm }); await app.start();
-    nodes(app.render()).find(node => node.type === 'button' && text(node) === 'Отключить').props.onClick();
-    await app.settle();
-    assert.equal(app.calls.filter(call => call.kind === 'disconnect').length, confirm ? 1 : 0);
-    assert.match(text(app.render()), confirm ? /Отключено/ : /Подключено/);
-    app.unmount();
-  });
-}
+test('shared cabinet disconnect requires dialog confirmation', async () => {
+  const app = harness({ initialStatus: 'WORKING', cabinet: true }); await app.start();
+  nodes(app.render()).find(node => text(node) === 'Отключить' && node.props?.onClick).props.onClick();
+  await app.settle();
+  assert.equal(app.calls.filter(call => call.kind === 'disconnect').length, 0);
+  nodes(app.render()).find(node => node.type?.name === 'ConfirmDialog').props.onConfirm();
+  await app.settle();
+  assert.equal(app.calls.filter(call => call.kind === 'disconnect').length, 1);
+  assert.match(text(app.render()), /Отключено/);
+  app.unmount();
+});
 test('viewer cannot see mutation controls or fetch QR', async () => {
   const app = harness({ initialStatus: 'SCAN_QR_CODE', cabinet: true, canEdit: false }); await app.start();
   assert.equal(image(app), undefined);
-  assert.equal(nodes(app.render()).filter(node => node.type === 'button').length, 0);
+  assert.equal(nodes(app.render()).filter(node => node.type === 'button' || (typeof node.type === 'function' && node.props?.onClick)).length, 0);
   app.unmount();
 });
