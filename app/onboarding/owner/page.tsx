@@ -25,7 +25,7 @@ export default function OwnerStep() {
       setTimeZone(data.phone?data.timeZone:deviceZone);setPhone(data.phone);setStart(data.quietStart);setEnd(data.quietEnd);setPaired(data.paired);setLoaded(true);
     }).catch(()=>{if(!controller.signal.aborted)setError(t('ownerLoadError'));});
     return ()=>controller.abort();
-  },[]);
+  },[t]);
   async function submit(event:FormEvent) {
     event.preventDefault();setBusy(true);setError('');
     try {
