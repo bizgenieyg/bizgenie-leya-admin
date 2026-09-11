@@ -46,7 +46,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
     }
     void load();
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

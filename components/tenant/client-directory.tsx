@@ -10,6 +10,8 @@ export default function ClientDirectory(){
  const statuses:Record<string,string>={new:t('newStatus'),active:t('dialogueStatus'),waiting_owner:t('waitingStatus'),closed:t('closedStatus')};
  const load=async()=>{setLoading(true);try{const r=await fetch(`/api/clients?search=${encodeURIComponent(search)}`),j=await r.json();if(!r.ok)throw new Error();setItems(j.clients??j);setError('');}catch{setError(t('loadClientsError'));}finally{setLoading(false)}};
  const open=async(id:string)=>{try{const r=await fetch(`/api/clients/${id}`),j=await r.json();if(!r.ok)throw new Error();setSelected(j.client??j);}catch{setError(t('openCardError'));}};
+ // Initial fetch only; later searches are explicitly submitted by the owner.
+ // eslint-disable-next-line react-hooks/exhaustive-deps
  useEffect(()=>{void load()},[]);
  const save=async(body:Record<string,unknown>)=>{if(!selected)return;setBusy(true);try{const r=await fetch(`/api/clients/${selected.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),j=await r.json();if(!r.ok)throw new Error();setSelected(j.client??j);setError('');}catch{setError(t('saveError'));}finally{setBusy(false)}};
  const remove=async(permanent:boolean)=>{if(!selected)return;setBusy(true);try{const r=await fetch(`/api/clients/${selected.id}?permanent=${permanent}`,{method:'DELETE'});if(!r.ok)throw new Error();setSelected(null);await load();}catch{setError(t('deleteError'));}finally{setBusy(false)}};

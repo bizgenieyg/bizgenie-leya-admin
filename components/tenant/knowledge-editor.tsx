@@ -43,7 +43,7 @@ export default function KnowledgeEditor({ onboarding = false }: { onboarding?: b
     }
     void load();
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   function resetForm() { setEditingId(null); setQuestion(''); setAnswer(''); }
 
