@@ -12,7 +12,7 @@ export const operatorOnly = [
   'auto_resume_hours', 'deferred_max_age_hours', 'context_message_count',
   'context_retention_hours', 'message_retention_days', 'intent_confidence_threshold',
   'route_stickiness_hours', 'reception_max_messages', 'campaign_routes', 'source_routes',
-  'templates',
+  'simulator_hourly_limit', 'simulator_daily_limit', 'templates',
 ];
 
 // Billing / tariff fields: operator-only and handled by PATCH /api/admin/usage-limits.

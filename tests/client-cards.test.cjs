@@ -24,11 +24,10 @@ test('client directory expands below the selected row and uses server-paged sear
  assert.match(directory,/inline-client-card/);
  assert.match(directory,/selected\?\.id===item\.id\?card:null/);
  assert.match(directory,/load\(false\)/);
- assert.match(route,/\.range\(from,from\+limit-1\)/);
- assert.match(route,/\.order\('last_seen_at'/);
- assert.match(route,/name\.ilike/);
- assert.doesNotMatch(route,/call\(`\/api\/admin\/clients\?search=/);
- assert.match(route,/searchParams\.get\('status'\)/);
+ for(const key of ['page','limit','search','status'])assert.match(route,new RegExp(`'${key}'`));
+ assert.match(route,/\/api\/admin\/clients\?\$\{query\}/);
+ assert.doesNotMatch(route,/\/api\/admin\/clients\/\$\{encodeURIComponent/);
+ assert.match(route,/enrichParticipation/);
  assert.match(css,/@container/);
 });
 test('knowledge editor lives only on the dedicated knowledge page',()=>{

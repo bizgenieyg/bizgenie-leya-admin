@@ -13,6 +13,8 @@ for(const[h,r]of [[load('viewer'),request()],[load('owner',null),request()],[loa
 const fieldLists=fields;
 test('operator and system field lists are well-formed and cover message_retention_days',()=>{
  assert.ok(fieldLists.operatorOnly.includes('message_retention_days'),'retention is operator-only');
+ assert.ok(fieldLists.operatorOnly.includes('simulator_hourly_limit'),'simulator hourly limit is operator-only');
+ assert.ok(fieldLists.operatorOnly.includes('simulator_daily_limit'),'simulator daily limit is operator-only');
  const editable=new Set(fieldLists.editable);
  for(const f of [...fieldLists.operatorOnly,...fieldLists.system])assert.equal(editable.has(f),false,`${f} must not also be owner-editable`);
  for(const f of fieldLists.system)assert.equal(fieldLists.operatorOnly.includes(f),false,`${f} is system, not operatorOnly`);
