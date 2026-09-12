@@ -11,6 +11,7 @@ export default function OnboardingStepOnePage() {
   const {t}=useI18n();
   const [ownerName, setOwnerName] = useState('');
   const [businessName, setBusinessName] = useState('');
+  const [category, setCategory] = useState('services');
   const [language, setLanguage] = useState('he');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -47,6 +48,7 @@ export default function OnboardingStepOnePage() {
       }
 
       sessionStorage.setItem('onboarding_tenant_id', tenantId);
+      sessionStorage.setItem('onboarding_business_category', category);
       router.push('/onboarding/step-2');
     } catch {
       if (process.env.NODE_ENV === 'development') console.error('Tenant creation request failed');
@@ -87,6 +89,13 @@ export default function OnboardingStepOnePage() {
               required
               value={businessName}
             />
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="business-category">{t('businessCategory')}</label>
+            <select className={inputClass} disabled={loading} id="business-category" value={category} onChange={event=>setCategory(event.target.value)}>
+              <option value="beauty">{t('categoryBeauty')}</option><option value="food">{t('categoryFood')}</option><option value="services">{t('categoryServices')}</option><option value="other">{t('categoryOther')}</option>
+            </select>
           </div>
 
           <div>

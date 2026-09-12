@@ -129,6 +129,8 @@ export default function LoginPage() {
             />
           </div>
 
+          {mode === 'login' ? <label className="remember-row"><input type="checkbox" defaultChecked /> <span>{t('rememberMe')}</span></label> : null}
+
           {error ? (
             <p aria-live="polite" className="text-sm text-red-600" role="alert">
               {error}

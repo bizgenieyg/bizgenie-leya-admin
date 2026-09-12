@@ -69,7 +69,7 @@ test('step 1 creates a tenant with a single plan-less RPC and no tariff choice',
   for (const key of ['p_plan', 'p_status', 'p_trial_ends_at', 'p_tier']) {
     assert.equal(key in args, false, `${key} must not be sent`);
   }
-  assert.deepEqual(app.stored, [['onboarding_tenant_id', 'tenant-id']]);
+  assert.deepEqual(app.stored, [['onboarding_tenant_id', 'tenant-id'], ['onboarding_business_category', 'services']]);
   assert.deepEqual(app.navigation, ['/onboarding/step-2']);
   // No tariff selector text on the page.
   const page = text(app.render());

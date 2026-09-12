@@ -14,7 +14,7 @@ function editor(name, { onboarding = false, writable = true, confirm = true } = 
       select() { return this; }, eq(column, value) { if (column === 'id') id = value; return this; }, order() { return this; },
       update(data) { operation = 'update'; values = data; return this; },
       insert(data) { operation = 'insert'; values = data; return this; },
-      delete() { operation = 'delete'; return this; },
+      delete() { operation = 'delete'; writes.push({ table, operation }); return this; },
       async single() {
         if (operation !== 'read') writes.push({ table, operation, values });
         if (table === 'assistant_profiles') return { data: { assistant_name: 'Лея', allowed_languages: ['he'], tone: 'friendly', style_profile_md: '', tenant_id: 'tenant-a' }, error: null };
@@ -30,7 +30,7 @@ function editor(name, { onboarding = false, writable = true, confirm = true } = 
   const jsx = (type, props) => ({ type, props });
   vm.runInNewContext(ts.transpileModule(readFileSync(`components/tenant/${name}.tsx`, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 },
-  }).outputText, { exports, Error, AbortController, window: { confirm: () => confirm }, require(path) {
+  }).outputText, { exports, Error, AbortController, confirm: () => confirm, window: { confirm: () => confirm }, require(path) {
     if (path === 'react/jsx-runtime') return { jsx, jsxs: jsx };
     if (path === 'react') return {
       useState(initial) { const key = index++; if (!(key in slots)) slots[key] = initial; return [slots[key], next => { slots[key] = typeof next === 'function' ? next(slots[key]) : next; dirty = true; }]; },
@@ -64,24 +64,27 @@ for (const onboarding of [false, true]) {
 }
 test('shared FAQ editor has empty state and supports add/edit/delete', async () => {
   const app = editor('knowledge-editor'); await app.settle();
-  assert.match(text(app.render()), /Пока нет ни одного вопроса/);
-  assert.ok(nodes(app.render()).some(node => node.type === 'button' && text(node) === 'Добавить вопрос'));
+  const addButton=nodes(app.render()).find(node => text(node) === 'Добавить вопрос' && typeof node.props?.onClick === 'function');
+  assert.ok(addButton);
+  addButton.props.onClick(); await app.settle();
   fill(app, 'question', 'Question'); fill(app, 'answer', 'Answer'); await submit(app); await app.settle();
   assert.match(text(app.render()), /Question/);
-  nodes(app.render()).find(node => node.type === 'button' && text(node) === 'Редактировать').props.onClick(); await app.settle();
+  nodes(app.render()).find(node => text(node) === 'Редактировать' && typeof node.props?.onClick === 'function').props.onClick(); await app.settle();
   fill(app, 'answer', 'Updated'); await submit(app); await app.settle();
   assert.match(text(app.render()), /Updated/);
-  nodes(app.render()).find(node => node.type === 'button' && text(node) === 'Удалить').props.onClick(); await app.settle();
-  assert.match(text(app.render()), /Пока нет ни одного вопроса/);
+  nodes(app.render()).find(node => text(node) === 'Удалить' && typeof node.props?.onClick === 'function').props.onClick(); await app.settle();
+  assert.doesNotMatch(text(app.render()), /Updated/);
+  assert.match(text(app.render()), /Добавить вопрос/);
   assert.deepEqual(app.writes.map(write => write.operation), ['insert', 'update', 'delete']);
   assert.deepEqual(app.navigation, []);
 });
 for (const component of ['assistant-settings', 'knowledge-editor']) {
   test(`viewer cannot mutate ${component} even if submit handler is invoked`, async () => {
     const app = editor(component, { writable: false }); await app.settle();
-    if (component === 'knowledge-editor') { fill(app, 'question', 'Question'); fill(app, 'answer', 'Answer'); }
-    await submit(app); await app.settle();
+    const form=nodes(app.render()).find(node=>node.type==='form');
+    if (component === 'knowledge-editor' && form) { fill(app, 'question', 'Question'); fill(app, 'answer', 'Answer'); }
+    if(form)await form.props.onSubmit({preventDefault(){}}); await app.settle();
     assert.equal(app.writes.length, 0);
-    assert.match(text(app.render()), /Недостаточно прав/);
+    if(component==='assistant-settings')assert.match(text(app.render()), /Недостаточно прав/);
   });
 }

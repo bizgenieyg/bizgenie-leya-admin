@@ -25,21 +25,21 @@ function Icon({name}: {name: string}) {
 
 export default function AppShell({children}: {children: ReactNode}) {
   const pathname = usePathname();
-  const {t, locale, setLocale} = useI18n();
+  const {t, locale, setLocale, dir} = useI18n();
   const [collapsed,setCollapsed]=useState(false);
   useEffect(()=>setCollapsed(localStorage.getItem('leya-sidebar-collapsed')==='true'),[]);
   const toggleCollapsed=()=>setCollapsed(value=>{const next=!value;localStorage.setItem('leya-sidebar-collapsed',String(next));return next});
   const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : href.includes('#') ? false : pathname.startsWith(href);
   return <div className={`app-shell ${collapsed?'sidebar-collapsed':''}`}>
     <aside className="side-nav">
-      <div className="side-brand"><Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span className="collapsible-label">Leya</span></Link><button type="button" className="collapse-button" onClick={toggleCollapsed} aria-label={collapsed?t('expandNavigation'):t('collapseNavigation')} title={collapsed?t('expandNavigation'):t('collapseNavigation')}><span className="direction-icon">{collapsed?'›':'‹'}</span></button></div>
+      <div className="side-brand"><Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span className="collapsible-label">Leya</span></Link><button type="button" className="collapse-button" onClick={toggleCollapsed} aria-label={collapsed?t('expandNavigation'):t('collapseNavigation')} title={collapsed?t('expandNavigation'):t('collapseNavigation')}><span aria-hidden="true" className="direction-icon">{collapsed?'›':'‹'}</span></button></div>
       <nav className="nav-list" aria-label={t('mainNav')}>
         {items.map(item => {
           const active = isActive(item.href);
           return <Link key={item.href} href={item.href} title={collapsed?t(item.key):undefined} className={`nav-item ${active ? 'active' : ''}`}><Icon name={item.icon}/><span className="collapsible-label">{t(item.key)}</span></Link>;
         })}
       </nav>
-      <div className="side-controls"><ThemeToggle/><select aria-label={t('cabinetLanguage')} value={locale} onChange={e=>setLocale(e.target.value as 'ru'|'he'|'en')}><option value="ru">RU</option><option value="he">עב</option><option value="en">EN</option></select></div><div className="side-foot">
+      <div className="side-controls"><div className="expanded-controls"><ThemeToggle/><select aria-label={t('cabinetLanguage')} value={locale} onChange={e=>setLocale(e.target.value as 'ru'|'he'|'en')}><option value="ru">RU</option><option value="he">עב</option><option value="en">EN</option></select></div><div className="collapsed-controls"><ThemeToggle compact/><button type="button" className="compact-control" title={t('cabinetLanguage')} aria-label={t('cabinetLanguage')} onClick={()=>setLocale(locale==='ru'?'en':locale==='en'?'he':'ru')}>{locale.toUpperCase()}</button></div></div><div className="side-foot">
         <div className="avatar" aria-hidden="true">L</div><div className="collapsible-label"><strong>{t('businessName')}</strong><small>{t('ownerRole')}</small></div>
       </div>
     </aside>
