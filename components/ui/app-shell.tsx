@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import {usePathname} from 'next/navigation';
-import {type ReactNode,useEffect,useState} from 'react';
+import {usePathname,useRouter} from 'next/navigation';
+import {type ReactNode,useEffect,useRef,useState} from 'react';
 import {useI18n} from '@/lib/i18n';
+import {createClient} from '@/lib/supabase/client';
 import ThemeToggle from './theme-toggle';
 
 const items = [
@@ -25,9 +26,15 @@ function Icon({name}: {name: string}) {
 
 export default function AppShell({children}: {children: ReactNode}) {
   const pathname = usePathname();
+  const router=useRouter();
   const {t, locale, setLocale, dir} = useI18n();
   const [collapsed,setCollapsed]=useState(false);
+  const [menuOpen,setMenuOpen]=useState(false),[profile,setProfile]=useState<{businessName:string;role:string}|null>(null),menuRef=useRef<HTMLDivElement>(null);
   useEffect(()=>setCollapsed(localStorage.getItem('leya-sidebar-collapsed')==='true'),[]);
+  useEffect(()=>{void fetch('/api/profile',{cache:'no-store'}).then(response=>response.ok?response.json():null).then(setProfile).catch(()=>undefined)},[]);
+  useEffect(()=>{const{data:{subscription}}=createClient().auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||!session){router.replace('/login?error=session_expired');router.refresh()}});return()=>subscription.unsubscribe()},[router]);
+  useEffect(()=>{if(!menuOpen)return;const close=(event:MouseEvent)=>{if(!menuRef.current?.contains(event.target as Node))setMenuOpen(false)};document.addEventListener('mousedown',close);return()=>document.removeEventListener('mousedown',close)},[menuOpen]);
+  async function logout(){await fetch('/api/auth/logout',{method:'POST'}).catch(()=>undefined);router.replace('/login');router.refresh()}
   const toggleCollapsed=()=>setCollapsed(value=>{const next=!value;localStorage.setItem('leya-sidebar-collapsed',String(next));return next});
   const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : href.includes('#') ? false : pathname.startsWith(href);
   return <div className={`app-shell ${collapsed?'sidebar-collapsed':''}`}>
@@ -39,12 +46,12 @@ export default function AppShell({children}: {children: ReactNode}) {
           return <Link key={item.href} href={item.href} title={collapsed?t(item.key):undefined} className={`nav-item ${active ? 'active' : ''}`}><Icon name={item.icon}/><span className="collapsible-label">{t(item.key)}</span></Link>;
         })}
       </nav>
-      <div className="side-controls"><div className="expanded-controls"><ThemeToggle/><select aria-label={t('cabinetLanguage')} value={locale} onChange={e=>setLocale(e.target.value as 'ru'|'he'|'en')}><option value="ru">RU</option><option value="he">עב</option><option value="en">EN</option></select></div><div className="collapsed-controls"><ThemeToggle compact/><button type="button" className="compact-control" title={t('cabinetLanguage')} aria-label={t('cabinetLanguage')} onClick={()=>setLocale(locale==='ru'?'en':locale==='en'?'he':'ru')}>{locale.toUpperCase()}</button></div></div><div className="side-foot">
-        <div className="avatar" aria-hidden="true">L</div><div className="collapsible-label"><strong>{t('businessName')}</strong><small>{t('ownerRole')}</small></div>
-      </div>
+      <div className="side-controls"><div className="expanded-controls"><ThemeToggle/><select aria-label={t('cabinetLanguage')} value={locale} onChange={e=>setLocale(e.target.value as 'ru'|'he'|'en')}><option value="ru">RU</option><option value="he">עב</option><option value="en">EN</option></select></div><div className="collapsed-controls"><ThemeToggle compact/><button type="button" className="compact-control" title={t('cabinetLanguage')} aria-label={t('cabinetLanguage')} onClick={()=>setLocale(locale==='ru'?'en':locale==='en'?'he':'ru')}>{locale.toUpperCase()}</button></div></div><div className="user-menu-wrap" ref={menuRef}>{menuOpen?<div className="user-menu" role="menu"><Link href="/admin/profile" role="menuitem" onClick={()=>setMenuOpen(false)}>{t('profileMenu')}</Link><button type="button" role="menuitem" onClick={()=>void logout()}>{t('logout')}</button></div>:null}<button type="button" className="side-foot" aria-haspopup="menu" aria-expanded={menuOpen} aria-label={t('userMenu')} onClick={()=>setMenuOpen(value=>!value)}>
+        <div className="avatar" aria-hidden="true">{(profile?.businessName||'L').slice(0,1).toUpperCase()}</div><div className="collapsible-label"><strong>{profile?.businessName||t('businessName')}</strong><small>{profile?t(`role_${profile.role}`):t('ownerRole')}</small></div>
+      </button></div>
     </aside>
     <div className="app-main">
-      <header className="mobile-head"><Link href="/admin" className="brand"><span className="brand-mark">L</span><span>Leya</span></Link><div className="header-controls"><ThemeToggle/><select aria-label={t('cabinetLanguage')} value={locale} onChange={e=>setLocale(e.target.value as 'ru'|'he'|'en')}><option value="ru">RU</option><option value="he">עב</option><option value="en">EN</option></select></div></header>
+      <header className="mobile-head"><Link href="/admin" className="brand"><span className="brand-mark">L</span><span>Leya</span></Link><div className="header-controls"><ThemeToggle/><select aria-label={t('cabinetLanguage')} value={locale} onChange={e=>setLocale(e.target.value as 'ru'|'he'|'en')}><option value="ru">RU</option><option value="he">עב</option><option value="en">EN</option></select><div className="user-menu-wrap mobile-user-menu">{menuOpen?<div className="user-menu" role="menu"><Link href="/admin/profile" role="menuitem" onClick={()=>setMenuOpen(false)}>{t('profileMenu')}</Link><button type="button" role="menuitem" onClick={()=>void logout()}>{t('logout')}</button></div>:null}<button type="button" className="avatar profile-shortcut" aria-label={t('userMenu')} aria-haspopup="menu" aria-expanded={menuOpen} onClick={()=>setMenuOpen(value=>!value)}>{(profile?.businessName||'L').slice(0,1).toUpperCase()}</button></div></div></header>
       {children}
     </div>
     <nav className="bottom-nav" aria-label={t('mainNav')}>{items.map(item => {const active=isActive(item.href);return <Link key={item.href} href={item.href} className={active?'active':''}><Icon name={item.icon}/><span>{t(item.key)}</span></Link>})}</nav>
