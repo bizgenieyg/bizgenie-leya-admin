@@ -9,6 +9,7 @@ import {Button,ConfirmDialog,ErrorState,Spinner} from '@/components/ui/primitive
 
 export default function WhatsAppConnection({ cabinet = false, canEdit = true }: { cabinet?: boolean; canEdit?: boolean }) {
   const {t}=useI18n();
+  const translate=useRef(t);translate.current=t;
   const statusText=(status:string)=>({NOT_CREATED:t('statusNotCreated'),STOPPED:t('statusStopped'),DISCONNECTED:t('statusStopped'),STARTING:t('statusStarting'),SCAN_QR_CODE:t('statusScan'),WORKING:t('statusWorking'),FAILED:t('statusFailed')}[status]??t('statusUnknown'));
   const actionText=(status:string)=>status==='NOT_CREATED'?t('connectWhatsApp'):['STOPPED','DISCONNECTED'].includes(status)?t('connect'):t('retry');
   const [state, setState] = useState<SessionState>({ status: '', qrAvailable: false });
@@ -23,6 +24,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
   const scanning = state.status === 'SCAN_QR_CODE' && state.qrAvailable && !expired && canEdit;
 
   useEffect(() => {
+    const errorText=(error:unknown)=>translate.current(error instanceof Error?error.message:backendUnavailable);
     const controller = new AbortController();
     active.current = controller;
     let inFlight = false;
@@ -55,7 +57,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
         const next = await requestSession('/api/waha/status', controller.signal);
         if (!controller.signal.aborted) accept(next);
       } catch (error) {
-        if (!controller.signal.aborted) setError(error instanceof Error ? error.message : backendUnavailable);
+        if (!controller.signal.aborted) setError(errorText(error));
       } finally { inFlight = false; }
     }
     async function start() {
@@ -66,7 +68,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
         if (!controller.signal.aborted && accept(next)) interval = setInterval(() => void poll(), 3000);
       } catch (error) {
         if (!controller.signal.aborted) {
-          setError(error instanceof Error ? error.message : backendUnavailable);
+          setError(errorText(error));
           clearTimeout(timeout);
         }
       } finally { if (!controller.signal.aborted) setBusy(false); }

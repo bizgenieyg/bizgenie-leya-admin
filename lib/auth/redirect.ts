@@ -6,6 +6,6 @@ export function callbackDestination(next: string | null, origin: string, recover
 }
 
 export const confirmationErrors: Record<string, string> = {
-  confirm_failed: 'Не удалось подтвердить ссылку. Откройте её в том же браузере, где отправляли запрос, или запросите новое письмо.',
-  confirm_expired: 'Ссылка недействительна или срок её действия истёк. Запросите новое письмо.',
+  confirm_failed: 'confirmationFailed',
+  confirm_expired: 'confirmationExpired',
 };

@@ -41,13 +41,13 @@ test('retry rechecks status and does not restart a recovered session', async () 
 });
 test('backend failure never triggers create and is sanitized', async () => {
   const { begin, calls } = fixture(null, 502);
-  await assert.rejects(begin(new AbortController().signal, false), /Бэкенд недоступен/);
+  await assert.rejects(begin(new AbortController().signal, false), /backendUnavailable/);
   assert.equal(calls.length, 1);
 });
 
 for (const code of [400, 404, 409, 422]) {
   test(`HTTP ${code} is not labelled backend unavailable`, async () => {
     const { begin } = fixture(null, code);
-    await assert.rejects(begin(new AbortController().signal, false), error => !error.message.includes('Бэкенд недоступен'));
+    await assert.rejects(begin(new AbortController().signal, false), error => error.message !== 'backendUnavailable');
   });
 }

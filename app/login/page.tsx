@@ -25,7 +25,7 @@ export default function LoginPage() {
   useEffect(() => {
     const reason = new URLSearchParams(window.location.search).get('error');
     if (reason === 'session_expired') setError(t('sessionExpired'));
-    else if (reason && confirmationErrors[reason]) setError(confirmationErrors[reason]);
+    else if (reason && confirmationErrors[reason]) setError(t(confirmationErrors[reason]));
   }, [t]);
 
   async function resendConfirmation() {
