@@ -85,6 +85,6 @@ for (const component of ['assistant-settings', 'knowledge-editor']) {
     if (component === 'knowledge-editor' && form) { fill(app, 'question', 'Question'); fill(app, 'answer', 'Answer'); }
     if(form)await form.props.onSubmit({preventDefault(){}}); await app.settle();
     assert.equal(app.writes.length, 0);
-    if(component==='assistant-settings')assert.match(text(app.render()), /Недостаточно прав/);
+    if(component==='assistant-settings')assert.match(text(app.render()), /readOnly/);
   });
 }

@@ -171,10 +171,10 @@ test('QR conflict preserves status and does not become 502', async () => {
   assert.deepEqual(await response.json(), { status: 'FAILED', qrAvailable: false });
 });
 
-test('FAILED forwards the backend safe reason without arbitrary fields', async () => {
-  const { proxy } = fixture({ upstream: Response.json({ status: 'FAILED', qrAvailable: false, reason: 'WAHA не удалось получить состояние подключения.', internal: 'secret' }) });
+test('FAILED forwards only the stable backend reason code without arbitrary fields', async () => {
+  const { proxy } = fixture({ upstream: Response.json({ status: 'FAILED', qrAvailable: false, reason: 'waha_status_unavailable', internal: 'secret' }) });
   const response = await proxy(new Request('https://admin.example/api/waha/status'), 'status');
   const data = await response.json();
-  assert.equal(data.reason, 'WAHA не удалось получить состояние подключения.');
+  assert.equal(data.reason, 'wahaStatusUnavailable');
   assert.equal(data.internal, undefined);
 });

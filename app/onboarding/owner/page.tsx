@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { StepFrame, inputClass, buttonClass } from '../step-frame';
 import {useI18n} from '@/lib/i18n';
+import {translatedApiError} from '@/lib/i18n/api-error';
 export default function OwnerStep() {
   const{t}=useI18n();
   const [phone,setPhone]=useState('');
@@ -21,7 +22,7 @@ export default function OwnerStep() {
     setZones(Intl.supportedValuesOf('timeZone'));
     const controller=new AbortController();
     fetch('/api/owner-settings',{signal:controller.signal}).then(async r=>{
-      const data=await r.json();if(!r.ok) throw new Error(data.error);
+      const data=await r.json();if(!r.ok) throw new Error(translatedApiError(t,data,'ownerLoadError'));
       setTimeZone(data.phone?data.timeZone:deviceZone);setPhone(data.phone);setStart(data.quietStart);setEnd(data.quietEnd);setPaired(data.paired);setLoaded(true);
     }).catch(()=>{if(!controller.signal.aborted)setError(t('ownerLoadError'));});
     return ()=>controller.abort();
@@ -30,7 +31,7 @@ export default function OwnerStep() {
     event.preventDefault();setBusy(true);setError('');
     try {
       const response=await fetch('/api/owner-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,quietStart,quietEnd,timeZone})});
-      const data=await response.json();if(!response.ok)throw new Error(data.error);
+      const data=await response.json();if(!response.ok)throw new Error(translatedApiError(t,data,'saveError'));
       setCommand(data.pairingCommand);setPaired(false);
     }catch(e){setError(e instanceof Error?e.message:t('saveError'));}finally{setBusy(false);}
   }

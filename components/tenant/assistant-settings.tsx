@@ -44,8 +44,8 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
         setStyle(data.style_profile_md ?? '');
         setTenantId(tenantId);
         try { requireRole(['owner', 'admin']); setCanEdit(true); } catch { setCanEdit(false); }
-      } catch (error) {
-        if (!cancelled) setError(error instanceof Error ? error.message : t('profileLoadError'));
+      } catch {
+        if (!cancelled) setError(t('profileLoadError'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -56,6 +56,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canEdit) { setError(t('readOnly')); return; }
     if (saving || !tenantId || !name.trim()) return;
     setSaving(true);
     setSaved(false);
@@ -71,8 +72,8 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
       if (error || !data) throw new Error(t('profileSaveError'));
       if (onboarding) router.push('/onboarding/step-3');
       else setSaved(true);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : t('profileSaveError'));
+    } catch {
+      setError(t('profileSaveError'));
     } finally {
       setSaving(false);
     }

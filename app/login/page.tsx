@@ -54,7 +54,7 @@ export default function LoginPage() {
           : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
 
       if (result.error) {
-        setError(result.error.message);
+        setError(t('requestError'));
         setLoading(false);
         return;
       }

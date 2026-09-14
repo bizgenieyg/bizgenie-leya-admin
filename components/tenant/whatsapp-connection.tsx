@@ -98,7 +98,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
       {expired ? t('waitExpired')
         : state.status ? statusText(state.status) : busy ? t('checkingConnection') : t('statusUnavailable')}
     </p>
-    {state.status === 'FAILED' && state.reason ? <p className="mb-4 text-sm text-red-600">{state.reason}</p> : null}
+    {state.status === 'FAILED' && state.reason ? <p className="mb-4 text-sm text-red-600">{t(state.reason==='wahaStatusUnavailable'?state.reason:'statusFailed')}</p> : null}
     {scanning ? <section className="qr-scan">
       <h2>{t('howConnect')}</h2>
       <ol>

@@ -100,7 +100,7 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
     if (typeof status !== 'string') throw new Error('Invalid status response');
     // Only send the status needed by the UI, not arbitrary admin API data.
     return Response.json({ status, qrAvailable: status === 'SCAN_QR_CODE' && data?.qrAvailable !== false,
-      ...(status === 'FAILED' && typeof data?.reason === 'string' ? { reason: data.reason.slice(0, 300) } : {})
+      ...(status === 'FAILED' && data?.reason === 'waha_status_unavailable' ? { reason: 'wahaStatusUnavailable' } : {})
     }, { status: upstream.status, headers });
   } catch {
     console.error('waha_proxy_request_failed', { operation });
