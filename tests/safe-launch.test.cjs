@@ -1,0 +1,3 @@
+const test=require('node:test');const assert=require('node:assert/strict');const{readFileSync}=require('node:fs');
+const read=file=>readFileSync(file,'utf8');
+test('dashboard explains the paused safe launch and keeps simulator available',()=>{const home=read('app/admin/page.tsx'),stop=read('components/tenant/emergency-stop.tsx'),simulator=read('components/tenant/conversation-simulator.tsx'),i18n=read('lib/i18n/index.tsx');assert.match(home,/EmergencyStop launchGuide/);assert.match(stop,/\/admin\/knowledge/);assert.match(stop,/#simulator/);assert.match(stop,/\/admin\/settings#owner-contact/);assert.match(simulator,/id="simulator"/);assert.match(i18n,/enableClientReplies/);assert.doesNotMatch(simulator,/auto_replies_paused|bot_paused/);});
