@@ -36,10 +36,11 @@ export default function AppShell({children}: {children: ReactNode}) {
   useEffect(()=>{if(!menuOpen)return;const close=(event:MouseEvent)=>{if(!menuRef.current?.contains(event.target as Node))setMenuOpen(false)};document.addEventListener('mousedown',close);return()=>document.removeEventListener('mousedown',close)},[menuOpen]);
   async function logout(){setLogoutError('');try{const response=await fetch('/api/auth/logout',{method:'POST'});if(!response.ok){setLogoutError(t('logoutError'));return}router.replace('/login');router.refresh()}catch{setLogoutError(t('logoutError'))}}
   const toggleCollapsed=()=>setCollapsed(value=>{const next=!value;localStorage.setItem('leya-sidebar-collapsed',String(next));return next});
+  const collapseArrow=dir==='rtl'?(collapsed?'‹':'›'):(collapsed?'›':'‹');
   const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : href.includes('#') ? false : pathname.startsWith(href);
   return <div className={`app-shell ${collapsed?'sidebar-collapsed':''}`}>
     <aside className="side-nav">
-      <div className="side-brand"><Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span className="collapsible-label">Leya</span></Link><button type="button" className="collapse-button" onClick={toggleCollapsed} aria-label={collapsed?t('expandNavigation'):t('collapseNavigation')} title={collapsed?t('expandNavigation'):t('collapseNavigation')}><span aria-hidden="true" className="direction-icon">{collapsed?'›':'‹'}</span></button></div>
+      <div className="side-brand"><Link href="/admin" className="brand" aria-label="Leya"><span className="brand-mark">L</span><span className="collapsible-label">Leya</span></Link><button type="button" className="collapse-button" onClick={toggleCollapsed} aria-label={collapsed?t('expandNavigation'):t('collapseNavigation')} title={collapsed?t('expandNavigation'):t('collapseNavigation')}><span aria-hidden="true">{collapseArrow}</span></button></div>
       <nav className="nav-list" aria-label={t('mainNav')}>
         {items.map(item => {
           const active = isActive(item.href);
