@@ -71,3 +71,10 @@
 .materials-list .row-actions .button{padding-inline:var(--control-padding-inline)}
 @media(max-width:39.9375rem){.materials-list li{grid-template-columns:minmax(0,1fr)}.materials-list .row-actions{justify-content:flex-start;flex-wrap:wrap}}
 .collapse-button .collapse-arrow{inline-size:1.5rem;block-size:1.5rem}
+
+/* Keep the desktop sticky simulator compact enough to leave settings visible. */
+@media(min-width:56.25rem){
+  .assistant-simulator .simulator{padding:var(--space-section);gap:var(--control-gap)}
+  .assistant-simulator .section-heading{margin-block-end:var(--control-gap)}
+  .assistant-simulator .simulator-chat{min-block-size:9rem;max-block-size:min(12rem,28vh);padding:var(--control-gap)}
+}
