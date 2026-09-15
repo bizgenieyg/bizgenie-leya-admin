@@ -1,0 +1,3 @@
+'use client';
+import {useI18n} from '@/lib/i18n';
+export default function FuturePlans(){const{t}=useI18n();return <section className="surface-card future-plans"><div className="section-heading"><div><p className="card-kicker">{t('plansKicker')}</p><h2>{t('futurePlansTitle')}</h2><p>{t('futurePlansHelp')}</p></div><span className="soft-badge">{t('comingSoon')}</span></div><div className="future-plan-grid"><article><h3>{t('growthPlan')}</h3><p>{t('growthPlanHelp')}</p><span>{t('comingSoon')}</span></article><article><h3>{t('businessPlan')}</h3><p>{t('businessPlanHelp')}</p><span>{t('comingSoon')}</span></article></div><p className="muted">{t('paymentsComingSoon')}</p></section>}

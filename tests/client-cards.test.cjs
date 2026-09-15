@@ -11,11 +11,10 @@ test('client cabinet exposes search, safe mutations, preserved-history deletion 
  assert.match(route,/permanent=true/);
  for(const key of ['day','week','month','missingKnowledge'])assert.match(summary,new RegExp(`t\\('${key}'`));
 });
-test('client list hides the GOWS identifier, translates codes and supports dialogue takeover',()=>{
+test('client list shows only name and last inquiry while the card keeps owner controls',()=>{
  const directory=fs.readFileSync('components/tenant/client-directory.tsx','utf8');
- assert.doesNotMatch(directory,/<small>\{item\.phone\}<\/small>/);
- for(const value of ['in_dialogue','SALE','SUPPORT','RECEPTION'])assert.match(directory,new RegExp(value));
- for(const key of ['ownerResponder','leyaResponder','takeOver','returnToLeya'])assert.match(directory,new RegExp(`t\\('${key}'`));
+ for(const hidden of ['item.phone','item.status','item.inquiry_count','card.phone','card.language','card.first_seen_at','card.current_agent'])assert.doesNotMatch(directory,new RegExp(hidden.replace('.', '\\.')));
+ for(const key of ['lastInquiry','takeOver','returnToLeya','ownerNote','recentMessages','hideCard','eraseCard'])assert.ok(directory.includes(`t('${key}')`));
 });
 test('client directory expands below the selected row and uses server-paged search and filters',()=>{
  const directory=fs.readFileSync('components/tenant/client-directory.tsx','utf8');
@@ -30,9 +29,12 @@ test('client directory expands below the selected row and uses server-paged sear
  assert.match(route,/enrichParticipation/);
  assert.match(css,/@container/);
 });
-test('knowledge editor lives only on the dedicated knowledge page',()=>{
+test('knowledge editor lives in the combined assistant workspace',()=>{
  const home=fs.readFileSync('app/admin/page.tsx','utf8');
- const knowledge=fs.readFileSync('app/admin/knowledge/page.tsx','utf8');
+ const assistant=fs.readFileSync('app/admin/assistant/page.tsx','utf8');
+ const legacy=fs.readFileSync('app/admin/knowledge/page.tsx','utf8');
  assert.doesNotMatch(home,/KnowledgeEditor/);
- assert.match(knowledge,/KnowledgeEditor/);
+ assert.match(assistant,/KnowledgeEditor/);
+ assert.match(assistant,/ConversationSimulator/);
+ assert.match(legacy,/redirect\('\/admin\/assistant#knowledge'\)/);
 });

@@ -10,7 +10,7 @@ import ThemeToggle from './theme-toggle';
 const items = [
   {href: '/admin', key: 'homeNav', icon: 'home'},
   {href: '/admin/clients', key: 'clientsLink', icon: 'people'},
-  {href: '/admin/knowledge', key: 'knowledgeNav', icon: 'book'},
+  {href: '/admin/assistant', key: 'assistantNav', icon: 'book'},
   {href: '/admin/settings', key: 'settingsNav', icon: 'settings'},
 ] as const;
 
