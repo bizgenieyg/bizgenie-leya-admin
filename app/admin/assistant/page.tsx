@@ -4,6 +4,7 @@ import AppShell from '@/components/ui/app-shell';
 import AssistantSettings from '@/components/tenant/assistant-settings';
 import KnowledgeEditor from '@/components/tenant/knowledge-editor';
 import ConversationSimulator from '@/components/tenant/conversation-simulator';
+import KnowledgeMaterials from '@/components/tenant/knowledge-materials';
 import {useI18n} from '@/lib/i18n';
 
 export default function AssistantPage(){
@@ -15,7 +16,7 @@ export default function AssistantPage(){
    <div className="assistant-controls">
     <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('assistantIdentityKicker')}</p><h2>{t('assistantTitle')}</h2><p>{t('assistantSettingsHelp')}</p></div></div><AssistantSettings/></section>
     <section id="knowledge" className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('knowledgeKicker')}</p><h2>{t('faqTitle')}</h2><p>{t('knowledgeHelp')}</p></div></div><KnowledgeEditor/></section>
-    <section className="surface-card materials-preview"><div><p className="card-kicker">{t('materialsKicker')}</p><h2>{t('uploadedMaterials')}</h2><p>{t('uploadedMaterialsHelp')}</p></div><span className="soft-badge">{t('comingSoon')}</span></section>
+    <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('materialsKicker')}</p><h2>{t('uploadedMaterials')}</h2><p>{t('uploadedMaterialsHelp')}</p></div></div><KnowledgeMaterials/></section>
    </div>
    <div className="assistant-simulator"><ConversationSimulator/></div>
   </div>
