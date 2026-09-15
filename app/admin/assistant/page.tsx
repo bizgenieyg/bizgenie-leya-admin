@@ -13,12 +13,12 @@ export default function AssistantPage(){
   <Link href="/admin" className="back-link"><span className="direction-icon">←</span> {t('backCabinet')}</Link>
   <header className="page-heading"><div><p className="eyebrow">Leya</p><h1>{t('assistantNav')}</h1><p>{t('assistantWorkspaceHelp')}</p></div></header>
   <div className="assistant-workspace">
+   <div className="assistant-simulator"><ConversationSimulator/></div>
    <div className="assistant-controls">
     <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('assistantIdentityKicker')}</p><h2>{t('assistantTitle')}</h2><p>{t('assistantSettingsHelp')}</p></div></div><AssistantSettings/></section>
     <section id="knowledge" className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('knowledgeKicker')}</p><h2>{t('faqTitle')}</h2><p>{t('knowledgeHelp')}</p></div></div><KnowledgeEditor/></section>
     <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('materialsKicker')}</p><h2>{t('uploadedMaterials')}</h2><p>{t('uploadedMaterialsHelp')}</p></div></div><KnowledgeMaterials/></section>
    </div>
-   <div className="assistant-simulator"><ConversationSimulator/></div>
   </div>
  </div></main></AppShell>;
 }

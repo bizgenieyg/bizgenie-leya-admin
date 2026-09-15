@@ -49,3 +49,25 @@
 .knowledge-materials{display:grid;gap:var(--space-section)}.file-drop{display:grid;gap:.375rem;padding:var(--space-section);border:.0625rem dashed var(--border);border-radius:var(--radius-control);background:var(--surface-soft);cursor:pointer}.file-drop span,.materials-list p,.materials-list small{color:var(--muted)}.file-drop input{margin-block-start:var(--control-gap);inline-size:100%}.materials-list{display:grid;gap:var(--control-gap);margin:0;padding:0;list-style:none}.materials-list li{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-section);padding:var(--space-section);border:.0625rem solid var(--border);border-radius:var(--radius-control)}.materials-list p{margin-block:.25rem}.materials-list small{overflow-wrap:anywhere}
 
 .knowledge-materials{display:grid;gap:var(--space-section)}.file-drop{display:grid;gap:.375rem;padding:var(--space-section);border:.0625rem dashed var(--border);border-radius:var(--radius-control);background:var(--surface-soft);cursor:pointer}.file-drop span,.materials-list p,.materials-list small{color:var(--muted)}.file-drop input{margin-block-start:var(--control-gap);inline-size:100%}.materials-list{display:grid;gap:var(--control-gap);margin:0;padding:0;list-style:none}.materials-list li{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-section);padding:var(--space-section);border:.0625rem solid var(--border);border-radius:var(--radius-control)}.materials-list p{margin-block:.25rem}.materials-list small{overflow-wrap:anywhere}
+
+/* Sidebar controls use one state-aware arrow transform in both directions. */
+.collapse-arrow{display:inline-block;transform:none}
+.sidebar-collapsed .collapse-arrow,[dir="rtl"] .collapse-arrow{transform:scaleX(-1)}
+[dir="rtl"] .sidebar-collapsed .collapse-arrow{transform:none}
+.side-controls{display:flex;align-items:center;justify-content:center;gap:var(--control-gap)}
+.compact-control{flex:0 0 var(--control-height);inline-size:var(--control-height);padding:0}
+.language-control{font-family:var(--font-mono),monospace;font-size:.75rem;letter-spacing:.02em}
+
+/* The simulator leads the page and stays visible while desktop settings scroll. */
+.assistant-workspace{grid-template-columns:minmax(0,1fr)}
+@media(min-width:56.25rem){.assistant-simulator{position:sticky;inset-block-start:var(--space-section);z-index:10;padding-block-end:var(--control-gap);background:var(--canvas)}}
+@media(max-width:56.1875rem){.assistant-simulator{position:static}}
+
+/* Material rows keep metadata flexible and controls stable. */
+.materials-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.material-file{min-inline-size:0}
+.material-file strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.materials-list .row-actions{display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:var(--control-gap);white-space:nowrap}
+.materials-list .row-actions .button{padding-inline:var(--control-padding-inline)}
+@media(max-width:39.9375rem){.materials-list li{grid-template-columns:minmax(0,1fr)}.materials-list .row-actions{justify-content:flex-start;flex-wrap:wrap}}
+.collapse-button .collapse-arrow{inline-size:1.5rem;block-size:1.5rem}
