@@ -78,3 +78,12 @@
   .assistant-simulator .section-heading{margin-block-end:var(--control-gap)}
   .assistant-simulator .simulator-chat{min-block-size:9rem;max-block-size:min(12rem,28vh);padding:var(--control-gap)}
 }
+
+/* Mobile is the primary simulator surface: keep the conversation useful above the keyboard. */
+@media(max-width:39.9375rem){
+  .assistant-simulator .simulator{gap:var(--control-gap)}
+  .assistant-simulator .section-heading{margin-block-end:var(--control-gap)}
+  .assistant-simulator .simulator-chat{min-block-size:10rem;max-block-size:min(16rem,38dvh);padding:var(--control-gap)}
+  .assistant-simulator .simulator-compose{grid-template-columns:minmax(0,1fr) auto}
+  .assistant-simulator .simulator-compose .button{inline-size:auto;padding-inline:var(--control-padding-inline)}
+}
