@@ -4,8 +4,8 @@ import { type FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getOnboardingTenant } from '@/lib/onboarding/tenant';
-import { buttonClass, inputClass } from '@/app/onboarding/step-frame';
 import {useI18n} from '@/lib/i18n';
+import {Button,Check,OwnerContentLanguage,Select} from '@/components/ui/primitives';
 
 const languages = [{ id: 'he', key: 'hebrew' }, { id: 'ru', key: 'russian' }, { id: 'en', key: 'english' }];
 const tones=[
@@ -87,23 +87,17 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
       {loading ? <p role="status">{t('loading')}</p> : null}
       {saved ? <p role="status" className="mb-4 text-sm text-green-600">{t('settingsSaved')}</p> : null}
       {!loading && tenantId && !canEdit ? <p className="mb-4 text-sm text-gray-500">{t('readOnly')}</p> : null}
-      <form className="space-y-5" onSubmit={handleSubmit}>
-        <fieldset className="space-y-5" disabled={loading || saving || !tenantId || !canEdit}>
-          <div><label htmlFor="assistant-name" className="text-sm font-medium text-gray-700">{t('assistantName')}</label>
-            <input id="assistant-name" className={inputClass} required value={name} onChange={(event) => setName(event.target.value)} /></div>
-          <fieldset><legend className="text-sm font-medium text-gray-700">{t('responseLanguages')}</legend>
-            <div className="mt-2 flex flex-wrap gap-4">{languages.map(({ id, key }) => (
-              <label key={id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={allowedLanguages.includes(id)} onChange={(event) => setAllowedLanguages((current) => event.target.checked ? [...current, id] : current.filter((language) => language !== id))} />{t(key)}</label>
-            ))}</div>
-          </fieldset>
-          <div><label htmlFor="tone" className="text-sm font-medium text-gray-700">{t('tone')}</label>
-            <select id="tone" className={inputClass} value={tone} onChange={(event) => changeTone(event.target.value)}>{tones.map(item=><option key={item.id} value={item.id}>{t(item.label)}</option>)}</select><p className="field-help">{t(tones.find(item=>item.id===tone)?.help??'toneFriendlyProfessionalHelp')}</p></div>
-          <div className="tone-preview"><span>{t('tonePreview')}</span><p dir="auto">{style.trim()||toneExample}</p></div><div><label htmlFor="style" className="text-sm font-medium text-gray-700">{t('answerStyle')}</label><p className="field-help">{t('answerStyleHelp')}</p><textarea id="style" className={inputClass} rows={4} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></div>
+      <form className="compact-form" onSubmit={handleSubmit}>
+        <fieldset className="compact-form" disabled={loading || saving || !tenantId || !canEdit}>
+          <label htmlFor="assistant-name" className="field-label">{t('assistantName')}<input id="assistant-name" className="field-control" required value={name} onChange={(event) => setName(event.target.value)} /></label>
+          <fieldset className="field-group"><legend className="field-label">{t('responseLanguages')}</legend><div className="check-grid">{languages.map(({ id, key }) => <Check key={id} label={t(key)} checked={allowedLanguages.includes(id)} onChange={checked=>setAllowedLanguages(current=>checked?[...current,id]:current.filter(language=>language!==id))}/>)}</div></fieldset>
+          <label htmlFor="tone" className="field-label">{t('tone')}<Select id="tone" className="field-control" value={tone} onChange={(event) => changeTone(event.target.value)}>{tones.map(item=><option key={item.id} value={item.id}>{t(item.label)}</option>)}</Select><span className="field-help">{t(tones.find(item=>item.id===tone)?.help??'toneFriendlyProfessionalHelp')}</span></label>
+          <div className="tone-preview"><span>{t('tonePreview')}</span><p dir="auto">{style.trim()||toneExample}</p>{style.trim()?<OwnerContentLanguage text={style}/>:null}</div><label htmlFor="style" className="field-label">{t('answerStyle')}<span className="field-help">{t('answerStyleHelp')}</span><textarea id="style" className="field-control" rows={3} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></label>
         </fieldset>
         {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
         <div className="flex items-center justify-between gap-4">
           {onboarding ? <Link href="/onboarding/step-1" className="text-sm text-blue-600">{t('back')}</Link> : null}
-          <button className={buttonClass} disabled={loading || saving || !tenantId || !canEdit || !name.trim()} type="submit">{saving ? t('saving') : onboarding ? <>{t('next')} <span className="direction-icon">→</span></> : t('save')}</button>
+          <Button disabled={loading || saving || !tenantId || !canEdit || !name.trim()} type="submit">{saving ? t('saving') : onboarding ? <>{t('next')} <span className="direction-icon">→</span></> : t('save')}</Button>
         </div>
       </form>
     </>

@@ -29,9 +29,9 @@ export default function AppShell({children}: {children: ReactNode}) {
   const router=useRouter();
   const {t, locale, setLocale} = useI18n();
   const [collapsed,setCollapsed]=useState(false);
-  const [menuOpen,setMenuOpen]=useState(false),[logoutError,setLogoutError]=useState(''),[profile,setProfile]=useState<{businessName:string;role:string}|null>(null),menuRef=useRef<HTMLDivElement>(null);
+  const [menuOpen,setMenuOpen]=useState(false),[logoutError,setLogoutError]=useState(''),[profile,setProfile]=useState<{businessName:string;role:string;email:string}|null>(null),menuRef=useRef<HTMLDivElement>(null);
   useEffect(()=>setCollapsed(localStorage.getItem('leya-sidebar-collapsed')==='true'),[]);
-  useEffect(()=>{void fetch('/api/profile',{cache:'no-store'}).then(response=>response.ok?response.json():null).then(setProfile).catch(()=>undefined)},[]);
+  useEffect(()=>{let active=true;void (async()=>{try{const response=await fetch('/api/profile',{cache:'no-store'});if(response.ok){const value=await response.json();if(active)setProfile(value);return}const supabase=createClient(),{data:{user}}=await supabase.auth.getUser();if(!user)return;const membership=await supabase.from('tenant_users').select('tenant_id,role').eq('user_id',user.id).limit(1).maybeSingle();const tenant=membership.data?await supabase.from('tenants').select('business_name,name').eq('id',membership.data.tenant_id).maybeSingle():null;if(active)setProfile({email:user.email??'',role:String(membership.data?.role??'owner'),businessName:String(tenant?.data?.business_name||tenant?.data?.name||t('businessName'))});}catch{/* The shell remains usable while profile details retry on the next load. */}})();return()=>{active=false}},[t]);
   useEffect(()=>{const{data:{subscription}}=createClient().auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||!session){router.replace('/login?error=session_expired');router.refresh()}});return()=>subscription.unsubscribe()},[router]);
   useEffect(()=>{if(!menuOpen)return;const close=(event:MouseEvent)=>{if(!menuRef.current?.contains(event.target as Node))setMenuOpen(false)};document.addEventListener('mousedown',close);return()=>document.removeEventListener('mousedown',close)},[menuOpen]);
   async function logout(){setLogoutError('');try{const response=await fetch('/api/auth/logout',{method:'POST'});if(!response.ok){setLogoutError(t('logoutError'));return}router.replace('/login');router.refresh()}catch{setLogoutError(t('logoutError'))}}
@@ -47,7 +47,7 @@ export default function AppShell({children}: {children: ReactNode}) {
         })}
       </nav>
       <div className="side-controls"><ThemeToggle/><button type="button" className="compact-control language-control" title={t('cabinetLanguage')} aria-label={`${t('cabinetLanguage')}: ${locale.toUpperCase()}`} onClick={()=>setLocale(locale==='ru'?'en':locale==='en'?'he':'ru')}>{locale.toUpperCase()}</button></div><div className="user-menu-wrap" ref={menuRef}>{menuOpen?<div className="user-menu" role="menu"><Link href="/admin/profile" role="menuitem" onClick={()=>setMenuOpen(false)}>{t('profileMenu')}</Link><button type="button" role="menuitem" onClick={()=>void logout()}>{t('logout')}</button>{logoutError?<p role="alert" className="user-menu-error">{logoutError}</p>:null}</div>:null}<button type="button" className="side-foot" aria-haspopup="menu" aria-expanded={menuOpen} aria-label={t('userMenu')} onClick={()=>setMenuOpen(value=>!value)}>
-        <div className="avatar" aria-hidden="true">{(profile?.businessName||'L').slice(0,1).toUpperCase()}</div><div className="collapsible-label"><strong>{profile?.businessName||t('businessName')}</strong><small>{profile?t(`role_${profile.role}`):t('ownerRole')}</small></div>
+        <div className="avatar" aria-hidden="true">{(profile?.businessName||'L').slice(0,1).toUpperCase()}</div><div className="collapsible-label user-identity"><strong>{profile?.businessName||t('businessName')}</strong><small>{profile?.email||t('ownerRole')}</small></div>
       </button></div>
     </aside>
     <div className="app-main">
