@@ -65,7 +65,7 @@
 
 /* The simulator leads the page and stays visible while desktop settings scroll. */
 .assistant-workspace{grid-template-columns:minmax(0,1fr)}
-@media(min-width:56.25rem){.assistant-simulator{position:sticky;inset-block-start:var(--space-section);z-index:10;padding-block-end:var(--control-gap);background:var(--canvas)}}
+@media(min-width:72rem){.assistant-simulator{position:sticky;inset-block-start:var(--space-section);z-index:1;align-self:start}}
 @media(max-width:56.1875rem){.assistant-simulator{position:static}}
 
 /* Material rows keep metadata flexible and controls stable. */
@@ -118,6 +118,7 @@
 
 /* Product-wide surface and typography contract for all four cabinet sections. */
 .page-heading,.section-heading,.connection-copy{min-inline-size:0}
+.page-heading,.section-heading,.surface-card,.connection-card,.launch-guide,.client-list-card{text-align:start}
 .page-heading{display:flex;justify-content:space-between;gap:var(--space-3)}
 .page-heading h1,.section-heading h2,.surface-card>h2,.connection-card h2{font-weight:750;letter-spacing:-.025em;line-height:1.15}
 .page-heading>div>p:last-child,.section-heading p,.connection-copy p:last-child{max-inline-size:62ch;color:var(--muted)}
@@ -137,4 +138,8 @@
 }
 @media(min-width:56.25rem){
   .surface-card,.connection-card,.launch-guide,.simulator{padding:var(--space-5)}
+  .metric-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
+.simulator-heading-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:var(--space-1)}
+.simulator-heading-actions .button{min-block-size:var(--touch);padding-inline:var(--space-2)}
+.gap-actions{flex:none;flex-wrap:nowrap;white-space:nowrap}.gap-actions a{white-space:nowrap}
