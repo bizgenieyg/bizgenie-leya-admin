@@ -57,6 +57,11 @@
 .side-controls{display:flex;align-items:center;justify-content:center;gap:var(--control-gap)}
 .compact-control{flex:0 0 var(--control-height);inline-size:var(--control-height);padding:0}
 .language-control{font-family:var(--font-mono),monospace;font-size:.75rem;letter-spacing:.02em}
+.language-picker{position:relative;display:grid;align-items:center;min-block-size:var(--control-height);min-inline-size:4.25rem;border:.0625rem solid var(--border);border-radius:var(--radius-control);background:var(--surface);color:var(--text)}
+.language-picker select{inline-size:100%;min-block-size:var(--control-height);appearance:none;border:0;background:transparent;color:inherit;padding-block:0;padding-inline:.75rem 1.65rem;font:800 .75rem/1 var(--font-mono),monospace;cursor:pointer}
+.language-picker svg{pointer-events:none;position:absolute;inset-inline-end:.5rem;inline-size:.85rem;block-size:.85rem;color:var(--muted)}
+.sidebar-collapsed .language-picker{min-inline-size:var(--control-height);inline-size:var(--control-height)}
+.sidebar-collapsed .language-picker select{padding-inline:.45rem 1.15rem;font-size:.68rem}
 
 /* The simulator leads the page and stays visible while desktop settings scroll. */
 .assistant-workspace{grid-template-columns:minmax(0,1fr)}
@@ -109,4 +114,27 @@
   .assistant-simulator .simulator-chat{min-block-size:10rem;max-block-size:min(16rem,38dvh);padding:var(--control-gap)}
   .assistant-simulator .simulator-compose{grid-template-columns:minmax(0,1fr) auto}
   .assistant-simulator .simulator-compose .button{inline-size:auto;padding-inline:var(--control-padding-inline)}
+}
+
+/* Product-wide surface and typography contract for all four cabinet sections. */
+.page-heading,.section-heading,.connection-copy{min-inline-size:0}
+.page-heading{display:flex;justify-content:space-between;gap:var(--space-3)}
+.page-heading h1,.section-heading h2,.surface-card>h2,.connection-card h2{font-weight:750;letter-spacing:-.025em;line-height:1.15}
+.page-heading>div>p:last-child,.section-heading p,.connection-copy p:last-child{max-inline-size:62ch;color:var(--muted)}
+.surface-card,.connection-card,.launch-guide,.simulator,.directory>.state-card{border:.0625rem solid var(--border);border-radius:var(--radius-card);background:var(--surface)}
+.surface-card,.connection-card,.launch-guide,.simulator{padding:var(--space-4)}
+.summary-card,.connection-card,.launch-guide,.billing-card{min-block-size:auto}
+.metric,.state-card,.knowledge-list li,.materials-list li,.exception-list article,.profile-details dl div{border-radius:var(--radius-control)}
+.client-list-card,.client-table-row{min-block-size:var(--touch)}
+@media(max-width:39.9375rem){
+  .mobile-head{gap:var(--space-2)}
+  .header-controls{gap:var(--space-1)}
+  .mobile-language-picker{min-inline-size:3.65rem}
+  .page-heading h1{font-size:clamp(1.6rem,8vw,2rem)}
+  .surface-card,.connection-card,.launch-guide,.simulator{padding:var(--space-3)}
+  .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .metric{min-block-size:6.25rem}
+}
+@media(min-width:56.25rem){
+  .surface-card,.connection-card,.launch-guide,.simulator{padding:var(--space-5)}
 }

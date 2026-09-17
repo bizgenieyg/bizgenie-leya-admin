@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getOnboardingTenant } from '@/lib/onboarding/tenant';
 import {useI18n} from '@/lib/i18n';
-import {Button,Check,OwnerContentLanguage,Select} from '@/components/ui/primitives';
+import {Button,Check,Select} from '@/components/ui/primitives';
 
 const languages = [{ id: 'he', key: 'hebrew' }, { id: 'ru', key: 'russian' }, { id: 'en', key: 'english' }];
 const tones=[
@@ -81,7 +81,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
 
   const selectedTone=tones.find(item=>item.id===tone)??tones[0];
   const toneExample=t(selectedTone.example);
-  function changeTone(next:string){const previous=t(selectedTone.example);setTone(next);const nextTone=tones.find(item=>item.id===next)??tones[0];if(!style.trim()||style===previous)setStyle(t(nextTone.example));}
+  function changeTone(next:string){setTone(next);}
   return (
     <>
       {loading ? <p role="status">{t('loading')}</p> : null}
@@ -92,7 +92,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
           <label htmlFor="assistant-name" className="field-label">{t('assistantName')}<input id="assistant-name" className="field-control" required value={name} onChange={(event) => setName(event.target.value)} /></label>
           <fieldset className="field-group"><legend className="field-label">{t('responseLanguages')}</legend><div className="check-grid">{languages.map(({ id, key }) => <Check key={id} label={t(key)} checked={allowedLanguages.includes(id)} onChange={checked=>setAllowedLanguages(current=>checked?[...current,id]:current.filter(language=>language!==id))}/>)}</div></fieldset>
           <label htmlFor="tone" className="field-label">{t('tone')}<Select id="tone" className="field-control" value={tone} onChange={(event) => changeTone(event.target.value)}>{tones.map(item=><option key={item.id} value={item.id}>{t(item.label)}</option>)}</Select><span className="field-help">{t(tones.find(item=>item.id===tone)?.help??'toneFriendlyProfessionalHelp')}</span></label>
-          <div className="tone-preview"><span>{t('tonePreview')}</span><p dir="auto">{style.trim()||toneExample}</p>{style.trim()?<OwnerContentLanguage text={style}/>:null}</div><label htmlFor="style" className="field-label">{t('answerStyle')}<span className="field-help">{t('answerStyleHelp')}</span><textarea id="style" className="field-control" rows={3} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></label>
+          <div className="tone-preview"><span>{t('tonePreview')}</span><p>{toneExample}</p></div><label htmlFor="style" className="field-label">{t('answerStyle')}<span className="field-help">{t('answerStyleHelp')}</span><textarea id="style" className="field-control" rows={3} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></label>
         </fieldset>
         {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
         <div className="flex items-center justify-between gap-4">
