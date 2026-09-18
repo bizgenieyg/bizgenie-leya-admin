@@ -20,8 +20,28 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
   const [qrError, setQrError] = useState(false);
   const [attempt, setAttempt] = useState<{ mode: 'read' | 'connect' | 'disconnect' }>({ mode: 'read' });
   const [confirmDisconnect,setConfirmDisconnect]=useState(false);
+  const [confirmNumberChange,setConfirmNumberChange]=useState(false);
+  const [numberChangeError,setNumberChangeError]=useState('');
+  const numberChangeAsked = useRef(false);
   const active = useRef<AbortController | null>(null);
   const scanning = state.status === 'SCAN_QR_CODE' && state.qrAvailable && !expired && canEdit;
+
+  // Owner answers once per detected swap (reset or keep); either way we tell the
+  // backend so the same number is not asked about again on the next reload.
+  async function resolveNumberChange(reset: boolean) {
+    setConfirmNumberChange(false);
+    setNumberChangeError('');
+    try {
+      if (reset) {
+        const response = await fetch('/api/reset-tenant-data', { method: 'POST' });
+        if (!response.ok) throw new Error('reset');
+      }
+      const ack = await fetch('/api/waha/ack-number-change', { method: 'POST' });
+      if (!ack.ok) throw new Error('ack');
+    } catch (error) {
+      setNumberChangeError(t(error instanceof Error && error.message === 'reset' ? 'resetTenantDataError' : 'numberChangeSyncError'));
+    }
+  }
 
   useEffect(() => {
     const errorText=(error:unknown)=>translate.current(error instanceof Error?error.message:backendUnavailable);
@@ -39,10 +59,18 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
     setExpired(false);
     setError('');
     setBusy(true);
+    numberChangeAsked.current = false;
 
     function accept(next: SessionState) {
       setState(next);
       setError('');
+      // Gated for cabinet/canEdit at render time (below), not here, since this
+      // closure is captured once per connection attempt and canEdit can still
+      // flip true shortly after mount, before a scan ever reaches WORKING.
+      if (next.status === 'WORKING' && next.numberChanged && !numberChangeAsked.current) {
+        numberChangeAsked.current = true;
+        setConfirmNumberChange(true);
+      }
       if (!shouldPoll(next.status)) {
         clearInterval(interval);
         clearTimeout(timeout);
@@ -111,6 +139,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
       <Button type="button" tone="secondary" onClick={() => { setQrTimestamp(Date.now()); setQrError(false); }}>{t('refreshCode')}</Button>
     </section> : null}
     {error ? <ErrorState message={error} onRetry={()=>run('read')}/> : null}
+    {numberChangeError ? <ErrorState message={numberChangeError} onRetry={()=>{setNumberChangeError('');setConfirmNumberChange(true);}}/> : null}
     {expired || error ? <button type="button" disabled={busy} className={buttonClass} onClick={() => run('read')}>{t('checkStatus')}</button>
       : canEdit && !busy && !shouldPoll(state.status) && !isConnected(state.status) && state.status
         ? <button type="button" className={buttonClass} onClick={() => run('connect')}>{actionText(state.status)}</button> : null}
@@ -120,5 +149,6 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
       <Link className="text-sm text-blue-600" href="/onboarding/step-4">{t('skip')}</Link>
       {isConnected(state.status) ? <Link className={buttonClass} href="/onboarding/owner">{t('next')} <span className="direction-icon">→</span></Link> : null}
     </div> : null}<ConfirmDialog open={confirmDisconnect} danger title={t('confirmAction')} onCancel={()=>setConfirmDisconnect(false)} onConfirm={()=>{setConfirmDisconnect(false);run('disconnect')}}><p>{t('disconnectConfirm')}</p></ConfirmDialog>
+    {cabinet && canEdit ? <ConfirmDialog open={confirmNumberChange} danger title={t('numberChangedTitle')} onCancel={()=>void resolveNumberChange(false)} onConfirm={()=>void resolveNumberChange(true)}><p>{t('resetTenantDataConfirm')}</p></ConfirmDialog> : null}
   </div>;
 }

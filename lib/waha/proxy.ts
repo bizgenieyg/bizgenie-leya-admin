@@ -11,6 +11,7 @@ const operations = {
   qr: { path: '/api/admin/waha/qr', method: 'GET' },
   disconnect: { path: '/api/admin/waha/disconnect', method: 'POST' },
   reconnect: { path: '/api/admin/waha/reconnect', method: 'POST' },
+  ackNumberChange: { path: '/api/admin/waha/ack-number-change', method: 'POST' },
 } as const;
 type Operation = keyof typeof operations;
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -96,11 +97,16 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
       if (data?.disconnected !== true) throw new Error('Invalid disconnect response');
       return Response.json({ status: 'DISCONNECTED' }, { headers });
     }
+    if (operation === 'ackNumberChange') {
+      if (data?.acknowledged !== true) throw new Error('Invalid acknowledge response');
+      return Response.json({ acknowledged: true }, { headers });
+    }
     const status = typeof data?.status === 'string' ? data.status : data?.status?.status;
     if (typeof status !== 'string') throw new Error('Invalid status response');
     // Only send the status needed by the UI, not arbitrary admin API data.
     return Response.json({ status, qrAvailable: status === 'SCAN_QR_CODE' && data?.qrAvailable !== false,
-      ...(status === 'FAILED' && data?.reason === 'waha_status_unavailable' ? { reason: 'wahaStatusUnavailable' } : {})
+      ...(status === 'FAILED' && data?.reason === 'waha_status_unavailable' ? { reason: 'wahaStatusUnavailable' } : {}),
+      ...(data?.numberChanged === true ? { numberChanged: true } : {}),
     }, { status: upstream.status, headers });
   } catch {
     console.error('waha_proxy_request_failed', { operation });

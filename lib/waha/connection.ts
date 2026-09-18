@@ -3,7 +3,7 @@ export const isFailed = (status: string) => ['FAILED', 'STOPPED', 'DISCONNECTED'
 export const backendUnavailable = 'backendUnavailable';
 export const connectionErrorKeys={unauthorized:'connectionSessionExpired',forbidden:'connectionForbidden',conflict:'connectionConflict',request:'connectionRequestError',invalidResponse:'connectionInvalidResponse'} as const;
 export const shouldPoll = (status: string) => ['STARTING', 'SCAN_QR_CODE'].includes(status);
-export type SessionState = { status: string; qrAvailable: boolean; reason?: string };
+export type SessionState = { status: string; qrAvailable: boolean; reason?: string; numberChanged?: boolean };
 
 export async function requestSession(path: string, signal: AbortSignal, method = 'GET'): Promise<SessionState> {
   let response: Response;
@@ -21,7 +21,8 @@ export async function requestSession(path: string, signal: AbortSignal, method =
   if (typeof data.status !== 'string' || !data.status.trim()) throw new Error(connectionErrorKeys.invalidResponse);
   const status = data.status.trim();
   return { status, qrAvailable: status === 'SCAN_QR_CODE' && data.qrAvailable !== false,
-    ...(status === 'FAILED' && typeof data.reason === 'string' ? { reason: data.reason } : {}) };
+    ...(status === 'FAILED' && typeof data.reason === 'string' ? { reason: data.reason } : {}),
+    ...(data.numberChanged === true ? { numberChanged: true } : {}) };
 }
 export async function requestStatus(path: string, signal: AbortSignal, method = 'GET') {
   return (await requestSession(path, signal, method)).status;

@@ -9,9 +9,9 @@ const compiled = ts.transpileModule(readFileSync('components/tenant/whatsapp-con
 const connection = {};
 vm.runInNewContext(ts.transpileModule(readFileSync('lib/waha/connection.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: connection });
 function text(tree) { if (Array.isArray(tree)) return tree.map(text).join(''); if (tree && typeof tree === 'object') return text(tree.props?.children); return typeof tree === 'string' ? tree : ''; }
-function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = true, confirm = true } = {}) {
-  let time = 1000000, index = 0, serial = 0, dirty = true, tree, status = initialStatus;
-  const slots = [], effects = [], timers = new Map(), calls = [];
+function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = true, confirm = true, fetchOk = true } = {}) {
+  let time = 1000000, index = 0, serial = 0, dirty = true, tree, status = initialStatus, numberChanged = false;
+  const slots = [], effects = [], timers = new Map(), calls = [], fetchCalls = [];
   const exports = {};
   function timer(fn, ms, repeat) { const id = ++serial; timers.set(id, { fn, ms, repeat, due: time + ms }); return id; }
   const jsx = (type, props) => ({ type, props });
@@ -19,6 +19,7 @@ function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = tr
     exports, AbortController, Error, window: { confirm: () => confirm }, Date: { now: () => time },
     setInterval: (fn, ms) => timer(fn, ms, true), setTimeout: (fn, ms) => timer(fn, ms, false),
     clearInterval: (id) => timers.delete(id), clearTimeout: (id) => timers.delete(id),
+    fetch: async (path, options) => { fetchCalls.push({ path, method: options?.method }); return { ok: fetchOk }; },
     require(name) {
       if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
       if (name === 'react') return {
@@ -35,14 +36,14 @@ function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = tr
       };
       if (name === '@/lib/waha/connection') return {
         ...connection,
-        beginSession: async signal => { calls.push({ kind: 'start', signal }); return { status, qrAvailable: status === 'SCAN_QR_CODE' }; },
+        beginSession: async signal => { calls.push({ kind: 'start', signal }); return { status, qrAvailable: status === 'SCAN_QR_CODE', ...(status === 'WORKING' && numberChanged ? { numberChanged: true } : {}) }; },
         requestSession: async (path, signal, method = 'GET') => {
           calls.push({ kind: method === 'POST' ? 'disconnect' : calls.length ? 'poll' : 'initial', signal });
           if (method === 'POST') status = 'DISCONNECTED';
-          return { status, qrAvailable: status === 'SCAN_QR_CODE' };
+          return { status, qrAvailable: status === 'SCAN_QR_CODE', ...(status === 'WORKING' && numberChanged ? { numberChanged: true } : {}) };
         },
       };
-      if (name === '@/lib/i18n') { const words={disconnect:'Отключить',disconnectConfirm:'Отключить WhatsApp?',next:'Далее',skip:'Пропустить',ownerSettings:'Настройки владельца',checkStatus:'Проверить статус',waitExpired:'Истекло время ожидания',statusNotCreated:'Не подключено',statusStopped:'Отключено',statusStarting:'Подключаем...',statusScan:'Ожидаем сканирования QR-кода.',statusWorking:'Подключено',statusFailed:'Не удалось подключиться',statusUnknown:'Состояние подключения уточняется',connectWhatsApp:'Подключить WhatsApp',connect:'Подключить',retry:'Попробовать заново'}; return {useI18n:()=>({t:key=>words[key]||key})}; }
+      if (name === '@/lib/i18n') { const words={disconnect:'Отключить',disconnectConfirm:'Отключить WhatsApp?',next:'Далее',skip:'Пропустить',ownerSettings:'Настройки владельца',checkStatus:'Проверить статус',waitExpired:'Истекло время ожидания',statusNotCreated:'Не подключено',statusStopped:'Отключено',statusStarting:'Подключаем...',statusScan:'Ожидаем сканирования QR-кода.',statusWorking:'Подключено',statusFailed:'Не удалось подключиться',statusUnknown:'Состояние подключения уточняется',connectWhatsApp:'Подключить WhatsApp',connect:'Подключить',retry:'Попробовать заново',numberChangedTitle:'Похоже, вы подключили другой номер WhatsApp',resetTenantDataConfirm:'Все клиенты, диалоги, эскалации и статистика будут удалены безвозвратно. Продолжить?',resetTenantDataError:'Не удалось сбросить данные кабинета. Попробуйте ещё раз.',numberChangeSyncError:'Не удалось сохранить изменение номера. Обновите страницу и попробуйте ещё раз.'}; return {useI18n:()=>({t:key=>words[key]||key})}; }
       if (name === '@/components/ui/primitives') return { Spinner:()=>jsx('span',{className:'animate-spin'}), ErrorState:({message})=>jsx('p',{children:message}), Button:({children,...props})=>jsx('button',{...props,children}), ConfirmDialog:({open,onCancel,onConfirm,children})=>open?jsx('section',{children:[children,jsx('button',{onClick:onCancel,children:'cancel'}),jsx('button',{onClick:onConfirm,children:'confirm'})]}):null };
       return {};
     },
@@ -64,7 +65,7 @@ function harness({ initialStatus = 'SCAN_QR_CODE', cabinet = false, canEdit = tr
     time = until; await settle();
   }
   render();
-  return { render, calls, timers, advance, setStatus: next => { status = next; },
+  return { render, calls, fetchCalls, timers, advance, setStatus: next => { status = next; }, setNumberChanged: next => { numberChanged = next; },
     start: settle, settle,
     unmount: () => { for (const slot of slots) slot?.cleanup?.(); },
   };
@@ -146,4 +147,64 @@ test('viewer cannot see mutation controls or fetch QR', async () => {
   assert.equal(image(app), undefined);
   assert.equal(nodes(app.render()).filter(node => node.type === 'button' || (typeof node.type === 'function' && node.props?.onClick)).length, 0);
   app.unmount();
+});
+
+function numberChangeDialog(app) {
+  return nodes(app.render()).find(node => node.type?.name === 'ConfirmDialog' && node.props.title === 'Похоже, вы подключили другой номер WhatsApp');
+}
+
+test('cabinet asks once to clear data when a different WhatsApp number connects', async () => {
+  const app = harness({ initialStatus: 'SCAN_QR_CODE', cabinet: true, canEdit: true });
+  await app.start();
+  app.setNumberChanged(true);
+  app.setStatus('WORKING');
+  await app.advance(3000);
+  assert.equal(numberChangeDialog(app).props.open, true);
+  app.unmount();
+});
+test('confirming the swap dialog resets tenant data then acknowledges the new number', async () => {
+  const app = harness({ initialStatus: 'SCAN_QR_CODE', cabinet: true, canEdit: true });
+  await app.start();
+  app.setNumberChanged(true); app.setStatus('WORKING');
+  await app.advance(3000);
+  numberChangeDialog(app).props.onConfirm();
+  await app.settle();
+  assert.deepEqual(app.fetchCalls, [
+    { path: '/api/reset-tenant-data', method: 'POST' },
+    { path: '/api/waha/ack-number-change', method: 'POST' },
+  ]);
+  assert.equal(numberChangeDialog(app).props.open, false);
+  app.unmount();
+});
+test('declining the swap dialog keeps data but still acknowledges the new number', async () => {
+  const app = harness({ initialStatus: 'SCAN_QR_CODE', cabinet: true, canEdit: true });
+  await app.start();
+  app.setNumberChanged(true); app.setStatus('WORKING');
+  await app.advance(3000);
+  numberChangeDialog(app).props.onCancel();
+  await app.settle();
+  assert.deepEqual(app.fetchCalls, [{ path: '/api/waha/ack-number-change', method: 'POST' }]);
+  assert.equal(numberChangeDialog(app).props.open, false);
+  app.unmount();
+});
+test('a failed acknowledge is surfaced with a retry, not silently dropped', async () => {
+  const app = harness({ initialStatus: 'SCAN_QR_CODE', cabinet: true, canEdit: true, fetchOk: false });
+  await app.start();
+  app.setNumberChanged(true); app.setStatus('WORKING');
+  await app.advance(3000);
+  numberChangeDialog(app).props.onCancel();
+  await app.settle();
+  const errorNode = nodes(app.render()).find(node => node.type?.name === 'ErrorState');
+  assert.equal(errorNode?.props.message, 'Не удалось сохранить изменение номера. Обновите страницу и попробуйте ещё раз.');
+  app.unmount();
+});
+test('viewer and onboarding are never asked to clear data on a number swap', async () => {
+  for (const options of [{ cabinet: true, canEdit: false }, { cabinet: false, canEdit: true }]) {
+    const app = harness({ initialStatus: 'SCAN_QR_CODE', ...options });
+    await app.start();
+    app.setNumberChanged(true); app.setStatus('WORKING');
+    await app.advance(3000);
+    assert.equal(numberChangeDialog(app), undefined);
+    app.unmount();
+  }
 });

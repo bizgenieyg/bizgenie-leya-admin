@@ -178,3 +178,42 @@ test('FAILED forwards only the stable backend reason code without arbitrary fiel
   assert.equal(data.reason, 'wahaStatusUnavailable');
   assert.equal(data.internal, undefined);
 });
+
+test('status forwards numberChanged only when the backend reports it true', async () => {
+  const changed = fixture({ upstream: Response.json({ status: 'WORKING', numberChanged: true }) });
+  assert.deepEqual(await (await changed.proxy(new Request('https://admin.example/api/waha/status'), 'status')).json(),
+    { status: 'WORKING', qrAvailable: false, numberChanged: true });
+  const unchanged = fixture({ upstream: Response.json({ status: 'WORKING' }) });
+  assert.deepEqual(await (await unchanged.proxy(new Request('https://admin.example/api/waha/status'), 'status')).json(),
+    { status: 'WORKING', qrAvailable: false });
+  const falsy = fixture({ upstream: Response.json({ status: 'WORKING', numberChanged: false }) });
+  assert.equal((await (await falsy.proxy(new Request('https://admin.example/api/waha/status'), 'status')).json()).numberChanged, undefined);
+});
+
+test('reconnect also forwards numberChanged when the retry lands on WORKING', async () => {
+  const { proxy, calls } = fixture({ upstream: Response.json({ status: 'WORKING', numberChanged: true }) });
+  const response = await proxy(post(), 'reconnect');
+  assert.equal(calls[0].url, 'https://backend.example/api/admin/waha/reconnect?tenantId=tenant-a');
+  assert.deepEqual(await response.json(), { status: 'WORKING', qrAvailable: false, numberChanged: true });
+});
+
+test('ackNumberChange posts tenantId, requires owner/admin, and normalizes the backend confirmation', async () => {
+  const { proxy, calls } = fixture({ upstream: Response.json({ acknowledged: true }) });
+  const response = await proxy(post(), 'ackNumberChange');
+  assert.equal(response.status, 200);
+  assert.equal(calls[0].url, 'https://backend.example/api/admin/waha/ack-number-change?tenantId=tenant-a');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(calls[0].options.body, undefined);
+  assert.deepEqual(await response.json(), { acknowledged: true });
+
+  const viewer = fixture({ memberships: [{ tenant_id: 'tenant-a', role: 'viewer' }] });
+  assert.equal((await viewer.proxy(post(), 'ackNumberChange')).status, 403);
+  assert.equal(viewer.calls.length, 0);
+});
+
+test('ackNumberChange never leaks backend response body when malformed', async () => {
+  const { proxy } = fixture({ upstream: Response.json({ acknowledged: false, error: 'sensitive' }) });
+  const response = await proxy(post(), 'ackNumberChange');
+  assert.equal(response.status, 502);
+  assert.doesNotMatch(await response.text(), /sensitive/);
+});
