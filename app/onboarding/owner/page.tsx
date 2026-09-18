@@ -43,7 +43,7 @@ export default function OwnerStep() {
   return <StepFrame step={3} title={t('ownerStepTitle')}>
     <p className="mb-4 text-sm text-gray-600">{t('ownerStepHelp')}</p>
     <form onSubmit={submit} className="space-y-4">
-      <label className="block">{t('ownerPhoneLabel')}<input required type="tel" className={inputClass} value={phone} onChange={e=>{setPhone(e.target.value);setPaired(false);}} /></label>
+      <label className="block">{t('ownerPhoneLabel')}<input required type="tel" inputMode="tel" placeholder="+972501234567" className={inputClass} value={phone} onChange={e=>{setPhone(e.target.value);setPaired(false);}} /></label>
       <p className="text-sm text-gray-600">{t('ownerHoursHelp')}</p>
       <label className="block">{t('ownerZone')}<input required list="owner-time-zones" className={inputClass} value={timeZone} onChange={e=>{setTimeZone(e.target.value);setPaired(false);}} /><datalist id="owner-time-zones">{zones.map(zone=><option key={zone} value={zone} />)}</datalist></label>
       <p className="text-sm text-gray-600">{t('ownerZoneHelp')}</p>
