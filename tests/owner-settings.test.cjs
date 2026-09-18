@@ -8,7 +8,7 @@ const roles={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/onboar
 function load(role='owner',user={id:'authenticated-user'}){
   const calls=[];const exports={};
   const db={auth:{getUser:async()=>({data:{user},error:null})},from(){return{select(){return this;},eq(field,value){assert.equal(field,'user_id');assert.equal(value,'authenticated-user');return this;},limit:async()=>({data:[{tenant_id:'server-tenant',role}],error:null})};}};
-  vm.runInNewContext(compiled,{exports,require:name=>name.includes('leya-env')?{readLeyaBackendEnv:()=>({apiUrl:'https://backend.invalid',adminApiKey:'server-secret'})}:name.includes('roles')?roles:{createClient:()=>db},URL,Response,AbortSignal,console:{error(){}},process:{env:{}},fetch:async(url,options)=>{calls.push({url:String(url),options});return Response.json({pairingCommand:'ПОДТВЕРДИТЬ test'});}});
+  vm.runInNewContext(compiled,{exports,require:name=>name.includes('leya-env')?{readLeyaBackendEnv:()=>({apiUrl:'https://backend.invalid',adminApiKey:'server-secret'})}:name.includes('roles')?roles:{createClient:()=>db},URL,Response,AbortSignal,console:{error(){}},process:{env:{}},fetch:async(url,options)=>{calls.push({url:String(url),options});return Response.json({sent:true});}});
   return{...exports,calls};
 }
 const request=(origin='https://admin.invalid')=>new Request('https://admin.invalid/api/owner-settings',{method:'POST',headers:{host:'admin.invalid',origin,'Content-Type':'application/json'},body:JSON.stringify({tenantId:'attacker-tenant',phone:'972500000001',timeZone:'Europe/Berlin',quietStart:'20:00',quietEnd:'09:00'})});
@@ -17,7 +17,15 @@ test('owner settings proxy derives tenant and credentials on server, forwards on
   const call=h.calls[0];assert.equal(new URL(call.url).searchParams.get('tenantId'),'server-tenant');
   const body=JSON.parse(call.options.body);assert.equal(body.tenantId,undefined);assert.equal(body.timeZone,'Europe/Berlin');
   assert.equal(call.options.headers.Authorization,'Bearer server-secret');
-  assert.equal((await r.text()).includes('server-secret'),false);
+  const text=await r.text();assert.equal(text.includes('server-secret'),false);
+  assert.deepEqual(JSON.parse(text),{sent:true});
+});
+test('owner settings proxy maps a pairing send failure to a translatable code',async()=>{
+  const exports={};const calls=[];
+  const db={auth:{getUser:async()=>({data:{user:{id:'authenticated-user'}},error:null})},from(){return{select(){return this;},eq(){return this;},limit:async()=>({data:[{tenant_id:'server-tenant',role:'owner'}],error:null})};}};
+  vm.runInNewContext(compiled,{exports,require:name=>name.includes('leya-env')?{readLeyaBackendEnv:()=>({apiUrl:'https://backend.invalid',adminApiKey:'server-secret'})}:name.includes('roles')?roles:{createClient:()=>db},URL,Response,AbortSignal,console:{error(){}},process:{env:{}},fetch:async(url,options)=>{calls.push({url:String(url),options});return Response.json({error:'private'},{status:422});}});
+  const r=await exports.POST(request());assert.equal(r.status,422);
+  const body=await r.json();assert.equal(body.code,'ownerPairSendFailed');assert.equal(JSON.stringify(body).includes('private'),false);
 });
 test('owner settings proxy denies viewer, missing session and cross-origin mutation',async()=>{
   for(const [h,r] of [[load('viewer'),request()],[load('owner',null),request()],[load(),request('https://evil.invalid')]]){

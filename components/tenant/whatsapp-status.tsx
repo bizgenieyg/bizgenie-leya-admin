@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getOnboardingTenant } from '@/lib/onboarding/tenant';
 import WhatsAppConnection from './whatsapp-connection';
+import ResetTenantData from './reset-tenant-data';
 
 export default function WhatsAppStatus() {
   const [canEdit, setCanEdit] = useState(false);
@@ -14,5 +15,8 @@ export default function WhatsAppStatus() {
     }).catch(() => { if (!disposed) setCanEdit(false); });
     return () => { disposed = true; };
   }, []);
-  return <WhatsAppConnection cabinet canEdit={canEdit} />;
+  return <>
+    <WhatsAppConnection cabinet canEdit={canEdit} />
+    <ResetTenantData canEdit={canEdit} />
+  </>;
 }

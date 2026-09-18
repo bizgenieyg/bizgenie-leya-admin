@@ -2,8 +2,8 @@ type Translate=(key:string)=>string;
 
 const supported=new Set([
  'settingsRestricted','settingsInvalid','ownerSettingsInvalid','ownerWhatsappRequired',
- 'exceptionInvalid','serviceUnavailable','simulatorLimitError','simulatorProcessingError',
- 'simulatorInvalidMessage','wahaStatusUnavailable',
+ 'ownerPairSendFailed','exceptionInvalid','serviceUnavailable','simulatorLimitError',
+ 'simulatorProcessingError','simulatorInvalidMessage','wahaStatusUnavailable',
 ]);
 
 export function translatedApiError(t:Translate,payload:unknown,fallback:string):string{

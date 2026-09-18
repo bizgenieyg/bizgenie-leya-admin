@@ -21,9 +21,9 @@ async function proxy(request: Request) {
     const body = request.method === 'POST' ? await request.json() : null;
     const upstream = await fetch(url, { method: request.method, headers: { Authorization: `Bearer ${adminApiKey}`, 'Content-Type': 'application/json' },
       ...(body ? { body: JSON.stringify({ phone: body.phone, quietStart: body.quietStart, quietEnd: body.quietEnd, timeZone: body.timeZone }) } : {}), cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000) });
-    if (!upstream.ok) return fail(upstream.status === 400 ? 'ownerSettingsInvalid' : upstream.status === 409 ? 'ownerWhatsappRequired' : 'serviceUnavailable', upstream.status);
+    if (!upstream.ok) return fail(upstream.status === 400 ? 'ownerSettingsInvalid' : upstream.status === 409 ? 'ownerWhatsappRequired' : upstream.status === 422 ? 'ownerPairSendFailed' : 'serviceUnavailable', upstream.status);
     const result = await upstream.json();
-    return Response.json(request.method === 'POST' ? { pairingCommand: result.pairingCommand } : { timeZone: result.timeZone, phone: result.phone, quietStart: result.quietStart, quietEnd: result.quietEnd, paired: result.paired === true }, { headers });
+    return Response.json(request.method === 'POST' ? { sent: result.sent === true } : { timeZone: result.timeZone, phone: result.phone, quietStart: result.quietStart, quietEnd: result.quietEnd, paired: result.paired === true }, { headers });
   } catch { console.error('owner_settings_proxy_failed'); return fail('serviceUnavailable', 502); }
 }
 export const GET = proxy;

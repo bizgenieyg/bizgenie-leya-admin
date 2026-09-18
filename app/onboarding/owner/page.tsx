@@ -11,7 +11,7 @@ export default function OwnerStep() {
   const [quietEnd,setEnd]=useState('');
   const [timeZone,setTimeZone]=useState('');
   const [zones,setZones]=useState<string[]>([]);
-  const [command,setCommand]=useState('');
+  const [sent,setSent]=useState(false);
   const [paired,setPaired]=useState(false);
   const [busy,setBusy]=useState(false);
   const [loaded,setLoaded]=useState(false);
@@ -32,7 +32,7 @@ export default function OwnerStep() {
     try {
       const response=await fetch('/api/owner-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,quietStart,quietEnd,timeZone})});
       const data=await response.json();if(!response.ok)throw new Error(translatedApiError(t,data,'saveError'));
-      setCommand(data.pairingCommand);setPaired(false);
+      setSent(data.sent===true);setPaired(false);
     }catch(e){setError(e instanceof Error?e.message:t('saveError'));}finally{setBusy(false);}
   }
   async function verify() {
@@ -51,7 +51,7 @@ export default function OwnerStep() {
       <label className="block">{t('toTime')}<input type="time" className={inputClass} value={quietEnd} onChange={e=>{setEnd(e.target.value);setPaired(false);}} /></label>
       <button className={buttonClass} disabled={busy||!loaded}>{t('save')}</button>
     </form>
-    {command&&!paired?<div className="mt-5 space-y-3"><p>{t('ownerPairHelp')}</p><code className="block break-all rounded bg-gray-100 p-3">{command}</code><button type="button" className={buttonClass} disabled={busy} onClick={verify}>{t('verifyOwner')}</button></div>:null}
+    {sent&&!paired?<div className="mt-5 space-y-3"><p>{t('ownerPairHelp')}</p><button type="button" className={buttonClass} disabled={busy} onClick={verify}>{t('verifyOwner')}</button></div>:null}
     {paired?<p role="status" className="mt-4 text-green-700">{t('ownerVerified')}</p>:null}
     {error?<p role="alert" className="mt-4 text-red-600">{error}</p>:null}
     <div className="mt-6 flex justify-between"><Link href="/onboarding/step-3">{t('back')}</Link>{paired?<Link className={buttonClass} href="/onboarding/step-4">{t('next')} <span className="direction-icon">→</span></Link>:null}</div>
