@@ -162,17 +162,14 @@ test('cabinet asks once to clear data when a different WhatsApp number connects'
   assert.equal(numberChangeDialog(app).props.open, true);
   app.unmount();
 });
-test('confirming the swap dialog resets tenant data then acknowledges the new number', async () => {
+test('confirming the swap dialog uses the guarded reset which also acknowledges the new number', async () => {
   const app = harness({ initialStatus: 'SCAN_QR_CODE', cabinet: true, canEdit: true });
   await app.start();
   app.setNumberChanged(true); app.setStatus('WORKING');
   await app.advance(3000);
   numberChangeDialog(app).props.onConfirm();
   await app.settle();
-  assert.deepEqual(app.fetchCalls, [
-    { path: '/api/reset-tenant-data', method: 'POST' },
-    { path: '/api/waha/ack-number-change', method: 'POST' },
-  ]);
+  assert.deepEqual(app.fetchCalls, [{ path: '/api/reset-tenant-data', method: 'POST' }]);
   assert.equal(numberChangeDialog(app).props.open, false);
   app.unmount();
 });

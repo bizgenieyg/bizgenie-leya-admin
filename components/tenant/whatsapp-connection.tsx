@@ -35,9 +35,10 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
       if (reset) {
         const response = await fetch('/api/reset-tenant-data', { method: 'POST' });
         if (!response.ok) throw new Error('reset');
+      } else {
+        const ack = await fetch('/api/waha/ack-number-change', { method: 'POST' });
+        if (!ack.ok) throw new Error('ack');
       }
-      const ack = await fetch('/api/waha/ack-number-change', { method: 'POST' });
-      if (!ack.ok) throw new Error('ack');
     } catch (error) {
       setNumberChangeError(t(error instanceof Error && error.message === 'reset' ? 'resetTenantDataError' : 'numberChangeSyncError'));
     }
