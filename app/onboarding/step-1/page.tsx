@@ -11,6 +11,8 @@ export default function OnboardingStepOnePage() {
   const {t}=useI18n();
   const [ownerName, setOwnerName] = useState('');
   const [businessName, setBusinessName] = useState('');
+  const [businessSector, setBusinessSector] = useState('');
+  const [createdTenantId, setCreatedTenantId] = useState<string | null>(null);
   const [category, setCategory] = useState('services');
   const [language, setLanguage] = useState('he');
   const [loading, setLoading] = useState(false);
@@ -32,19 +34,25 @@ export default function OnboardingStepOnePage() {
       }
 
       // Plan is assigned by the system (starter); it is never chosen here.
-      const { data: tenantId, error: createError } = await supabase.rpc('create_tenant_with_owner', {
-        p_name: ownerName.trim(),
-        p_business_name: businessName.trim(),
-        p_language: language,
-      });
-      if (createError || typeof tenantId !== 'string' || !tenantId) {
-        if (process.env.NODE_ENV === 'development') console.error('Tenant creation failed', { code: createError?.code });
-        setError(
-          createError?.code === '54000' || createError?.hint === 'max_tenants_per_owner'
-            ? t('businessExists')
-            : t('createBusinessError'),
-        );
-        return;
+      let tenantId=createdTenantId;
+      if(!tenantId){
+        const { data, error: createError } = await supabase.rpc('create_tenant_with_owner', {
+          p_name: ownerName.trim(),
+          p_business_name: businessName.trim(),
+          p_language: language,
+        });
+        if (createError || typeof data !== 'string' || !data) {
+          if (process.env.NODE_ENV === 'development') console.error('Tenant creation failed', { code: createError?.code });
+          setError(createError?.code === '54000' || createError?.hint === 'max_tenants_per_owner' ? t('businessExists') : t('createBusinessError'));
+          return;
+        }
+        tenantId=data;
+        setCreatedTenantId(data);
+      }
+
+      if(businessSector.trim()){
+        const saved=await fetch('/api/tenant-settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_sector:businessSector.trim()})});
+        if(!saved.ok){setError(t('businessSectorSaveError'));return;}
       }
 
       sessionStorage.setItem('onboarding_tenant_id', tenantId);
@@ -89,6 +97,12 @@ export default function OnboardingStepOnePage() {
               required
               value={businessName}
             />
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor="onboarding-business-sector">{t('businessSector')}<span className="field-help">{t('businessSectorHelp')}</span></label>
+            <input className={inputClass} disabled={loading} id="onboarding-business-sector" dir="auto" list="onboarding-business-sector-options" maxLength={100} onChange={event=>setBusinessSector(event.target.value)} placeholder={t('businessSectorPlaceholder')} value={businessSector}/>
+            <datalist id="onboarding-business-sector-options">{t('businessSectorSuggestions').split('|').map(value=><option key={value} value={value}/>)}</datalist>
           </div>
 
           <div>

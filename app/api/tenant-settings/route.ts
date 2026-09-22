@@ -24,6 +24,7 @@ async function proxy(request: Request) {
   if(request.method==='PATCH'){
    const input=await request.json();if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>[...system,...operatorOnly].includes(key)))return fail('settingsRestricted',403);
    if(Object.keys(input).some(key=>!editable.includes(key)))return fail('settingsInvalid',400);
+   if('business_sector' in input&&(typeof input.business_sector!=='string'||input.business_sector.trim().length>100))return fail('settingsInvalid',400);
    const saved=await call('/api/admin/tenant-settings','PATCH',input);
    if(!saved.ok)return fail(saved.status===400?'settingsInvalid':'serviceUnavailable',saved.status);
    return Response.json({saved:true},{headers});

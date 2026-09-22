@@ -4,12 +4,13 @@ const { test } = require('node:test');
 const vm = require('node:vm');
 const ts = require('typescript');
 
-function fixture({ error = null, user = {}, throws = false } = {}) {
+function fixture({ error = null, user = {}, throws = false, sectorSaveFails = false } = {}) {
   const state = [];
   const calls = [];
   const navigation = [];
   const stored = [];
   const logs = [];
+  const saves = [];
   let index = 0;
   const exports = {};
   const jsx = (type, props) => ({ type, props });
@@ -17,6 +18,7 @@ function fixture({ error = null, user = {}, throws = false } = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, {
     exports, process: { env: { NODE_ENV: 'production' } }, console: { error: (...args) => logs.push(args) },
+    fetch: async (url, options) => { saves.push({url,options}); return Response.json({}, {status:sectorSaveFails?503:200}); },
     sessionStorage: { setItem: (...args) => stored.push(args) },
     require: (name) => {
       if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
@@ -35,7 +37,7 @@ function fixture({ error = null, user = {}, throws = false } = {}) {
       } }) };
     },
   });
-  return { render: () => { index = 0; return exports.default(); }, calls, navigation, stored, logs };
+  return { render: () => { index = 0; return exports.default(); }, calls, saves, navigation, stored, logs };
 }
 function nodes(tree) {
   if (Array.isArray(tree)) return tree.flatMap(nodes);
@@ -74,6 +76,20 @@ test('step 1 creates a tenant with a single plan-less RPC and no tariff choice',
   // No tariff selector text on the page.
   const page = text(app.render());
   assert.doesNotMatch(page, /Тариф|Starter|Pro|триал|₪/i);
+});
+
+test('optional custom sector is saved after signup; a failed save can be retried without creating another tenant',async()=>{
+ const app=fixture({sectorSaveFails:true});
+ nodes(app.render()).find(node=>node.props.id==='onboarding-business-sector').props.onChange({target:{value:'  мастер маникюра  '}});
+ await submit(app);
+ assert.equal(app.calls.length,1);
+ assert.equal(app.saves.length,1);
+ assert.equal(app.saves[0].url,'/api/tenant-settings');
+ assert.equal(JSON.parse(app.saves[0].options.body).business_sector,'мастер маникюра');
+ assert.equal(app.navigation.length,0);
+ await submit(app);
+ assert.equal(app.calls.length,1);
+ assert.equal(app.saves.length,2);
 });
 
 for (const options of [{ error: { message: 'private backend error', code: '42501' } }, { throws: true }]) {

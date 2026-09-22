@@ -9,6 +9,7 @@ const DEFAULT_TIME_ZONES=['Asia/Jerusalem','Europe/Moscow','Europe/London','Amer
 const timeZones=(value:unknown)=>Array.from(new Set([...strings(value,[]),...DEFAULT_TIME_ZONES]));
 
 export function normalizeTenantSettings(value:unknown){const raw=object(value);return{
+ business_sector:typeof raw.business_sector==='string'?raw.business_sector:'',
  messages_per_month:number(raw.messages_per_month,0),voice_minutes_per_month:number(raw.voice_minutes_per_month,0),warning_percent:number(raw.warning_percent,80),plan:typeof raw.plan==='string'?raw.plan:null,
  cabinet_language:['ru','en','he'].includes(String(raw.cabinet_language))?raw.cabinet_language:null,time_zone:typeof raw.time_zone==='string'?raw.time_zone:'Asia/Jerusalem',supported_time_zones:timeZones(raw.supported_time_zones),weekly_schedule:schedule(raw.weekly_schedule),
  auto_replies_paused:raw.auto_replies_paused===true,translate_owner_answer:raw.translate_owner_answer===true,escalation_remind_minutes:number(raw.escalation_remind_minutes,120),escalation_close_minutes:number(raw.escalation_close_minutes,1440),

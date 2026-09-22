@@ -8,6 +8,10 @@ test('tenant settings mutations enforce role, origin and server-derived tenant',
 const h=load(),settings={time_zone:'UTC+3',auto_replies_paused:true,enabled_agents:['SALE'],summary_frequency:'weekly',summary_time:'10:30',summary_weekday:2};assert.equal((await h.PATCH(request(settings))).status,200);assert.equal(h.calls.length,1);assert.equal(new URL(h.calls[0].url).searchParams.get('tenantId'),'server-tenant');assert.equal(h.calls[0].options.headers.Authorization,'Bearer secret');assert.deepEqual(JSON.parse(h.calls[0].options.body),settings);
 for(const[h,r]of [[load('viewer'),request()],[load('owner',null),request()],[load(),request({},'https://evil.invalid')],[load(),request({tenantId:'other'})]]){const result=await h.PATCH(r);assert.ok([400,401,403].includes(result.status));assert.equal(h.calls.length,0);}
 });
+test('business sector is an owner field with a bounded free-text value',async()=>{
+ const h=load();const r=await h.PATCH(request({business_sector:'мастер маникюра'}));assert.equal(r.status,200);assert.equal(JSON.parse(h.calls[0].options.body).business_sector,'мастер маникюра');
+ for(const invalid of [42,'x'.repeat(101)]){const other=load();assert.equal((await other.PATCH(request({business_sector:invalid}))).status,400);assert.equal(other.calls.length,0);}
+});
 // These tests iterate the exact field lists the route imports (lib/tenant-settings/fields),
 // so a new operator/system field is covered automatically and drift is caught.
 const fieldLists=fields;
