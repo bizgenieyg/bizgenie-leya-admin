@@ -62,7 +62,7 @@ export default function OnboardingStepOnePage() {
     <StepFrame step={1} title={t('onboardingBusinessTitle')}>
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="owner-name">
+            <label className="text-sm font-medium muted" htmlFor="owner-name">
               {t('ownerName')}
             </label>
             <input
@@ -77,7 +77,7 @@ export default function OnboardingStepOnePage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="business-name">
+            <label className="text-sm font-medium muted" htmlFor="business-name">
               {t('businessLabel')}
             </label>
             <input
@@ -99,7 +99,7 @@ export default function OnboardingStepOnePage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="language">
+            <label className="text-sm font-medium muted" htmlFor="language">
               {t('primaryLanguage')}
             </label>
             <select
@@ -116,7 +116,7 @@ export default function OnboardingStepOnePage() {
           </div>
 
           {error ? (
-            <p aria-live="polite" className="text-sm text-red-600" role="alert">
+            <p aria-live="polite" className="text-sm error-copy" role="alert">
               {error}
             </p>
           ) : null}

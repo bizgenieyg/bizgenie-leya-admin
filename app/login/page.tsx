@@ -80,8 +80,8 @@ export default function LoginPage() {
     <PublicShell>
         <h1>{t('checkEmail')}</h1>
         <p className="auth-copy">{t('confirmationSent',{email:confirmationEmail})}</p>
-        {error ? <p role="alert" className="mb-4 text-sm text-red-600">{error}</p> : null}
-        {notice ? <p role="status" className="mb-4 text-sm text-green-600">{notice}</p> : null}
+        {error ? <p role="alert" className="mb-4 text-sm error-copy">{error}</p> : null}
+        {notice ? <p role="status" className="mb-4 text-sm success-copy">{notice}</p> : null}
         <button type="button" disabled={loading} onClick={() => void resendConfirmation()} className="button primary full">{loading ? t('loading') : t('resend')}</button>
         <Link href="/login" onClick={() => { setConfirmationEmail(''); setMode('login'); setError(''); }} className="text-link centered">{t('loginAction')}</Link>
     </PublicShell>
@@ -98,12 +98,12 @@ export default function LoginPage() {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="email">
+            <label className="mb-1 block text-sm font-medium muted" htmlFor="email">
               {t('email')}
             </label>
             <input
               autoComplete="email"
-              className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="field-control"
               disabled={loading}
               id="email"
               onChange={(event) => setEmail(event.target.value)}
@@ -115,12 +115,12 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="password">
+            <label className="mb-1 block text-sm font-medium muted" htmlFor="password">
               {t('password')}
             </label>
             <input
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="field-control"
               disabled={loading}
               id="password"
               onChange={(event) => setPassword(event.target.value)}
@@ -133,13 +133,13 @@ export default function LoginPage() {
           {mode === 'login' ? <label className="remember-row"><input type="checkbox" defaultChecked /> <span>{t('rememberMe')}</span></label> : null}
 
           {error ? (
-            <p aria-live="polite" className="text-sm text-red-600" role="alert">
+            <p aria-live="polite" className="text-sm error-copy" role="alert">
               {error}
             </p>
           ) : null}
 
           <button
-            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="button primary full"
             disabled={loading}
             type="submit"
           >
@@ -150,7 +150,7 @@ export default function LoginPage() {
         {mode === 'login' ? <Link href="/forgot-password" className="text-link centered">{t('forgotPassword')}</Link> : null}
 
         <button
-          className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700"
+          className="mt-4 w-full text-center text-sm muted"
           disabled={loading}
           onClick={toggleMode}
           type="button"

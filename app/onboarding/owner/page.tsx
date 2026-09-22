@@ -41,19 +41,19 @@ export default function OwnerStep() {
     catch{setError(t('ownerVerifyError'));}finally{setBusy(false);}
   }
   return <StepFrame step={3} title={t('ownerStepTitle')}>
-    <p className="mb-4 text-sm text-gray-600">{t('ownerStepHelp')}</p>
+    <p className="mb-4 text-sm muted">{t('ownerStepHelp')}</p>
     <form onSubmit={submit} className="space-y-4">
       <label className="block">{t('ownerPhoneLabel')}<input required type="tel" inputMode="tel" placeholder="+972501234567" className={inputClass} value={phone} onChange={e=>{setPhone(e.target.value);setPaired(false);}} /></label>
-      <p className="text-sm text-gray-600">{t('ownerHoursHelp')}</p>
+      <p className="text-sm muted">{t('ownerHoursHelp')}</p>
       <label className="block">{t('ownerZone')}<input required list="owner-time-zones" className={inputClass} value={timeZone} onChange={e=>{setTimeZone(e.target.value);setPaired(false);}} /><datalist id="owner-time-zones">{zones.map(zone=><option key={zone} value={zone} />)}</datalist></label>
-      <p className="text-sm text-gray-600">{t('ownerZoneHelp')}</p>
+      <p className="text-sm muted">{t('ownerZoneHelp')}</p>
       <label className="block">{t('fromTime')}<input type="time" className={inputClass} value={quietStart} onChange={e=>{setStart(e.target.value);setPaired(false);}} /></label>
       <label className="block">{t('toTime')}<input type="time" className={inputClass} value={quietEnd} onChange={e=>{setEnd(e.target.value);setPaired(false);}} /></label>
       <button className={buttonClass} disabled={busy||!loaded}>{t('save')}</button>
     </form>
     {sent&&!paired?<div className="mt-5 space-y-3"><p>{t('ownerPairHelp')}</p><button type="button" className={buttonClass} disabled={busy} onClick={verify}>{t('verifyOwner')}</button></div>:null}
-    {paired?<p role="status" className="mt-4 text-green-700">{t('ownerVerified')}</p>:null}
-    {error?<p role="alert" className="mt-4 text-red-600">{error}</p>:null}
+    {paired?<p role="status" className="mt-4 success-copy">{t('ownerVerified')}</p>:null}
+    {error?<p role="alert" className="mt-4 error-copy">{error}</p>:null}
     <div className="mt-6 flex justify-between"><Link href="/onboarding/step-3">{t('back')}</Link>{paired?<Link className={buttonClass} href="/onboarding/step-4">{t('next')} <span className="direction-icon">→</span></Link>:null}</div>
   </StepFrame>;
 }

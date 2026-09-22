@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
         {sent ? <p role="status" className="auth-copy">{t('resetSent')}</p> : (
           <form onSubmit={submit} className="space-y-4">
             <div><label htmlFor="email" className="field-label">{t('email')}</label>
-              <input id="email" type="email" autoComplete="email" required disabled={loading} value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
+              <input id="email" type="email" autoComplete="email" required disabled={loading} value={email} onChange={(event) => setEmail(event.target.value)} className="field-control" /></div>
             <button type="submit" disabled={loading} className="button primary full">{loading ? t('loading') : t('sendLink')}</button>
           </form>
         )}

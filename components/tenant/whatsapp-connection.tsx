@@ -127,7 +127,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
       {expired ? t('waitExpired')
         : state.status ? statusText(state.status) : busy ? t('checkingConnection') : t('statusUnavailable')}
     </p>
-    {state.status === 'FAILED' && state.reason ? <p className="mb-4 text-sm text-red-600">{t(state.reason==='wahaStatusUnavailable'?state.reason:'statusFailed')}</p> : null}
+    {state.status === 'FAILED' && state.reason ? <p className="mb-4 text-sm error-copy">{t(state.reason==='wahaStatusUnavailable'?state.reason:'statusFailed')}</p> : null}
     {scanning ? <section className="qr-scan">
       <h2>{t('howConnect')}</h2>
       <ol>
@@ -135,8 +135,8 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
       </ol>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <div className="qr-image"><img key={qrTimestamp} src={`/api/waha/qr?ts=${qrTimestamp}`} width={280} height={280} alt={t('qrAlt')} onLoad={() => setQrError(false)} onError={() => setQrError(true)} /></div>
-      {qrError ? <p role="alert" className="mb-3 text-sm text-red-600">{t('qrUnavailable')}</p> : null}
-      <p className="mb-3 text-sm text-gray-500">{t('qrRefreshHelp')}</p>
+      {qrError ? <p role="alert" className="mb-3 text-sm error-copy">{t('qrUnavailable')}</p> : null}
+      <p className="mb-3 text-sm muted">{t('qrRefreshHelp')}</p>
       <Button type="button" tone="secondary" onClick={() => { setQrTimestamp(Date.now()); setQrError(false); }}>{t('refreshCode')}</Button>
     </section> : null}
     {error ? <ErrorState message={error} onRetry={()=>run('read')}/> : null}
@@ -144,10 +144,10 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
     {expired || error ? <button type="button" disabled={busy} className={buttonClass} onClick={() => run('read')}>{t('checkStatus')}</button>
       : canEdit && !busy && !shouldPoll(state.status) && !isConnected(state.status) && state.status
         ? <button type="button" className={buttonClass} onClick={() => run('connect')}>{actionText(state.status)}</button> : null}
-    {cabinet && canEdit ? <Link className="block text-sm text-blue-600" href="/onboarding/owner">{t('ownerSettings')}</Link> : null}
+    {cabinet && canEdit ? <Link className="block text-sm text-link-inline" href="/onboarding/owner">{t('ownerSettings')}</Link> : null}
     {cabinet && canEdit && isConnected(state.status) ? <Button type="button" disabled={busy} tone="danger" onClick={() => setConfirmDisconnect(true)}>{t('disconnect')}</Button> : null}
     {!cabinet ? <div className="mt-8 flex items-center justify-between gap-4">
-      <Link className="text-sm text-blue-600" href="/onboarding/step-4">{t('skip')}</Link>
+      <Link className="text-sm text-link-inline" href="/onboarding/step-4">{t('skip')}</Link>
       {isConnected(state.status) ? <Link className={buttonClass} href="/onboarding/owner">{t('next')} <span className="direction-icon">→</span></Link> : null}
     </div> : null}<ConfirmDialog open={confirmDisconnect} danger title={t('confirmAction')} onCancel={()=>setConfirmDisconnect(false)} onConfirm={()=>{setConfirmDisconnect(false);run('disconnect')}}><p>{t('disconnectConfirm')}</p></ConfirmDialog>
     {cabinet && canEdit ? <ConfirmDialog open={confirmNumberChange} danger title={t('numberChangedTitle')} onCancel={()=>void resolveNumberChange(false)} onConfirm={()=>void resolveNumberChange(true)}><p>{t('resetTenantDataConfirm')}</p></ConfirmDialog> : null}

@@ -47,10 +47,10 @@ export default function ResetPasswordForm() {
         <h1>{t('newPassword')}</h1>
         <form onSubmit={submit} className="space-y-4">
           <div><label htmlFor="password" className="field-label">{t('password')}</label>
-            <input id="password" type="password" autoComplete="new-password" required disabled={loading} value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
+            <input id="password" type="password" autoComplete="new-password" required disabled={loading} value={password} onChange={(event) => setPassword(event.target.value)} className="field-control" /></div>
           <div><label htmlFor="repeat-password" className="field-label">{t('repeatPassword')}</label>
-            <input id="repeat-password" type="password" autoComplete="new-password" required disabled={loading} value={repeat} onChange={(event) => setRepeat(event.target.value)} className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500" /></div>
-          {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
+            <input id="repeat-password" type="password" autoComplete="new-password" required disabled={loading} value={repeat} onChange={(event) => setRepeat(event.target.value)} className="field-control" /></div>
+          {error ? <p role="alert" className="text-sm error-copy">{error}</p> : null}
           <button type="submit" disabled={loading} className="button primary full">{loading ? t('loading') : t('savePassword')}</button>
         </form>
     </PublicShell>

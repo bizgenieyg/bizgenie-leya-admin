@@ -85,8 +85,8 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
   return (
     <>
       {loading ? <p role="status">{t('loading')}</p> : null}
-      {saved ? <p role="status" className="mb-4 text-sm text-green-600">{t('settingsSaved')}</p> : null}
-      {!loading && tenantId && !canEdit ? <p className="mb-4 text-sm text-gray-500">{t('readOnly')}</p> : null}
+      {saved ? <p role="status" className="mb-4 text-sm success-copy">{t('settingsSaved')}</p> : null}
+      {!loading && tenantId && !canEdit ? <p className="mb-4 text-sm muted">{t('readOnly')}</p> : null}
       <form className="compact-form" onSubmit={handleSubmit}>
         <fieldset className="compact-form" disabled={loading || saving || !tenantId || !canEdit}>
           <label htmlFor="assistant-name" className="field-label">{t('assistantName')}<input id="assistant-name" className="field-control" required value={name} onChange={(event) => setName(event.target.value)} /></label>
@@ -94,9 +94,9 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
           <label htmlFor="tone" className="field-label">{t('tone')}<Select id="tone" className="field-control" value={tone} onChange={(event) => changeTone(event.target.value)}>{tones.map(item=><option key={item.id} value={item.id}>{t(item.label)}</option>)}</Select><span className="field-help">{t(tones.find(item=>item.id===tone)?.help??'toneFriendlyProfessionalHelp')}</span></label>
           <div className="tone-preview"><span>{t('tonePreview')}</span><p>{toneExample}</p></div><label htmlFor="style" className="field-label">{t('answerStyle')}<span className="field-help">{t('answerStyleHelp')}</span><textarea id="style" className="field-control" rows={3} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></label>
         </fieldset>
-        {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
+        {error ? <p role="alert" className="text-sm error-copy">{error}</p> : null}
         <div className="flex items-center justify-between gap-4">
-          {onboarding ? <Link href="/onboarding/step-1" className="text-sm text-blue-600">{t('back')}</Link> : null}
+          {onboarding ? <Link href="/onboarding/step-1" className="text-sm text-link-inline">{t('back')}</Link> : null}
           <Button disabled={loading || saving || !tenantId || !canEdit || !name.trim()} type="submit">{saving ? t('saving') : onboarding ? <>{t('next')} <span className="direction-icon">→</span></> : t('save')}</Button>
         </div>
       </form>
