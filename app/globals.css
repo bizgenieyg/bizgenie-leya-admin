@@ -161,5 +161,6 @@
   .metric-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
 .simulator-heading-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:var(--space-1)}
+.chat-bubble .simulator-note{margin-block-start:var(--space-2);padding-block:var(--space-2);padding-inline:var(--space-3);border-radius:var(--radius-control);background:var(--accent-soft);color:var(--accent);font-size:.8rem;line-height:1.45}
 .simulator-heading-actions .button{min-block-size:var(--touch);padding-inline:var(--space-2)}
 .gap-actions{flex:none;flex-wrap:nowrap;white-space:nowrap}.gap-actions a{white-space:nowrap}
