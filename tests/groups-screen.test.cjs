@@ -22,6 +22,26 @@ test('new dashboard copy is translated in all cabinet languages',()=>{
   }
 });
 
+test('group activity uses cabinet-local time today and date on older days',()=>{
+  const directory=fs.readFileSync('components/tenant/group-directory.tsx','utf8');
+  assert.match(directory,/format\.date\(group\.lastActivityAt\)===format\.date\(new Date\(\)\)/);
+  assert.match(directory,/\?format\.time\(group\.lastActivityAt\):format\.date\(group\.lastActivityAt\)/);
+});
+
+test('field-action rows keep buttons level with inputs and sector suggestions stay text inputs',()=>{
+  const css=fs.readFileSync('app/globals.css','utf8');
+  const settings=fs.readFileSync('components/tenant/tenant-settings.tsx','utf8');
+  const onboarding=fs.readFileSync('app/onboarding/step-1/page.tsx','utf8');
+  assert.match(css,/\.field-action-row>\.button\{block-size:var\(--control-height\)/);
+  assert.match(css,/business-sector-input::-webkit-calendar-picker-indicator/);
+  assert.match(settings,/className="field-action-row"/);
+  assert.match(settings,/className="field-control business-sector-input"[^>]*list="settings-business-sector-options"/);
+  assert.match(onboarding,/business-sector-input[^>]*list="onboarding-business-sector-options"/);
+  for(const file of ['components/tenant/client-directory.tsx','components/tenant/conversation-simulator.tsx','components/tenant/knowledge-editor.tsx']){
+    assert.match(fs.readFileSync(file,'utf8'),/field-action-row/,file);
+  }
+});
+
 test('dashboard components no longer use recolored Tailwind palette classes',()=>{
   const paths=['app','components'];
   for(const root of paths){

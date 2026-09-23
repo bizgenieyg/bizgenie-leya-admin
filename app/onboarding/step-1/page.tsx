@@ -101,7 +101,7 @@ export default function OnboardingStepOnePage() {
 
           <div>
             <label className="field-label" htmlFor="onboarding-business-sector">{t('businessSector')}<span className="field-help">{t('businessSectorHelp')}</span></label>
-            <input className={inputClass} disabled={loading} id="onboarding-business-sector" dir="auto" list="onboarding-business-sector-options" maxLength={100} onChange={event=>setBusinessSector(event.target.value)} placeholder={t('businessSectorPlaceholder')} value={businessSector}/>
+            <input className={`${inputClass} business-sector-input`} disabled={loading} id="onboarding-business-sector" dir="auto" list="onboarding-business-sector-options" maxLength={100} onChange={event=>setBusinessSector(event.target.value)} placeholder={t('businessSectorPlaceholder')} value={businessSector}/>
             <datalist id="onboarding-business-sector-options">{t('businessSectorSuggestions').split('|').map(value=><option key={value} value={value}/>)}</datalist>
           </div>
 

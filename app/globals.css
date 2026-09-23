@@ -120,6 +120,20 @@
 @media(min-width:56.25rem){.page-wrap{padding-block:2rem 3rem;padding-inline:clamp(1.5rem,4vw,3.5rem)}.surface-card,.connection-card{padding:var(--space-5);border-radius:var(--radius-card)}.content-stack{gap:var(--space-5)}.metric{min-block-size:7rem}.side-nav{padding-block:1.25rem 1rem}.nav-list{margin-block-start:2rem}.side-controls{padding-block-start:var(--space-3)}}
 .collapse-button .collapse-arrow{inline-size:1.5rem;block-size:1.5rem}
 
+/* Field-and-action rows share one control height; labels and help stay outside the row. */
+.field-action-stack,.contact-controls{display:grid;gap:var(--space-2)}
+.field-action-row{display:grid;grid-template-columns:minmax(0,1fr);align-items:center;gap:var(--control-gap)}
+.field-action-row>input{min-inline-size:0;block-size:var(--control-height);margin-block:0}
+.field-action-row>.button{block-size:var(--control-height);min-block-size:var(--control-height);align-self:center}
+.field-action-row .field-control{margin-block-start:0}
+@media(min-width:40rem){.contact-controls{grid-template-columns:1fr}.field-action-row{grid-template-columns:minmax(0,1fr) auto}}
+@container (max-width:30rem){.knowledge-toolbar.field-action-row{grid-template-columns:1fr}}
+@container (max-width:34rem){.search-bar.simple.field-action-row,.simulator-compose.field-action-row{grid-template-columns:1fr}}
+
+/* The sector remains a text input with typing suggestions, not a select. */
+input.business-sector-input::-webkit-calendar-picker-indicator,
+input.business-sector-input::-webkit-list-button{display:none!important}
+
 /* Keep the desktop sticky simulator compact enough to leave settings visible. */
 @media(min-width:56.25rem){
   .assistant-simulator .simulator{padding:var(--space-section);gap:var(--control-gap)}
