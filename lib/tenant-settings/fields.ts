@@ -3,14 +3,14 @@
 // drift is caught automatically.
 
 // Owner/admin can change these from the cabinet.
-export const editable = ['business_sector', 'cabinet_language', 'time_zone', 'weekly_schedule', 'auto_replies_paused', 'enabled_agents', 'summary_frequency', 'summary_time', 'summary_weekday', 'polish_owner_answer'];
+export const editable = ['business_sector', 'cabinet_language', 'time_zone', 'weekly_schedule', 'auto_replies_paused', 'enabled_agents', 'summary_frequency', 'summary_time', 'summary_weekday', 'polish_owner_answer', 'auto_resume_hours'];
 
 // Operator-only runtime fields: rejected for cabinet users, changeable only by a caller
 // holding ADMIN_SECRET directly (see backend src/routes/admin.ts).
 export const operatorOnly = [
   'translate_owner_answer', 'escalation_remind_minutes', 'escalation_close_minutes',
-  'auto_resume_hours', 'deferred_max_age_hours', 'context_message_count',
-  'context_retention_hours', 'history_fetch_limit', 'history_max_characters', 'history_timeout_seconds', 'message_retention_days', 'intent_confidence_threshold',
+  'deferred_max_age_hours', 'context_message_count',
+  'context_retention_hours', 'history_fetch_limit', 'history_max_characters', 'history_timeout_seconds', 'lid_lookup_timeout_seconds', 'lid_backfill_pause_ms', 'knowledge_full_context_chars', 'knowledge_unit_max_chars', 'knowledge_similarity_floor', 'message_retention_days', 'intent_confidence_threshold',
   'inbound_quiet_seconds',
   'outbound_typing_min_seconds', 'outbound_typing_max_seconds',
   'outbound_typing_seconds_per_100_min', 'outbound_typing_seconds_per_100_max',
