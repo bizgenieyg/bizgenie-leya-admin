@@ -11,6 +11,7 @@ export const operatorOnly = [
   'translate_owner_answer', 'escalation_remind_minutes', 'escalation_close_minutes',
   'auto_resume_hours', 'deferred_max_age_hours', 'context_message_count',
   'context_retention_hours', 'message_retention_days', 'intent_confidence_threshold',
+  'inbound_quiet_seconds',
   'route_stickiness_hours', 'reception_max_messages', 'campaign_routes', 'source_routes',
   'simulator_hourly_limit', 'simulator_daily_limit', 'templates',
 ];
