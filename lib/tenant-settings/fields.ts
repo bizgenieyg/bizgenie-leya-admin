@@ -10,7 +10,7 @@ export const editable = ['business_sector', 'cabinet_language', 'time_zone', 'we
 export const operatorOnly = [
   'translate_owner_answer', 'escalation_remind_minutes', 'escalation_close_minutes',
   'auto_resume_hours', 'deferred_max_age_hours', 'context_message_count',
-  'context_retention_hours', 'message_retention_days', 'intent_confidence_threshold',
+  'context_retention_hours', 'history_fetch_limit', 'history_max_characters', 'history_timeout_seconds', 'message_retention_days', 'intent_confidence_threshold',
   'inbound_quiet_seconds',
   'outbound_typing_min_seconds', 'outbound_typing_max_seconds',
   'outbound_typing_seconds_per_100_min', 'outbound_typing_seconds_per_100_max',
