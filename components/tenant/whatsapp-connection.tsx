@@ -7,7 +7,7 @@ import { buttonClass } from '@/app/onboarding/step-frame';
 import {useI18n} from '@/lib/i18n';
 import {Button,ConfirmDialog,ErrorState,Spinner} from '@/components/ui/primitives';
 
-export default function WhatsAppConnection({ cabinet = false, canEdit = true }: { cabinet?: boolean; canEdit?: boolean }) {
+export default function WhatsAppConnection({ cabinet = false, canEdit = true, onStatusChange }: { cabinet?: boolean; canEdit?: boolean; onStatusChange?: (status: string) => void }) {
   const {t}=useI18n();
   const translate=useRef(t);translate.current=t;
   const statusText=(status:string)=>({NOT_CREATED:t('statusNotCreated'),STOPPED:t('statusStopped'),DISCONNECTED:t('statusStopped'),STARTING:t('statusStarting'),SCAN_QR_CODE:t('statusScan'),WORKING:t('statusWorking'),FAILED:t('statusFailed')}[status]??t('statusUnknown'));
@@ -24,6 +24,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
   const [numberChangeError,setNumberChangeError]=useState('');
   const numberChangeAsked = useRef(false);
   const active = useRef<AbortController | null>(null);
+  const statusCallback = useRef(onStatusChange);statusCallback.current=onStatusChange;
   const scanning = state.status === 'SCAN_QR_CODE' && state.qrAvailable && !expired && canEdit;
 
   // Owner answers once per detected swap (reset or keep); either way we tell the
@@ -64,6 +65,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true }: 
 
     function accept(next: SessionState) {
       setState(next);
+      statusCallback.current?.(next.status);
       setError('');
       // Gated for cabinet/canEdit at render time (below), not here, since this
       // closure is captured once per connection attempt and canEdit can still
