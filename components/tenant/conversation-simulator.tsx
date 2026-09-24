@@ -3,7 +3,7 @@ import { type FormEvent, useState } from 'react';
 import { Button, EmptyState, ErrorState } from '@/components/ui/primitives';
 import { useFormat, useI18n } from '@/lib/i18n';
 
-type Message = { role: 'owner' | 'leya'; text: string; at: Date; notices?: string[] };
+type Message = { role: 'owner' | 'leya'; text: string; at: Date; notices?: string[]; awaitingOwner?: boolean };
 type SimulatorResponse = {
   reply: string | null;
   outcome: 'answered' | 'escalated' | 'limit' | 'paused';
@@ -18,14 +18,15 @@ export default function ConversationSimulator() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [ownerAnswer, setOwnerAnswer] = useState('');
   const [sessionId, setSessionId] = useState(()=>crypto.randomUUID());
-  const clear = () => { setMessages([]); setText(''); setError(''); setSessionId(crypto.randomUUID()); };
+  const clear = () => { setMessages([]); setText(''); setOwnerAnswer(''); setError(''); setSessionId(crypto.randomUUID()); };
 
   async function send(event: FormEvent) {
     event.preventDefault();
     const value = text.trim();
     if (!value || busy) return;
-    setMessages(rows => [...rows, { role: 'owner', text: value, at: new Date() }]);
+    setMessages(rows => [...rows.map(row => ({ ...row, awaitingOwner: false })), { role: 'owner', text: value, at: new Date() }]);
     setText(''); setBusy(true); setError('');
     try {
       const response = await fetch('/api/simulator', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({text:value,sessionId}) });
@@ -43,7 +44,27 @@ export default function ConversationSimulator() {
       if (result.pausedNote) notices.push(t('simulatorPausedNote'));
       if (result.outcome === 'limit') notices.push(t('simulatorTariffLimitNote'));
       if (result.outcome === 'paused') notices.push(t('simulatorPausedNoReply'));
-      setMessages(rows => [...rows, { role: 'leya', text: result.reply ?? '', at: new Date(), notices }]);
+      setMessages(rows => [...rows.map(row => ({ ...row, awaitingOwner: false })), { role: 'leya', text: result.reply ?? '', at: new Date(), notices, awaitingOwner: result.outcome === 'escalated' }]);
+    } catch { setError(t('simulatorError')); }
+    finally { setBusy(false); }
+  }
+
+  async function answerAsOwner(event: FormEvent) {
+    event.preventDefault();
+    const value = ownerAnswer.trim();
+    if (!value || busy) return;
+    setBusy(true); setError('');
+    try {
+      const response = await fetch('/api/simulator/owner-answer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: value, sessionId }) });
+      const json = await response.json();
+      if (!response.ok) {
+        const code = typeof json?.code === 'string' ? json.code : '';
+        setError(t(['simulatorLimitError', 'simulatorProcessingError', 'simulatorInvalidMessage', 'simulatorNoQuestion', 'serviceUnavailable'].includes(code) ? code : 'simulatorError'));
+        return;
+      }
+      if (typeof json?.reply !== 'string') throw new Error('Invalid simulator reply');
+      setOwnerAnswer('');
+      setMessages(rows => [...rows.map(row => ({ ...row, awaitingOwner: false })), { role: 'leya', text: json.reply, at: new Date(), notices: [t('simulatorOwnerAnswerNote')] }]);
     } catch { setError(t('simulatorError')); }
     finally { setBusy(false); }
   }
@@ -54,6 +75,7 @@ export default function ConversationSimulator() {
       {message.text ? <p dir="auto">{message.text}</p> : null}
       {message.notices?.map((notice, noticeIndex) => <p className="simulator-note" key={noticeIndex}>{notice}</p>)}
       <small>{format.time(message.at)}</small>
+      {message.awaitingOwner ? <form className="simulator-owner-answer" onSubmit={answerAsOwner}><label className="field-label" htmlFor={`simulator-owner-answer-${index}`}>{t('simulatorOwnerAnswerLabel')}</label><div className="field-action-row"><input id={`simulator-owner-answer-${index}`} dir="auto" value={ownerAnswer} onChange={event => setOwnerAnswer(event.target.value)} maxLength={2000} placeholder={t('simulatorOwnerAnswerPlaceholder')} /><Button disabled={busy || !ownerAnswer.trim()}>{t('simulatorOwnerAnswerSend')}</Button></div></form> : null}
     </div>)}{busy ? <div className="chat-bubble leya typing"><span/><span/><span/><i>{t('simulatorThinking')}</i></div> : null}</div>
     {error ? <ErrorState message={error} /> : null}
     <form className="simulator-compose field-action-row" onSubmit={send}><label className="sr-only" htmlFor="simulation-message">{t('simulatorPlaceholder')}</label><input id="simulation-message" dir="auto" value={text} onChange={event => setText(event.target.value)} maxLength={2000} placeholder={t('simulatorPlaceholder')} /><Button disabled={busy || !text.trim()}>{t('simulatorSend')}</Button></form>

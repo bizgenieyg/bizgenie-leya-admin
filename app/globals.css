@@ -181,3 +181,5 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .whatsapp-alert { border: 0.125rem solid #b73535; background: color-mix(in srgb, #b73535 10%, var(--surface, white)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
 .whatsapp-alert h2 { font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 700; }
 .whatsapp-alert .button { min-block-size: 2.75rem; display: inline-flex; align-items: center; }
+.simulator-owner-answer{display:grid;gap:.5rem;margin-block-start:.75rem;padding-block-start:.75rem;border-block-start:.0625rem solid var(--border)}.simulator-owner-answer .field-label{margin:0}.simulator-owner-answer input{min-block-size:2.75rem;inline-size:100%}.polish-setting{display:grid;gap:.25rem;margin-block-start:1rem}
+@container (max-width:34rem){.simulator-owner-answer .field-action-row{grid-template-columns:1fr}}
