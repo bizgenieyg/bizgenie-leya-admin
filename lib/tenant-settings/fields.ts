@@ -12,6 +12,11 @@ export const operatorOnly = [
   'auto_resume_hours', 'deferred_max_age_hours', 'context_message_count',
   'context_retention_hours', 'message_retention_days', 'intent_confidence_threshold',
   'inbound_quiet_seconds',
+  'outbound_typing_min_seconds', 'outbound_typing_max_seconds',
+  'outbound_typing_seconds_per_100_min', 'outbound_typing_seconds_per_100_max',
+  'outbound_conversation_gap_min_seconds', 'outbound_conversation_gap_max_seconds',
+  'outbound_proactive_gap_min_seconds', 'outbound_proactive_gap_max_seconds',
+  'outbound_reminder_spread_minutes', 'daily_proactive_limit', 'outbound_retry_delays_seconds', 'outbound_retention_days',
   'route_stickiness_hours', 'reception_max_messages', 'campaign_routes', 'source_routes',
   'simulator_hourly_limit', 'simulator_daily_limit', 'templates',
 ];
