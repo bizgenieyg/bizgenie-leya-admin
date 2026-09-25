@@ -35,6 +35,6 @@ test('knowledge editor lives in the combined assistant workspace',()=>{
  const legacy=fs.readFileSync('app/admin/knowledge/page.tsx','utf8');
  assert.doesNotMatch(home,/KnowledgeEditor/);
  assert.match(assistant,/KnowledgeEditor/);
- assert.match(assistant,/ConversationSimulator/);
+ assert.match(assistant,/SimulatorOpenButton/);
  assert.match(legacy,/redirect\('\/admin\/assistant#knowledge'\)/);
 });

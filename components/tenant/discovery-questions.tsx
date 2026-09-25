@@ -3,6 +3,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { Button, ErrorState, LoadingState } from '@/components/ui/primitives';
 import { useI18n } from '@/lib/i18n';
 import { translatedApiError } from '@/lib/i18n/api-error';
+import { useSimulatorDrawer } from '@/lib/tenant/simulator-drawer';
 
 const MAX_QUESTIONS = 10, MAX_CHARS = 200;
 
@@ -10,6 +11,8 @@ const MAX_QUESTIONS = 10, MAX_CHARS = 200;
 export default function DiscoveryQuestions() {
   const { t } = useI18n();
   const [items, setItems] = useState<string[] | null>(null);
+  const [saved, setSaved] = useState('');
+  const { setDirty } = useSimulatorDrawer();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -18,8 +21,11 @@ export default function DiscoveryQuestions() {
     if (!r.ok) throw new Error(translatedApiError(t, d, 'settingsLoadError'));
     const list = Array.isArray(d.settings?.client_discovery_questions) ? d.settings.client_discovery_questions.filter((q: unknown) => typeof q === 'string') : [];
     setItems(list.length ? list : ['']);
+    setSaved(JSON.stringify(list));
   }, [t]);
   useEffect(() => { void load().catch(() => setError(t('settingsLoadError'))); }, [load, t]);
+  useEffect(() => { if (items) setDirty('discovery', JSON.stringify(items.map(q => q.trim()).filter(Boolean)) !== saved); }, [items, saved, setDirty]);
+  useEffect(() => () => setDirty('discovery', false), [setDirty]);
   async function save(event: FormEvent) {
     event.preventDefault(); if (!items) return;
     setBusy(true); setError(''); setNotice('');

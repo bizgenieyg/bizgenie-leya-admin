@@ -11,7 +11,7 @@ type SimulatorResponse = {
   pausedNote?: true;
 };
 
-export default function ConversationSimulator() {
+export default function ConversationSimulator({ dirtyWarning = false }: { dirtyWarning?: boolean } = {}) {
   const { t } = useI18n();
   const format = useFormat();
   const [text, setText] = useState('');
@@ -78,6 +78,7 @@ export default function ConversationSimulator() {
       {message.awaitingOwner ? <form className="simulator-owner-answer" onSubmit={answerAsOwner}><label className="field-label" htmlFor={`simulator-owner-answer-${index}`}>{t('simulatorOwnerAnswerLabel')}</label><div className="field-action-row"><input id={`simulator-owner-answer-${index}`} dir="auto" value={ownerAnswer} onChange={event => setOwnerAnswer(event.target.value)} maxLength={2000} placeholder={t('simulatorOwnerAnswerPlaceholder')} /><Button disabled={busy || !ownerAnswer.trim()}>{t('simulatorOwnerAnswerSend')}</Button></div></form> : null}
     </div>)}{busy ? <div className="chat-bubble leya typing"><span/><span/><span/><i>{t('simulatorThinking')}</i></div> : null}</div>
     {error ? <ErrorState message={error} /> : null}
+    {dirtyWarning ? <p className="simulator-dirty-warning" role="status">{t('simulatorDirtyWarning')}</p> : null}
     <form className="simulator-compose field-action-row" onSubmit={send}><label className="sr-only" htmlFor="simulation-message">{t('simulatorPlaceholder')}</label><input id="simulation-message" dir="auto" value={text} onChange={event => setText(event.target.value)} maxLength={2000} placeholder={t('simulatorPlaceholder')} /><Button disabled={busy || !text.trim()}>{t('simulatorSend')}</Button></form>
   </section>;
 }

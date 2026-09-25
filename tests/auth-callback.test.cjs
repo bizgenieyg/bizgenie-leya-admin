@@ -26,12 +26,14 @@ function fixture({ failure = false, throws = false } = {}) {
       options.cookies.setAll([{ name: 'session-cookie', value: 'test-session', options: { path: '/' } }]);
       return { data: { session: {} }, error: null };
     } } }) }, { process: { env: {} } });
-  const callback = compile('app/auth/callback/route.ts', (name) => {
+  const shared = compile('lib/auth/callback.ts', (name) => {
     if (name === '@/lib/supabase/server') return server;
     if (name === '@/lib/auth/redirect') return redirects;
     return { NextResponse: { redirect: (url, options) => new Response(null, { status: 307, headers: { ...options.headers, location: url.toString() } }) } };
   });
-  return { get: callback.GET, calls, cookies };
+  const callback = compile('app/auth/callback/route.ts', () => shared);
+  const google = compile('app/auth/callback/google/route.ts', () => shared);
+  return { get: callback.GET, google: google.GET, calls, cookies };
 }
 
 test('exchanges code and writes session cookies before default redirect', async () => {
@@ -79,4 +81,15 @@ test('missing code fails safely', async () => {
   const { get, calls } = fixture();
   assert.equal((await get(new Request('https://admin.example/auth/callback'))).headers.get('location'), 'https://admin.example/login?error=confirm_failed');
   assert.equal(calls.length, 0);
+});
+
+test('Google sign-in failures land on /login with the OAuth message, success still signs in', async () => {
+  const cancelled = fixture();
+  assert.equal((await cancelled.google(new Request('https://admin.example/auth/callback/google?error=access_denied&error_description=private'))).headers.get('location'), 'https://admin.example/login?error=oauth_failed');
+  assert.equal(cancelled.calls.length, 0);
+  const failed = fixture({ failure: true });
+  assert.equal((await failed.google(new Request('https://admin.example/auth/callback/google?code=x'))).headers.get('location'), 'https://admin.example/login?error=oauth_failed');
+  const ok = fixture();
+  const response = await ok.google(new Request('https://admin.example/auth/callback/google?code=ok'));
+  assert.equal(response.status, 307); assert.doesNotMatch(response.headers.get('location'), /error=/);
 });
