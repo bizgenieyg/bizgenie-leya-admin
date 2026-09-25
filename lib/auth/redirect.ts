@@ -8,5 +8,4 @@ export function callbackDestination(next: string | null, origin: string, recover
 export const confirmationErrors: Record<string, string> = {
   confirm_failed: 'confirmationFailed',
   confirm_expired: 'confirmationExpired',
-  oauth_failed: 'oauthFailed',
 };

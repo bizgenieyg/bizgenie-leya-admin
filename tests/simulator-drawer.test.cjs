@@ -71,17 +71,8 @@ test('unsaved assistant settings changes show a warning above the simulator inpu
   assert.match(dictionary, /simulatorDirtyWarning:'Сохраните изменения, чтобы Лея отвечала с ними\.'/);
 });
 
-test('Google sign-in calls signInWithOAuth with the callback redirect and a translated error on failure', () => {
-  assert.match(login, /signInWithOAuth\(\{\s*provider:\s*'google'/);
-  assert.match(login, /redirectTo:\s*`\$\{window\.location\.origin\}\/auth\/callback\/google`/);
-  assert.match(login, /t\('googleContinue'\)/);
-  assert.match(login, /t\('oauthFailed'\)/);
-  assert.match(redirect, /oauth_failed:\s*'oauthFailed'/);
-});
-
-test('the callback route redirects OAuth and confirmation failures to /login with a code, never raw provider text', () => {
+test('the callback route redirects confirmation failures to /login with a code, never raw provider text', () => {
   const callback = readFileSync('lib/auth/callback.ts', 'utf8');
-  assert.match(readFileSync('app/auth/callback/google/route.ts', 'utf8'), /handleAuthCallback\(request, 'oauth'\)/);
   assert.match(callback, /\/login\?error=\$\{reason\}/);
   assert.match(callback, /params\.has\('error'\)\s*\|\|\s*params\.has\('error_description'\)/);
   assert.doesNotMatch(callback, /error_description[^)]*\)\}`/);
@@ -112,4 +103,25 @@ test('the new task K dictionary keys exist for every locale and are spread into 
   assert.match(dictionary, /\.\.\.taskKRu\}/);
   assert.match(dictionary, /\.\.\.taskKEn\}/);
   assert.match(dictionary, /\.\.\.taskKHe\}/);
+});
+
+test('Google sign-in is removed completely; email login and links remain', () => {
+  const login = readFileSync('app/login/page.tsx', 'utf8');
+  const oauthCall = ['signIn', 'With', 'OAuth'].join('');
+  assert.ok(!login.includes(oauthCall) && !/google/i.test(login));
+  assert.match(login, /signInWithPassword/);
+  assert.equal(require('node:fs').existsSync(['app/auth/callback', 'goo' + 'gle'].join('/')), false);
+  assert.doesNotMatch(readFileSync('lib/auth/callback.ts', 'utf8'), /oauth/i);
+  assert.doesNotMatch(readFileSync('lib/i18n/index.tsx', 'utf8'), /googleContinue|oauthFailed/);
+});
+
+test('only the message list scrolls in the drawer; heading, warning and input stay visible (desktop and mobile)', () => {
+  const css = readFileSync('app/globals.css', 'utf8');
+  assert.match(css, /\.simulator-drawer-body\{flex:1;min-block-size:0;overflow:hidden;display:flex;flex-direction:column;/);
+  assert.match(css, /\.simulator-drawer-body \.simulator>\*\{flex:none\}/);
+  assert.match(css, /\.simulator-drawer-body \.simulator>\.simulator-chat\{flex:1 1 auto;min-block-size:0;max-block-size:none;overflow-y:auto/);
+  assert.match(css, /\.simulator-drawer\{position:fixed;inset-block-start:0;block-size:100dvh;max-block-size:100dvh;/);
+  assert.match(readFileSync('app/layout.tsx', 'utf8'), /interactiveWidget: 'resizes-content'/);
+  assert.match(css, /\.simulator-drawer-body \.simulator-compose\.field-action-row\{grid-template-columns:minmax\(0,1fr\) auto\}/);
+  assert.match(css, /@media\(max-height:34rem\)\{\.simulator-drawer-body \.section-heading h2\+p\{display:none\}/);
 });

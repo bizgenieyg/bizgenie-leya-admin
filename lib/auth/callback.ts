@@ -2,16 +2,15 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { callbackDestination } from '@/lib/auth/redirect';
 
-/** Shared auth callback: email links fail with confirm_* codes, Google sign-in with oauth_failed. */
-export async function handleAuthCallback(request: Request, flow: 'email' | 'oauth'): Promise<NextResponse> {
+/** Auth callback for email confirmation and password-recovery links; failures redirect with confirm_* codes. */
+export async function handleAuthCallback(request: Request): Promise<NextResponse> {
   const url = new URL(request.url);
   // Use the incoming host when Next reconstructs the URL with an internal host.
   url.host = request.headers.get('host') ?? url.host;
   const params = url.searchParams;
   const fail = (reason: string) => NextResponse.redirect(new URL(`/login?error=${reason}`, url.origin), { headers: { 'Cache-Control': 'no-store' } });
-  const failed = flow === 'oauth' ? 'oauth_failed' : 'confirm_failed';
+  const failed = 'confirm_failed';
   if (params.has('error') || params.has('error_description')) {
-    if (flow === 'oauth') return fail(failed);
     const expired = params.get('error_code') === 'otp_expired' || /expired|invalid|ист[её]к/i.test(params.get('error_description') ?? '');
     return fail(expired ? 'confirm_expired' : failed);
   }

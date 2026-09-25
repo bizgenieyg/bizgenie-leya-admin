@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import './globals.css';
 import {I18nProvider,type Locale} from '@/lib/i18n';
@@ -9,6 +9,9 @@ import {cookies,headers} from 'next/headers';
 const manrope=Manrope({subsets:['latin','cyrillic'],variable:'--font-sans',display:'swap'});
 const hebrew=Noto_Sans_Hebrew({subsets:['hebrew'],variable:'--font-hebrew',display:'swap'});
 const mono=IBM_Plex_Mono({subsets:['latin','cyrillic'],weight:['400','500','600'],variable:'--font-mono',display:'swap'});
+
+// The on-screen keyboard shrinks the layout viewport, so the simulator input (100dvh drawer) stays above it.
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, interactiveWidget: 'resizes-content' };
 
 export const metadata: Metadata = {
   title: 'Leya — ваш помощник в WhatsApp',
