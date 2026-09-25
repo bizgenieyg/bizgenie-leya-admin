@@ -5,6 +5,7 @@ import AssistantSettings from '@/components/tenant/assistant-settings';
 import KnowledgeEditor from '@/components/tenant/knowledge-editor';
 import ConversationSimulator from '@/components/tenant/conversation-simulator';
 import KnowledgeMaterials from '@/components/tenant/knowledge-materials';
+import DiscoveryQuestions from '@/components/tenant/discovery-questions';
 import {useI18n} from '@/lib/i18n';
 
 export default function AssistantPage(){
@@ -16,6 +17,7 @@ export default function AssistantPage(){
    <div className="assistant-simulator"><ConversationSimulator/></div>
    <div className="assistant-controls">
     <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('assistantIdentityKicker')}</p><h2>{t('assistantTitle')}</h2><p>{t('assistantSettingsHelp')}</p></div></div><AssistantSettings/></section>
+    <section className="surface-card"><div className="section-heading"><div><h2>{t('discoveryTitle')}</h2><p>{t('discoveryHelp')}</p></div></div><DiscoveryQuestions/></section>
     <section id="knowledge" className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('knowledgeKicker')}</p><h2>{t('faqTitle')}</h2><p>{t('knowledgeHelp')}</p></div></div><KnowledgeEditor/></section>
     <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('materialsKicker')}</p><h2>{t('uploadedMaterials')}</h2><p>{t('uploadedMaterialsHelp')}</p></div></div><KnowledgeMaterials/></section>
    </div>

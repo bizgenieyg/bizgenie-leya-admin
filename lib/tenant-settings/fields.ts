@@ -3,7 +3,7 @@
 // drift is caught automatically.
 
 // Owner/admin can change these from the cabinet.
-export const editable = ['business_sector', 'cabinet_language', 'time_zone', 'weekly_schedule', 'auto_replies_paused', 'enabled_agents', 'summary_frequency', 'summary_time', 'summary_weekday', 'polish_owner_answer', 'auto_resume_hours'];
+export const editable = ['business_sector', 'cabinet_language', 'time_zone', 'weekly_schedule', 'auto_replies_paused', 'enabled_agents', 'summary_frequency', 'summary_time', 'summary_weekday', 'polish_owner_answer', 'auto_resume_hours', 'client_discovery_questions'];
 
 // Operator-only runtime fields: rejected for cabinet users, changeable only by a caller
 // holding ADMIN_SECRET directly (see backend src/routes/admin.ts).
