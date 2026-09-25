@@ -28,6 +28,16 @@ export default function LoginPage() {
     else if (reason && confirmationErrors[reason]) setError(t(confirmationErrors[reason]));
   }, [t]);
 
+  async function handleGoogleLogin() {
+    if (loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      const { error } = await createClient().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } });
+      if (error) { setError(t('oauthFailed')); setLoading(false); }
+    } catch { setError(t('oauthFailed')); setLoading(false); }
+  }
+
   async function resendConfirmation() {
     if (loading) return;
     setLoading(true);
@@ -146,6 +156,8 @@ export default function LoginPage() {
             {loading ? t('loading') : mode === 'login' ? t('loginAction') : t('signupAction')}
           </button>
         </form>
+
+        <button type="button" className="button secondary full google-auth-button" disabled={loading} onClick={() => void handleGoogleLogin()}>{t('googleContinue')}</button>
 
         {mode === 'login' ? <Link href="/forgot-password" className="text-link centered">{t('forgotPassword')}</Link> : null}
 

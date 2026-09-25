@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { getOnboardingTenant } from '@/lib/onboarding/tenant';
 import {useI18n} from '@/lib/i18n';
 import {Button,Check,Select} from '@/components/ui/primitives';
+import {useSimulatorDrawer} from '@/lib/tenant/simulator-drawer';
 
 const languages = [{ id: 'he', key: 'hebrew' }, { id: 'ru', key: 'russian' }, { id: 'en', key: 'english' }];
 const tones=[
@@ -28,6 +29,8 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
+  const [snapshot, setSnapshot] = useState('');
+  const {setDirty} = useSimulatorDrawer();
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +46,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
         setTone(tones.some(item=>item.id===data.tone) ? data.tone : 'friendly_professional');
         setStyle(data.style_profile_md ?? '');
         setTenantId(tenantId);
+        setSnapshot(JSON.stringify({name: data.assistant_name ?? '', allowedLanguages: data.allowed_languages ?? [], tone: data.tone ?? '', style: data.style_profile_md ?? ''}));
         try { requireRole(['owner', 'admin']); setCanEdit(true); } catch { setCanEdit(false); }
       } catch {
         if (!cancelled) setError(t('profileLoadError'));
@@ -53,6 +57,12 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
     void load();
     return () => { cancelled = true; };
   }, [t]);
+
+  useEffect(() => {
+    if (loading || !snapshot) return;
+    setDirty(JSON.stringify({name, allowedLanguages, tone, style}) !== snapshot);
+  }, [name, allowedLanguages, tone, style, snapshot, loading, setDirty]);
+  useEffect(() => () => setDirty(false), [setDirty]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,6 +80,7 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
         tone: tone.trim() || null, style_profile_md: style.trim() || null,
       }).eq('tenant_id', tenantId).select('tenant_id').single();
       if (error || !data) throw new Error(t('profileSaveError'));
+      setSnapshot(JSON.stringify({name: name.trim(), allowedLanguages, tone, style}));
       if (onboarding) router.push('/onboarding/step-3');
       else setSaved(true);
     } catch {
