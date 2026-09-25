@@ -68,7 +68,7 @@ test('unsaved assistant settings changes show a warning above the simulator inpu
   assert.match(assistantSettings, /useSimulatorDrawer/);
   assert.match(assistantSettings, /setDirty\(/);
   for (const locale of ['Ru', 'En', 'He']) assert.match(dictionary, new RegExp(`taskK${locale}`));
-  assert.match(dictionary, /simulatorDirtyWarning:'Сохраните изменения, чтобы Лея отвечала с ними\.'/);
+  assert.match(dictionary, /simulatorDirtyWarning:'Сохраните изменения, чтобы ассистент отвечал с ними\.'/);
 });
 
 test('the callback route redirects confirmation failures to /login with a code, never raw provider text', () => {
@@ -97,7 +97,7 @@ test('no tone example in ru, en or he contains forbidden filler phrases', () => 
 });
 
 test('the new task K dictionary keys exist for every locale and are spread into all three dictionaries', () => {
-  assert.match(dictionary, /const taskKRu=\{simulatorOpenButton:'Проверить Лею'/);
+  assert.match(dictionary, /const taskKRu=\{simulatorOpenButton:'Проверить ассистента'/);
   assert.match(dictionary, /const taskKEn:Record<keyof typeof taskKRu,string>=/);
   assert.match(dictionary, /const taskKHe:Record<keyof typeof taskKRu,string>=/);
   assert.match(dictionary, /\.\.\.taskKRu\}/);
@@ -124,4 +124,16 @@ test('only the message list scrolls in the drawer; heading, warning and input st
   assert.match(readFileSync('app/layout.tsx', 'utf8'), /interactiveWidget: 'resizes-content'/);
   assert.match(css, /\.simulator-drawer-body \.simulator-compose\.field-action-row\{grid-template-columns:minmax\(0,1fr\) auto\}/);
   assert.match(css, /@media\(max-height:34rem\)\{\.simulator-drawer-body \.section-heading h2\+p\{display:none\}/);
+});
+
+test('cabinet texts about the assistant are neutral; the assistant name is only a standalone label', () => {
+  const lines = dictionary.split('\n').filter(line => /Ле[яиюе]/.test(line));
+  const pairs = lines.join('\n').match(/[A-Za-z0-9_]+:'[^']*Ле[яиюе][^']*'/g) ?? [];
+  assert.deepEqual(pairs.map(p => p.split(':')[0]).sort(), ['feedbackSubject', 'feedbackTitle', 'loginSubtitle', 'signupSubtitle'], 'only product texts mention Leya');
+  assert.doesNotMatch(dictionary, /WhatsApp отключён — Лея/);
+  const simulator = readFileSync('components/tenant/conversation-simulator.tsx', 'utf8');
+  assert.match(simulator, /useAssistantName\(\) \?\? t\('leyaResponder'\)/);
+  assert.match(simulator, /t\('simulatorThinking', \{ name: assistantName \}\)/);
+  assert.match(dictionary, /simulatorThinking:'\{name\} печатает…'/);
+  assert.match(readFileSync('lib/tenant/assistant-name.ts', 'utf8'), /select\('assistant_name'\)/);
 });

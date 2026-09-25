@@ -11,5 +11,5 @@ test('simulator renders the client reply and localized outcome notices without i
     for (const locale of ['Ru', 'En', 'He']) assert.match(dictionary, new RegExp(`simulatorPipeline${locale}`));
   }
   assert.doesNotMatch(component, /json\.agent|json\.source|result\.agent|result\.source/);
-  assert.match(dictionary, /Здесь Лея передала бы вопрос вам/);
+  assert.match(dictionary, /Здесь ассистент передал бы вопрос вам/);
 });
