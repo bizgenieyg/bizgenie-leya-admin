@@ -31,7 +31,7 @@ async function proxy(request: Request) {
   }
   const [settings,usage]=await Promise.all([call('/api/admin/tenant-settings'),call('/api/admin/usage')]);
   if(!settings.ok||!usage.ok)return fail('serviceUnavailable',502);
-  const raw=normalizeTenantSettings(await settings.json());const safe=Object.fromEntries([...editable,...system,'owner_phone','paired','exceptions','supported_time_zones'].map(key=>[key,raw[key as keyof typeof raw]]));
+  const raw=normalizeTenantSettings(await settings.json());const safe=Object.fromEntries([...editable,...system,'owner_phone','paired','exceptions','supported_time_zones','greeting_template_defaults'].map(key=>[key,raw[key as keyof typeof raw]]));
   return Response.json({settings:safe,usage:await usage.json()},{headers});
  }catch{console.error('tenant_settings_proxy_failed');return fail('serviceUnavailable',502);}
 }

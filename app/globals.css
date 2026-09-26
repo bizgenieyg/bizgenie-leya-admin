@@ -203,3 +203,15 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 @media(max-width:47.9375rem){.simulator-drawer{inline-size:100%}}
 @media(min-width:75rem){body.simulator-drawer-open .page-wrap{padding-inline-end:calc(26.25rem + clamp(2.125rem,6vw,5rem))}}
 .chat-sender{display:block;margin-block-end:.25rem;font-size:.75rem;font-weight:800;color:var(--muted)}
+/* Short summary: 3 cards per row, 2 on narrow, 1 on very narrow; equal heights. */
+.summary-card{container-type:inline-size;container-name:summary}
+.summary-card .metric-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr}
+@container summary (max-width:44rem){.summary-card .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container summary (max-width:20.75rem){.summary-card .metric-grid{grid-template-columns:minmax(0,1fr)}}
+/* Uploaded file card: full-width name with ellipsis, one metadata line, actions on their own row. */
+.materials-list li{grid-template-columns:minmax(0,1fr);gap:var(--control-gap)}
+.material-file{display:grid;gap:.25rem;min-inline-size:0}
+.material-file strong{inline-size:100%}
+.material-file .material-meta{margin:0;white-space:normal;overflow-wrap:anywhere}
+.materials-list .row-actions{justify-content:flex-start;flex-wrap:wrap}
+.greeting-templates{display:grid;gap:var(--space-section)}.greeting-template{display:grid;gap:var(--control-gap);margin:0;padding:var(--space-section);border:.0625rem solid var(--border);border-radius:var(--radius-card)}.greeting-template legend{font-weight:800;padding-inline:.25rem}.greeting-template .button{justify-self:start}

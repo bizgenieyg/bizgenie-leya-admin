@@ -100,9 +100,9 @@ test('the new task K dictionary keys exist for every locale and are spread into 
   assert.match(dictionary, /const taskKRu=\{simulatorOpenButton:'Проверить ассистента'/);
   assert.match(dictionary, /const taskKEn:Record<keyof typeof taskKRu,string>=/);
   assert.match(dictionary, /const taskKHe:Record<keyof typeof taskKRu,string>=/);
-  assert.match(dictionary, /\.\.\.taskKRu\}/);
-  assert.match(dictionary, /\.\.\.taskKEn\}/);
-  assert.match(dictionary, /\.\.\.taskKHe\}/);
+  assert.match(dictionary, /\.\.\.taskKRu[,}]/);
+  assert.match(dictionary, /\.\.\.taskKEn[,}]/);
+  assert.match(dictionary, /\.\.\.taskKHe[,}]/);
 });
 
 test('Google sign-in is removed completely; email login and links remain', () => {
