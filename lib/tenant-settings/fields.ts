@@ -19,6 +19,7 @@ export const operatorOnly = [
   'outbound_reminder_spread_minutes', 'daily_proactive_limit', 'outbound_retry_delays_seconds', 'outbound_retention_days',
   'route_stickiness_hours', 'reception_max_messages', 'campaign_routes', 'source_routes',
   'simulator_hourly_limit', 'simulator_daily_limit', 'templates',
+  'semantic_repeat_threshold', 'repeat_window', 'request_offer_turns', 'cta_min_gap_turns',
 ];
 
 // Billing / tariff fields: operator-only and handled by PATCH /api/admin/usage-limits.
