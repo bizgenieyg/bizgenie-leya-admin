@@ -2,8 +2,6 @@
 import Link from 'next/link';
 import AppShell from '@/components/ui/app-shell';
 import AssistantSettings from '@/components/tenant/assistant-settings';
-import KnowledgeEditor from '@/components/tenant/knowledge-editor';
-import KnowledgeMaterials from '@/components/tenant/knowledge-materials';
 import DiscoveryQuestions from '@/components/tenant/discovery-questions';
 import GreetingTemplates from '@/components/tenant/greeting-templates';
 import {SimulatorOpenButton} from '@/components/tenant/simulator-drawer';
@@ -19,8 +17,6 @@ export default function AssistantPage(){
     <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('assistantIdentityKicker')}</p><h2>{t('assistantTitle')}</h2><p>{t('assistantSettingsHelp')}</p></div></div><AssistantSettings/></section>
     <section className="surface-card"><div className="section-heading"><div><h2>{t('discoveryTitle')}</h2><p>{t('discoveryHelp')}</p></div></div><DiscoveryQuestions/></section>
     <section className="surface-card"><div className="section-heading"><div><h2>{t('greetingTitle')}</h2><p>{t('greetingHelp')}</p></div></div><GreetingTemplates/></section>
-    <section id="knowledge" className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('knowledgeKicker')}</p><h2>{t('faqTitle')}</h2><p>{t('knowledgeHelp')}</p></div></div><KnowledgeEditor/></section>
-    <section className="surface-card"><div className="section-heading"><div><p className="card-kicker">{t('materialsKicker')}</p><h2>{t('uploadedMaterials')}</h2><p>{t('uploadedMaterialsHelp')}</p></div></div><KnowledgeMaterials/></section>
    </div>
   </div>
  </div></main></AppShell>;

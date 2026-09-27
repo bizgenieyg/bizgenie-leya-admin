@@ -29,12 +29,12 @@ test('client directory expands below the selected row and uses server-paged sear
  assert.match(route,/enrichParticipation/);
  assert.match(css,/@container/);
 });
-test('knowledge editor lives in the combined assistant workspace',()=>{
+test('knowledge is its own section; the old Q&A editor and materials are out of the menu',()=>{
  const home=fs.readFileSync('app/admin/page.tsx','utf8');
  const assistant=fs.readFileSync('app/admin/assistant/page.tsx','utf8');
- const legacy=fs.readFileSync('app/admin/knowledge/page.tsx','utf8');
+ const knowledge=fs.readFileSync('app/admin/knowledge/page.tsx','utf8');
  assert.doesNotMatch(home,/KnowledgeEditor/);
- assert.match(assistant,/KnowledgeEditor/);
+ assert.doesNotMatch(assistant,/KnowledgeEditor|KnowledgeMaterials/);
  assert.match(assistant,/SimulatorOpenButton/);
- assert.match(legacy,/redirect\('\/admin\/assistant#knowledge'\)/);
+ assert.match(knowledge,/KnowledgeProfile/);
 });

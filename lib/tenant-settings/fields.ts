@@ -20,6 +20,7 @@ export const operatorOnly = [
   'route_stickiness_hours', 'reception_max_messages', 'campaign_routes', 'source_routes',
   'simulator_hourly_limit', 'simulator_daily_limit', 'templates',
   'semantic_repeat_threshold', 'repeat_window', 'request_offer_turns', 'cta_min_gap_turns',
+  'knowledge_mode', 'fact_duplicate_threshold', 'facts_search_results', 'source_text_max_chars', 'extraction_chunk_chars', 'link_timeout_seconds', 'link_max_bytes', 'link_max_pages', 'audit_max_open_cards',
 ];
 
 // Billing / tariff fields: operator-only and handled by PATCH /api/admin/usage-limits.
