@@ -238,3 +238,4 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .kp-understood h3{margin:0}.kp-simulator{display:flex;justify-content:flex-end}
 @media(min-width:40rem){.kp-topics{grid-template-columns:repeat(2,minmax(0,1fr))}.kp-compare{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:56.25rem){.kp-topics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.client-preferred-name{margin:0.25rem 0 0;color:var(--muted);font-size:0.875rem}

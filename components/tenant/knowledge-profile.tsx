@@ -7,12 +7,15 @@ import {useFormat,useI18n} from '@/lib/i18n';
 type Fact={id:string;topic:string;text:string;quote:string|null;source_id:string|null;updated_at:string;status?:string};
 type Topic={topic:string;required:boolean;facts:Fact[];updated_at:string|null};
 type Card={id:string;kind:'audit'|'gap';check_type:string;topic:string;before_text:string|null;suggested_text:string|null;question:string|null;reason:string|null};
-type Profile={topics:Topic[];filled:number;required:number;audit:Card[];waiting_questions:number;assistant_name:string|null;sources:Array<{id:string;kind:string;title:string|null;url:string|null}>};
+type Profile={offering?:'services'|'goods'|'rental';topics:Topic[];filled:number;required:number;audit:Card[];waiting_questions:number;assistant_name:string|null;sources:Array<{id:string;kind:string;title:string|null;url:string|null}>};
 type Source={id:string;status:'processing'|'ready'|'failed';error:string|null;drafts:Fact[];conflicts:Array<{id:string}>};
 type Tab='text'|'file'|'link'|'photo';
 
 const TABS:Tab[]=['text','file','link','photo'];
 const POLL_MS=2000;
+type T=(key:string,vars?:Record<string,string|number>)=>string;
+/** The offer topic is worded by what the business sells (goods, rental, services); other topics as is. */
+const topicLabel=(t:T,topic:string,offering:Profile['offering'])=>topic==='services_prices'&&offering&&offering!=='services'?t(`kpTopic_services_prices_${offering}`):t(`kpTopic_${topic}`);
 const errorKey=async(r:Response,fallback:string)=>{const d=await r.json().catch(()=>({})) as {code?:string};return d.code??fallback;};
 
 /** "Что знает Лея": the business profile by topic, "Добавить что угодно", improvement cards (task R). */
@@ -25,7 +28,7 @@ export default function KnowledgeProfile(){
  if(!profile)return error?<ErrorState message={error} onRetry={()=>void load()}/>:<LoadingState label={t('loading')}/>;
  const name=profile.assistant_name?.trim();
  const shown=profile.topics.filter(topic=>topic.facts.length||topic.required);
- const current=profile.topics.find(topic=>topic.topic===open);
+ const current=profile.topics.find(topic=>topic.topic===open),offering=profile.offering;
  return <div className="kp">
   <header className="page-heading kp-head">
    <div><p className="eyebrow">{name||'Leya'}</p><h1>{name?t('kpTitleNamed',{name}):t('kpTitle')}</h1><p>{t('kpFilled',{filled:profile.filled,total:profile.required})}</p></div>
@@ -36,28 +39,28 @@ export default function KnowledgeProfile(){
   <div className="kp-topics">
    {shown.map(topic=>topic.facts.length
     ?<button key={topic.topic} type="button" className={`kp-topic ${open===topic.topic?'active':''}`} aria-expanded={open===topic.topic} onClick={()=>setOpen(open===topic.topic?null:topic.topic)}>
-      <strong>{t(`kpTopic_${topic.topic}`)}</strong>
+      <strong>{topicLabel(t,topic.topic,offering)}</strong>
       <span dir="auto" className="kp-topic-summary">{t('kpFactsCount',{count:topic.facts.length})} · {topic.facts[0]!.text}</span>
       {topic.updated_at?<small>{t('kpUpdated',{date:format.date(topic.updated_at)})}</small>:null}
      </button>
     :<button key={topic.topic} type="button" className="kp-topic empty" onClick={()=>setAdding({topic:topic.topic})}>
-      <strong>{t(`kpTopic_${topic.topic}`)}</strong><span className="kp-tell">{t('kpTell')} <span className="direction-icon">→</span></span>
+      <strong>{topicLabel(t,topic.topic,offering)}</strong><span className="kp-tell">{t('kpTell')} <span className="direction-icon">→</span></span>
      </button>)}
   </div>
-  {current?<TopicFacts topic={current} sources={profile.sources} onChanged={load}/>:null}
+  {current?<TopicFacts topic={current} sources={profile.sources} offering={offering} onChanged={load}/>:null}
   {profile.audit.length?<section className="kp-audit" aria-labelledby="kp-audit-title">
    <h2 id="kp-audit-title">{t('kpImprove',{count:profile.audit.length})}</h2>
-   {profile.audit.map(card=><AuditCard key={card.id} card={card} onDone={load}/>)}
+   {profile.audit.map(card=><AuditCard key={card.id} card={card} offering={offering} onDone={load}/>)}
   </section>:null}
   {profile.waiting_questions?<p className="kp-waiting">{t('kpWaiting',{count:profile.waiting_questions})} · <Link href="/admin/clients">{t('kpAnswer')}</Link></p>:null}
-  {adding?<AddAnything topic={adding.topic} onClose={()=>{setAdding(null);void load();}}/>:null}
+  {adding?<AddAnything topic={adding.topic} offering={offering} onClose={()=>{setAdding(null);void load();}}/>:null}
  </div>;
 }
 
-function TopicFacts({topic,sources,onChanged}:{topic:Topic;sources:Profile['sources'];onChanged:()=>Promise<void>}){
+function TopicFacts({topic,sources,offering,onChanged}:{topic:Topic;sources:Profile['sources'];offering:Profile['offering'];onChanged:()=>Promise<void>}){
  const{t}=useI18n();
- return <section className="surface-card kp-facts" aria-label={t(`kpTopic_${topic.topic}`)}>
-  <h2>{t(`kpTopic_${topic.topic}`)}</h2>
+ return <section className="surface-card kp-facts" aria-label={topicLabel(t,topic.topic,offering)}>
+  <h2>{topicLabel(t,topic.topic,offering)}</h2>
   <ul>{topic.facts.map(fact=><li key={fact.id}><FactRow fact={fact} source={sources.find(s=>s.id===fact.source_id)??null} onChanged={onChanged}/></li>)}</ul>
  </section>;
 }
@@ -76,12 +79,12 @@ function FactRow({fact,source,onChanged,draft=false}:{fact:Fact;source?:Profile[
  </div>;
 }
 
-function AuditCard({card,onDone}:{card:Card;onDone:()=>Promise<void>}){
+function AuditCard({card,offering,onDone}:{card:Card;offering:Profile['offering'];onDone:()=>Promise<void>}){
  const{t}=useI18n();
  const[text,setText]=useState(card.kind==='gap'?'':card.suggested_text??''),[editing,setEditing]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const decide=async(action:'accept'|'edit'|'skip'|'answer')=>{setBusy(true);setError('');try{const r=await fetch(`/api/knowledge-profile/audit/${card.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,text})});if(!r.ok){setError(t(await errorKey(r,'kpErrorSave')));return;}await onDone();}finally{setBusy(false);}};
  return <article className="surface-card kp-card">
-  <p className="kp-card-kind">{t(`kpTopic_${card.topic}`)} · {t(`kpCheck_${card.check_type}`)}</p>
+  <p className="kp-card-kind">{topicLabel(t,card.topic,offering)} · {t(`kpCheck_${card.check_type}`)}</p>
   {card.kind==='gap'?<>
    <p dir="auto">{card.question}</p>
    <label className="sr-only" htmlFor={`gap-${card.id}`}>{t('kpYourAnswer')}</label>
@@ -103,7 +106,7 @@ function AuditCard({card,onDone}:{card:Card;onDone:()=>Promise<void>}){
 }
 
 /** Text / File / Link / Photo → processing (polled) → "Лея поняла так" → "Верно". */
-function AddAnything({topic,onClose}:{topic:string|null;onClose:()=>void}){
+function AddAnything({topic,offering,onClose}:{topic:string|null;offering:Profile['offering'];onClose:()=>void}){
  const{t}=useI18n();
  const[tab,setTab]=useState<Tab>('text'),[text,setText]=useState(''),[url,setUrl]=useState(''),[file,setFile]=useState<File|null>(null);
  const[busy,setBusy]=useState(false),[error,setError]=useState(''),[source,setSource]=useState<Source|null>(null);
@@ -123,7 +126,7 @@ function AddAnything({topic,onClose}:{topic:string|null;onClose:()=>void}){
  const ready=tab==='text'?!!text.trim():tab==='link'?!!url.trim():!!file;
  return <div className="dialog-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)onClose();}}>
   <section className="dialog kp-dialog" role="dialog" aria-modal="true" aria-labelledby="kp-add-title">
-   <h2 id="kp-add-title">{topic?t('kpTellAbout',{topic:t(`kpTopic_${topic}`)}):t('kpAddTitle')}</h2>
+   <h2 id="kp-add-title">{topic?t('kpTellAbout',{topic:topicLabel(t,topic,offering)}):t('kpAddTitle')}</h2>
    {!source?<form onSubmit={submit} className="kp-add">
     {!topic?<div className="kp-tabs" role="tablist" aria-label={t('kpAddTitle')}>{TABS.map(item=><button key={item} type="button" role="tab" aria-selected={tab===item} className={tab===item?'active':''} onClick={()=>{setTab(item);setError('');}}>{t(`kpTab_${item}`)}</button>)}</div>:null}
     {tab==='text'?<><label className="field-label" htmlFor="kp-text">{t('kpTextLabel')}</label><textarea id="kp-text" className="field-control" dir="auto" rows={8} maxLength={50000} value={text} onChange={e=>setText(e.target.value)} placeholder={t('kpTextPlaceholder')}/></>:null}
@@ -136,7 +139,7 @@ function AddAnything({topic,onClose}:{topic:string|null;onClose:()=>void}){
    :source.status==='failed'?<><ErrorState message={t(source.error??'kpErrorProcessing')}/><div className="dialog-actions"><Button tone="secondary" onClick={()=>setSource(null)}>{t('kpTryAgain')}</Button><Button onClick={onClose}>{t('close')}</Button></div></>
    :<div className="kp-understood">
      <h3>{t('kpUnderstood')}</h3>
-     {source.drafts.length?<ul>{source.drafts.map(fact=><li key={fact.id}><p className="kp-card-kind">{t(`kpTopic_${fact.topic}`)}</p><FactRow fact={fact} draft onChanged={()=>poll(source.id)}/></li>)}</ul>:<p>{t('kpNothingNew')}</p>}
+     {source.drafts.length?<ul>{source.drafts.map(fact=><li key={fact.id}><p className="kp-card-kind">{topicLabel(t,fact.topic,offering)}</p><FactRow fact={fact} draft onChanged={()=>poll(source.id)}/></li>)}</ul>:<p>{t('kpNothingNew')}</p>}
      {source.conflicts.length?<p className="field-help">{t('kpConflictsNote')}</p>:null}
      {error?<p role="alert" className="error-copy">{error}</p>:null}
      <div className="dialog-actions"><Button tone="secondary" disabled={busy} onClick={onClose}>{t('close')}</Button>{source.drafts.length?<Button disabled={busy} onClick={()=>void confirm()}>{t('kpCorrect')}</Button>:null}</div>

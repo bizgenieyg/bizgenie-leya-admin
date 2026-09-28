@@ -32,3 +32,12 @@ test('every topic, check and error key exists in ru, en and he',()=>{
  for(const code of read('lib/knowledge/proxy.ts').match(/'kp[A-Za-z]+'/g))assert.match(ru,new RegExp(code.slice(1,-1)));
  assert.match(i18n,/taskREn:Record<keyof typeof taskRRu,string>/);assert.match(i18n,/taskRHe:Record<keyof typeof taskRRu,string>/);
 });
+
+test('task V: offer topic label follows the sector, title uses the assistant name, client card shows the given name',()=>{
+ const ui=read('components/tenant/knowledge-profile.tsx'),i18n=read('lib/i18n/index.tsx'),card=read('components/tenant/client-directory.tsx');
+ assert.match(ui,/kpTopic_services_prices_\$\{offering\}/);
+ assert.equal((ui.match(/t\(`kpTopic_\$\{topic\}`\)/g)??[]).length,1,'every topic label goes through topicLabel');assert.doesNotMatch(ui,/t\(`kpTopic_\$\{(?:card|fact|topic)\.topic\}`\)/);
+ assert.match(ui,/name\?t\('kpTitleNamed',\{name\}\):t\('kpTitle'\)/);
+ for(const key of ['kpTopic_services_prices_goods','kpTopic_services_prices_rental','clientCallsThemselves'])assert.equal((i18n.match(new RegExp(`${key}:`,'g'))??[]).length,3,key);
+ assert.match(card,/card\.preferred_name\?/);assert.doesNotMatch(card,/preferred_name:/,'read only: never sent back');
+});
