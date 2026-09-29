@@ -41,3 +41,9 @@ test('task V: offer topic label follows the sector, title uses the assistant nam
  for(const key of ['kpTopic_services_prices_goods','kpTopic_services_prices_rental','clientCallsThemselves'])assert.equal((i18n.match(new RegExp(`${key}:`,'g'))??[]).length,3,key);
  assert.match(card,/card\.preferred_name\?/);assert.doesNotMatch(card,/preferred_name:/,'read only: never sent back');
 });
+
+test('task X 5a: the knowledge page mounts the simulator drawer, so its button opens it',()=>{
+ const layout=read('app/admin/knowledge/layout.tsx');
+ assert.match(layout,/<SimulatorDrawerProvider>/);assert.match(layout,/<SimulatorDrawer\/>/);
+ assert.match(read('app/admin/knowledge/page.tsx'),/SimulatorOpenButton/);
+});
