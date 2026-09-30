@@ -8,7 +8,8 @@ const CODES:Record<string,string>={
  link_social:'kpErrorLinkSocial',link_timeout:'kpErrorLinkUnavailable',link_unavailable:'kpErrorLinkUnavailable',link_too_large:'kpErrorLinkUnavailable',
  link_not_html:'kpErrorLinkUnavailable',link_empty:'kpErrorLinkEmpty',photo_no_text:'kpErrorPhotoNoText',source_model_unavailable:'kpErrorUnavailable',
  source_failed:'kpErrorProcessing',fact_invalid:'kpErrorFactInvalid',fact_not_found:'kpErrorGone',fact_archived:'kpErrorGone',audit_not_found:'kpErrorGone',
- audit_decided:'kpErrorGone',audit_action:'kpErrorSave',source_not_found:'kpErrorGone',
+ audit_decided:'kpErrorGone',audit_action:'kpErrorSave',source_not_found:'kpErrorGone',question_not_found:'kpErrorGone',
+ voice_type:'kpErrorVoiceType',voice_too_long:'kpErrorVoiceTooLong',voice_limit:'kpErrorLimit',voice_unavailable:'kpErrorUnavailable',voice_failed:'kpErrorVoiceFailed',voice_empty:'kpErrorVoiceEmpty',
 };
 export const knowledgeCode=(code:unknown,fallback='kpErrorSave')=>CODES[String(code)]??fallback;
 export const isId=(value:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);

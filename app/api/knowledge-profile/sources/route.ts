@@ -11,6 +11,9 @@ if(!isSameOrigin(request))return Response.json({code:'settingsRestricted'},{stat
   return knowledgeCall(request,`/api/admin/knowledge/sources/text${query}`,{method:'POST',headers:{'Content-Type':'text/plain; charset=utf-8'},body:text});}
  if(kind==='link'){const url=form.get('url');if(typeof url!=='string'||!url.trim())return Response.json({code:'kpErrorLinkInvalid'},{status:400});
   return knowledgeCall(request,'/api/admin/knowledge/sources/link',{method:'POST',body:JSON.stringify({url:url.trim()})});}
+ if(kind==='voice'){const file=form.get('file'),topic=form.get('topic');if(!(file instanceof File)||!file.size)return Response.json({code:'kpErrorVoiceType'},{status:400});
+  const query=typeof topic==='string'&&TOPICS.has(topic)?`?topic=${topic}`:'';
+  return knowledgeCall(request,`/api/admin/knowledge/sources/voice${query}`,{method:'POST',headers:{'Content-Type':'application/octet-stream','x-file-type':file.type||'audio/webm'},body:await file.arrayBuffer()},120000);}
  if(kind==='file'){const file=form.get('file');if(!(file instanceof File)||!file.size)return Response.json({code:'kpErrorFileType'},{status:400});
   return knowledgeCall(request,'/api/admin/knowledge/sources/file',{method:'POST',headers:{'Content-Type':'application/octet-stream','x-file-name':encodeURIComponent(file.name),'x-file-type':file.type||'application/octet-stream'},body:await file.arrayBuffer()},120000);}
  return Response.json({code:'kpErrorSave'},{status:400});

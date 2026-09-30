@@ -16,7 +16,7 @@ test('screen follows the mockup and the cabinet rules: tabs, understood list, ca
  const ui=read('components/tenant/knowledge-profile.tsx'),css=read('app/globals.css');
  for(const key of ['kpAdd','kpFilled','kpTell','kpImprove','kpUnderstood','kpCorrect','kpBefore','kpSuggested','kpAccept','kpSkip','kpWaiting'])assert.match(ui,new RegExp(`'${key}'`));
  for(const tab of ['text','file','link','photo'])assert.match(ui,new RegExp(`'${tab}'`));
- assert.doesNotMatch(ui,/voice/i,'voice is only in onboarding');
+ assert.match(ui,/'voice'/,'task Z: voice tab');
  assert.match(ui,/useI18n/);
  const block=css.slice(css.indexOf('Task R'));
  assert.match(block,/\.kp-topic\.empty\{border:0\.0625rem dashed var\(--warning\)/);
@@ -46,4 +46,14 @@ test('task X 5a: the knowledge page mounts the simulator drawer, so its button o
  const layout=read('app/admin/knowledge/layout.tsx');
  assert.match(layout,/<SimulatorDrawerProvider>/);assert.match(layout,/<SimulatorDrawer\/>/);
  assert.match(read('app/admin/knowledge/page.tsx'),/SimulatorOpenButton/);
+});
+
+test('task Z: "Добавить знания" in three languages, voice recorder ≥44px with a fallback hint, owner-question cards',()=>{
+ const ui=read('components/tenant/knowledge-profile.tsx'),css=read('app/globals.css'),i18n=read('lib/i18n/index.tsx'),proxy=read('app/api/knowledge-profile/sources/route.ts');
+ for(const text of ['kpAdd:"+ Добавить знания"','kpAddTitle:"Добавить знания"','kpAdd:"+ Add knowledge"','kpAddTitle:"Add knowledge"','kpAdd:"+ הוספת ידע"','kpAddTitle:"הוספת ידע"'])assert.ok(i18n.includes(text),text);
+ assert.match(ui,/MediaRecorder\.isTypeSupported/);assert.match(ui,/'audio\/mp4'/,'Safari iOS records mp4');assert.match(ui,/getUserMedia/);
+ assert.match(ui,/kpVoiceDenied/);assert.match(ui,/kpVoiceWhatsAppHint/);assert.match(ui,/TOPIC_TABS:Tab\[\]=\['text','voice'\]/,'"Рассказать" offers voice');
+ assert.match(ui,/OwnerQuestionCard/);assert.match(read('app/api/knowledge-profile/owner-questions/[id]/route.ts'),/isSameOrigin\(request\)/);
+ assert.match(proxy,/sources\/voice/);
+ const block=css.slice(css.indexOf('Task Z'));assert.match(block,/\.kp-record\{min-height:var\(--touch\)/);assert.doesNotMatch(block,/\b(?:margin|padding)-(?:left|right)|\bleft:|\bright:/);
 });

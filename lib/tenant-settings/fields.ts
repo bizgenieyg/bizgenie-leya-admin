@@ -20,6 +20,7 @@ export const operatorOnly = [
   'route_stickiness_hours', 'reception_max_messages', 'campaign_routes', 'source_routes',
   'simulator_hourly_limit', 'simulator_daily_limit', 'templates',
   'semantic_repeat_threshold', 'repeat_window', 'request_offer_turns', 'cta_min_gap_turns',
+  'reply_engine', 'reply_model', 'request_required_fields', 'demo_max_turns', 'owner_interview_first_batch', 'owner_interview_daily_limit', 'knowledge_voice_max_seconds', 'knowledge_voice_hourly_limit', 'knowledge_voice_daily_limit',
   'knowledge_mode', 'fact_duplicate_threshold', 'facts_search_results', 'source_text_max_chars', 'extraction_chunk_chars', 'link_timeout_seconds', 'link_max_bytes', 'link_max_pages', 'audit_max_open_cards',
 ];
 

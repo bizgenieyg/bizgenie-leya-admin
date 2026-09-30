@@ -233,9 +233,19 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .kp-compare{display:grid;grid-template-columns:minmax(0,1fr);gap:0.75rem}.kp-compare p{overflow-wrap:anywhere;font-size:0.875rem;line-height:1.5}.kp-compare p:first-child{color:var(--muted)}
 .kp-waiting{margin:0;color:var(--muted);font-size:0.875rem}.kp-waiting a{color:var(--accent);font-weight:750}
 .kp-dialog{width:min(100%,40rem);max-height:calc(100dvh - 2.5rem);overflow-y:auto}.kp-add{display:flex;flex-direction:column;gap:0.5rem}.kp-add textarea{width:100%}
-.kp-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.25rem;padding:0.25rem;border-radius:var(--radius-control);background:var(--surface-soft);margin-bottom:0.5rem}
+.kp-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0.25rem;padding:0.25rem;border-radius:var(--radius-control);background:var(--surface-soft);margin-bottom:0.5rem}
 .kp-tabs button{min-height:var(--touch);border:0;border-radius:calc(var(--radius-control) - 0.125rem);background:transparent;color:var(--muted);font-weight:700;cursor:pointer}.kp-tabs button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-card)}
 .kp-understood h3{margin:0}.kp-simulator{display:flex;justify-content:flex-end}
 @media(min-width:40rem){.kp-topics{grid-template-columns:repeat(2,minmax(0,1fr))}.kp-compare{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:56.25rem){.kp-topics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .client-preferred-name{margin:0.25rem 0 0;color:var(--muted);font-size:0.875rem}
+/* Task Z: voice notes in "Добавить знания". */
+.kp-tabs.two{grid-template-columns:repeat(2,minmax(0,1fr))}.kp-tabs button{font-size:0.8125rem;padding-inline:0.25rem;overflow-wrap:anywhere}
+.kp-voice{display:flex;flex-direction:column;align-items:flex-start;gap:0.5rem}
+.kp-record{min-height:var(--touch);min-width:min(100%,14rem);display:inline-flex;align-items:center;justify-content:center;gap:0.625rem;padding-inline:1.125rem;border:0.0625rem solid var(--border);border-radius:62.4375rem;background:var(--surface);color:var(--text);font-weight:750;cursor:pointer}
+.kp-record.recording{border-color:var(--danger);background:var(--danger-soft);color:var(--danger-text)}
+.kp-record-dot{width:0.75rem;height:0.75rem;flex:none;border-radius:50%;background:var(--danger)}
+.kp-record.recording .kp-record-dot{animation:kp-pulse 1s ease-in-out infinite}
+@keyframes kp-pulse{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.kp-record.recording .kp-record-dot{animation:none}}
+.kp-voice-preview{width:100%;max-width:100%}
