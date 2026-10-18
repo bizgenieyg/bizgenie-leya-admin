@@ -15,9 +15,10 @@ test('Z6 onboarding path: step 1 → owner → «Расскажите о биз�
   assert.match(simulator, /<ConversationSimulator suggestions=\{suggestions\} \/>/); assert.match(simulator, /href="\/onboarding\/step-3"/);
   const whatsapp = read('components/tenant/whatsapp-connection.tsx');
   assert.doesNotMatch(whatsapp, /onboarding\/step-4/);
-  assert.match(whatsapp, /href="\/admin">\{t\('next'\)\}/);
+  assert.match(whatsapp, /href="\/onboarding\/owner\?after=whatsapp">\{t\('next'\)\}/, 'after the QR — back to confirm the owner number');
   assert.match(read('app/onboarding/step-frame.tsx'), /\[1, 2, 3, 4, 5\]/);
-  for (const [page, step] of [['owner', 2], ['knowledge', 3], ['simulator', 4], ['step-3', 5]]) assert.match(read(`app/onboarding/${page}/page.tsx`), new RegExp(`step=\\{${step}\\}`));
+  assert.match(read('app/onboarding/owner/page.tsx'), /step=\{afterWhatsapp\?5:2\}/);
+  for (const [page, step] of [['knowledge', 3], ['simulator', 4], ['step-3', 5]]) assert.match(read(`app/onboarding/${page}/page.tsx`), new RegExp(`step=\\{${step}\\}`));
 });
 
 test('Z6: step-2 (tone, greetings) and step-4 (FAQ) are out of the path; direct URLs redirect to the next step', () => {
@@ -38,4 +39,14 @@ test('Z6 assistant section: tone, style, greetings and discovery chips hidden on
   const simulator = read('components/tenant/conversation-simulator.tsx');
   assert.match(simulator, /suggestions\.map\(question => <button key=\{question\} type="button" className="preset-card"/);
   assert.match(simulator, /t\('simulatorOwnQuestion'\)/);
+});
+
+test('Z6 review: owner number before the QR is saved and confirmed after it (pending → after=whatsapp → code → cabinet)', () => {
+  const owner = read('app/onboarding/owner/page.tsx');
+  assert.match(owner, /afterWhatsapp=useSearchParams\(\)\.get\('after'\)==='whatsapp'/);
+  assert.match(owner, /setPending\(data\.pending==='whatsapp'\)/);
+  assert.match(owner, /t\('ownerPendingWhatsapp'\)/);
+  assert.match(owner, /paired\|\|pending\?<Link className=\{buttonClass\} href="\/onboarding\/knowledge">/, 'a saved number lets the onboarding go on');
+  assert.match(owner, /paired\?<Link className=\{buttonClass\} href="\/admin">\{t\('finishSetup'\)\}/, 'the cabinet only after the code is confirmed (or skipped)');
+  assert.match(read('app/api/owner-settings/route.ts'), /result\.pending === 'whatsapp' \? \{ pending: 'whatsapp' \}/);
 });

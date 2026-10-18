@@ -1,11 +1,15 @@
 'use client';
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { StepFrame, inputClass, buttonClass } from '../step-frame';
 import {useI18n} from '@/lib/i18n';
 import {translatedApiError} from '@/lib/i18n/api-error';
 export default function OwnerStep() {
   const{t}=useI18n();
+  // Z6: the first visit is before the QR (number saved, code later); `?after=whatsapp` — back after the connection to send and confirm the code.
+  const afterWhatsapp=useSearchParams().get('after')==='whatsapp';
+  const [pending,setPending]=useState(false);
   const [phone,setPhone]=useState('');
   const [quietStart,setStart]=useState('');
   const [quietEnd,setEnd]=useState('');
@@ -32,7 +36,7 @@ export default function OwnerStep() {
     try {
       const response=await fetch('/api/owner-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,quietStart,quietEnd,timeZone})});
       const data=await response.json();if(!response.ok)throw new Error(translatedApiError(t,data,'saveError'));
-      setSent(data.sent===true);setPaired(false);
+      setSent(data.sent===true);setPending(data.pending==='whatsapp');setPaired(false);
     }catch(e){setError(e instanceof Error?e.message:t('saveError'));}finally{setBusy(false);}
   }
   async function verify() {
@@ -40,8 +44,8 @@ export default function OwnerStep() {
     try{const r=await fetch('/api/owner-settings');const data=await r.json();if(!r.ok)throw new Error();setPaired(data.paired);if(!data.paired)setError(t('ownerVerifyPending'));}
     catch{setError(t('ownerVerifyError'));}finally{setBusy(false);}
   }
-  return <StepFrame step={2} title={t('ownerStepTitle')}>
-    <p className="mb-4 text-sm muted">{t('ownerStepHelp')}</p>
+  return <StepFrame step={afterWhatsapp?5:2} title={t(afterWhatsapp?'ownerFinishTitle':'ownerStepTitle')}>
+    <p className="mb-4 text-sm muted">{t(afterWhatsapp?'ownerFinishHelp':'ownerStepHelp')}</p>
     <form onSubmit={submit} className="space-y-4">
       <label className="block">{t('ownerPhoneLabel')}<input required type="tel" inputMode="tel" placeholder="+972501234567" className={inputClass} value={phone} onChange={e=>{setPhone(e.target.value);setPaired(false);}} /></label>
       <p className="text-sm muted">{t('ownerHoursHelp')}</p>
@@ -49,11 +53,14 @@ export default function OwnerStep() {
       <p className="text-sm muted">{t('ownerZoneHelp')}</p>
       <label className="block">{t('fromTime')}<input type="time" className={inputClass} value={quietStart} onChange={e=>{setStart(e.target.value);setPaired(false);}} /></label>
       <label className="block">{t('toTime')}<input type="time" className={inputClass} value={quietEnd} onChange={e=>{setEnd(e.target.value);setPaired(false);}} /></label>
-      <button className={buttonClass} disabled={busy||!loaded}>{t('save')}</button>
+      <button className={buttonClass} disabled={busy||!loaded}>{t(afterWhatsapp?'ownerSendCode':'save')}</button>
     </form>
     {sent&&!paired?<div className="mt-5 space-y-3"><p>{t('ownerPairHelp')}</p><button type="button" className={buttonClass} disabled={busy} onClick={verify}>{t('verifyOwner')}</button></div>:null}
+    {pending&&!afterWhatsapp?<p role="status" className="mt-4 text-sm muted">{t('ownerPendingWhatsapp')}</p>:null}
     {paired?<p role="status" className="mt-4 success-copy">{t('ownerVerified')}</p>:null}
     {error?<p role="alert" className="mt-4 error-copy">{error}</p>:null}
-    <div className="mt-6 flex justify-between"><Link href="/onboarding/step-1">{t('back')}</Link>{paired?<Link className={buttonClass} href="/onboarding/knowledge">{t('next')} <span className="direction-icon">→</span></Link>:<Link className="text-sm text-link-inline" href="/onboarding/knowledge">{t('skip')}</Link>}</div>
+    {afterWhatsapp
+      ?<div className="mt-6 flex justify-between"><Link href="/onboarding/step-3">{t('back')}</Link>{paired?<Link className={buttonClass} href="/admin">{t('finishSetup')} <span className="direction-icon">→</span></Link>:<Link className="text-sm text-link-inline" href="/admin">{t('skip')}</Link>}</div>
+      :<div className="mt-6 flex justify-between"><Link href="/onboarding/step-1">{t('back')}</Link>{paired||pending?<Link className={buttonClass} href="/onboarding/knowledge">{t('next')} <span className="direction-icon">→</span></Link>:<Link className="text-sm text-link-inline" href="/onboarding/knowledge">{t('skip')}</Link>}</div>}
   </StepFrame>;
 }
