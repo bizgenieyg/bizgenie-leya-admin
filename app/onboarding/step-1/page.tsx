@@ -57,7 +57,7 @@ export default function OnboardingStepOnePage() {
 
       sessionStorage.setItem('onboarding_tenant_id', tenantId);
       sessionStorage.setItem('onboarding_business_category', category);
-      router.push('/onboarding/step-2');
+      router.push('/onboarding/owner');
     } catch {
       if (process.env.NODE_ENV === 'development') console.error('Tenant creation request failed');
       setError(t('createBusinessError'));

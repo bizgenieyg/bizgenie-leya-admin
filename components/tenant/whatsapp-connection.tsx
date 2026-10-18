@@ -149,8 +149,8 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true, on
     {cabinet && canEdit ? <Link className="block text-sm text-link-inline" href="/onboarding/owner">{t('ownerSettings')}</Link> : null}
     {cabinet && canEdit && isConnected(state.status) ? <Button type="button" disabled={busy} tone="danger" onClick={() => setConfirmDisconnect(true)}>{t('disconnect')}</Button> : null}
     {!cabinet ? <div className="mt-8 flex items-center justify-between gap-4">
-      <Link className="text-sm text-link-inline" href="/onboarding/step-4">{t('skip')}</Link>
-      {isConnected(state.status) ? <Link className={buttonClass} href="/onboarding/owner">{t('next')} <span className="direction-icon">→</span></Link> : null}
+      <Link className="text-sm text-link-inline" href="/admin">{t('skip')}</Link>
+      {isConnected(state.status) ? <Link className={buttonClass} href="/admin">{t('next')} <span className="direction-icon">→</span></Link> : null}
     </div> : null}<ConfirmDialog open={confirmDisconnect} danger title={t('confirmAction')} onCancel={()=>setConfirmDisconnect(false)} onConfirm={()=>{setConfirmDisconnect(false);run('disconnect')}}><p>{t('disconnectConfirm')}</p></ConfirmDialog>
     {cabinet && canEdit ? <ConfirmDialog open={confirmNumberChange} danger title={t('numberChangedTitle')} onCancel={()=>void resolveNumberChange(false)} onConfirm={()=>void resolveNumberChange(true)}><p>{t('resetTenantDataConfirm')}</p></ConfirmDialog> : null}
   </div>;

@@ -1,8 +1,4 @@
-'use client';
-import KnowledgeEditor from '@/components/tenant/knowledge-editor';
-import { StepFrame } from '../step-frame';
-import {useI18n} from '@/lib/i18n';
+import { redirect } from 'next/navigation';
 
-export default function OnboardingStepFourPage() {
-  const{t}=useI18n();return <StepFrame step={4} title={t('faqSetupTitle')}><KnowledgeEditor onboarding /></StepFrame>;
-}
+/** Z6: FAQ left the onboarding path («Расскажите о бизнесе» replaces it); the data stays. Step 4 was the last one. */
+export default function OnboardingStepFourPage() { redirect('/admin'); }

@@ -12,7 +12,7 @@ export function StepFrame({ step, title, children }: { step: number; title: stri
     <PublicShell>
         <div className="step-head">
           <div aria-label={t('stepProgress',{step})} className="step-progress">
-            {[1, 2, 3, 4].map((number) => <div key={number} className={number <= step ? 'active' : ''} />)}
+            {[1, 2, 3, 4, 5].map((number) => <div key={number} className={number <= step ? 'active' : ''} />)}
           </div>
           <h1>{title}</h1>
           <p>{t('stepProgress',{step})}</p>

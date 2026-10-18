@@ -23,7 +23,8 @@ const topicLabel=(t:T,topic:string,offering:Profile['offering'])=>topic==='servi
 const errorKey=async(r:Response,fallback:string)=>{const d=await r.json().catch(()=>({})) as {code?:string};return d.code??fallback;};
 
 /** "Что знает Лея": the business profile by topic, "Добавить что угодно", improvement cards (task R). */
-export default function KnowledgeProfile(){
+/** `onboarding` (Z6 step «Расскажите о бизнесе»): no page heading — the step frame has the title. */
+export default function KnowledgeProfile({onboarding=false}:{onboarding?:boolean}={}){
  const{t}=useI18n(),format=useFormat();
  const[profile,setProfile]=useState<Profile|null>(null),[error,setError]=useState(''),[open,setOpen]=useState<string|null>(null);
  const[adding,setAdding]=useState<{topic:string|null}|null>(null);
@@ -35,7 +36,7 @@ export default function KnowledgeProfile(){
  const current=profile.topics.find(topic=>topic.topic===open),offering=profile.offering;
  return <div className="kp">
   <header className="page-heading kp-head">
-   <div><p className="eyebrow">{name||'Leya'}</p><h1>{name?t('kpTitleNamed',{name}):t('kpTitle')}</h1><p>{t('kpFilled',{filled:profile.filled,total:profile.required})}</p></div>
+   {onboarding?<p>{t('kpFilled',{filled:profile.filled,total:profile.required})}</p>:<div><p className="eyebrow">{name||'Leya'}</p><h1>{name?t('kpTitleNamed',{name}):t('kpTitle')}</h1><p>{t('kpFilled',{filled:profile.filled,total:profile.required})}</p></div>}
    <Button onClick={()=>setAdding({topic:null})}>{t('kpAdd')}</Button>
   </header>
   <p className="field-help">{t('kpAddHelp')}</p>

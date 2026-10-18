@@ -40,7 +40,7 @@ export default function OwnerStep() {
     try{const r=await fetch('/api/owner-settings');const data=await r.json();if(!r.ok)throw new Error();setPaired(data.paired);if(!data.paired)setError(t('ownerVerifyPending'));}
     catch{setError(t('ownerVerifyError'));}finally{setBusy(false);}
   }
-  return <StepFrame step={3} title={t('ownerStepTitle')}>
+  return <StepFrame step={2} title={t('ownerStepTitle')}>
     <p className="mb-4 text-sm muted">{t('ownerStepHelp')}</p>
     <form onSubmit={submit} className="space-y-4">
       <label className="block">{t('ownerPhoneLabel')}<input required type="tel" inputMode="tel" placeholder="+972501234567" className={inputClass} value={phone} onChange={e=>{setPhone(e.target.value);setPaired(false);}} /></label>
@@ -54,6 +54,6 @@ export default function OwnerStep() {
     {sent&&!paired?<div className="mt-5 space-y-3"><p>{t('ownerPairHelp')}</p><button type="button" className={buttonClass} disabled={busy} onClick={verify}>{t('verifyOwner')}</button></div>:null}
     {paired?<p role="status" className="mt-4 success-copy">{t('ownerVerified')}</p>:null}
     {error?<p role="alert" className="mt-4 error-copy">{error}</p>:null}
-    <div className="mt-6 flex justify-between"><Link href="/onboarding/step-3">{t('back')}</Link>{paired?<Link className={buttonClass} href="/onboarding/step-4">{t('next')} <span className="direction-icon">→</span></Link>:null}</div>
+    <div className="mt-6 flex justify-between"><Link href="/onboarding/step-1">{t('back')}</Link>{paired?<Link className={buttonClass} href="/onboarding/knowledge">{t('next')} <span className="direction-icon">→</span></Link>:<Link className="text-sm text-link-inline" href="/onboarding/knowledge">{t('skip')}</Link>}</div>
   </StepFrame>;
 }

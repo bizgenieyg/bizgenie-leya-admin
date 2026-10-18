@@ -16,7 +16,8 @@ const tones=[
   {id:'formal_respectful',label:'toneFormalRespectful',help:'toneFormalRespectfulHelp',example:'toneFormalRespectfulExample'},
 ] as const;
 
-export default function AssistantSettings({ onboarding = false }: { onboarding?: boolean }) {
+/** `hideStyle` (Z6): tone and answer style are not shown when replies go by an instruction (they would not apply). */
+export default function AssistantSettings({ onboarding = false, hideStyle = false }: { onboarding?: boolean; hideStyle?: boolean }) {
   const {t}=useI18n();
   const router = useRouter();
   const [name, setName] = useState('');
@@ -102,8 +103,8 @@ export default function AssistantSettings({ onboarding = false }: { onboarding?:
         <fieldset className="compact-form" disabled={loading || saving || !tenantId || !canEdit}>
           <label htmlFor="assistant-name" className="field-label">{t('assistantName')}<input id="assistant-name" className="field-control" required value={name} onChange={(event) => setName(event.target.value)} /></label>
           <fieldset className="field-group"><legend className="field-label">{t('responseLanguages')}</legend><div className="check-grid">{languages.map(({ id, key }) => <Check key={id} label={t(key)} checked={allowedLanguages.includes(id)} onChange={checked=>setAllowedLanguages(current=>checked?[...current,id]:current.filter(language=>language!==id))}/>)}</div></fieldset>
-          <label htmlFor="tone" className="field-label">{t('tone')}<Select id="tone" className="field-control" value={tone} onChange={(event) => changeTone(event.target.value)}>{tones.map(item=><option key={item.id} value={item.id}>{t(item.label)}</option>)}</Select><span className="field-help">{t(tones.find(item=>item.id===tone)?.help??'toneFriendlyProfessionalHelp')}</span></label>
-          <div className="tone-preview"><span>{t('tonePreview')}</span><p>{toneExample}</p></div><label htmlFor="style" className="field-label">{t('answerStyle')}<span className="field-help">{t('answerStyleHelp')}</span><textarea id="style" className="field-control" rows={3} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></label>
+          {hideStyle?null:<><label htmlFor="tone" className="field-label">{t('tone')}<Select id="tone" className="field-control" value={tone} onChange={(event) => changeTone(event.target.value)}>{tones.map(item=><option key={item.id} value={item.id}>{t(item.label)}</option>)}</Select><span className="field-help">{t(tones.find(item=>item.id===tone)?.help??'toneFriendlyProfessionalHelp')}</span></label>
+          <div className="tone-preview"><span>{t('tonePreview')}</span><p>{toneExample}</p></div><label htmlFor="style" className="field-label">{t('answerStyle')}<span className="field-help">{t('answerStyleHelp')}</span><textarea id="style" className="field-control" rows={3} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></label></>}
         </fieldset>
         {error ? <p role="alert" className="text-sm error-copy">{error}</p> : null}
         <div className="flex items-center justify-between gap-4">

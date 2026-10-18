@@ -12,7 +12,8 @@ type SimulatorResponse = {
   pausedNote?: true;
 };
 
-export default function ConversationSimulator({ dirtyWarning = false }: { dirtyWarning?: boolean } = {}) {
+/** Z6: `suggestions` — three typical client questions of the tenant's deal type, plus «Свой вопрос» (focuses the input). */
+export default function ConversationSimulator({ dirtyWarning = false, suggestions = [] }: { dirtyWarning?: boolean; suggestions?: string[] } = {}) {
   const { t } = useI18n();
   const format = useFormat();
   const assistantName = useAssistantName() ?? t('leyaResponder');
@@ -26,7 +27,9 @@ export default function ConversationSimulator({ dirtyWarning = false }: { dirtyW
 
   async function send(event: FormEvent) {
     event.preventDefault();
-    const value = text.trim();
+    await sendText(text.trim());
+  }
+  async function sendText(value: string) {
     if (!value || busy) return;
     setMessages(rows => [...rows.map(row => ({ ...row, awaitingOwner: false })), { role: 'owner', text: value, at: new Date() }]);
     setText(''); setBusy(true); setError('');
@@ -82,6 +85,10 @@ export default function ConversationSimulator({ dirtyWarning = false }: { dirtyW
     </div>)}{busy ? <div className="chat-bubble leya typing"><span/><span/><span/><i>{t('simulatorThinking', { name: assistantName })}</i></div> : null}</div>
     {error ? <ErrorState message={error} /> : null}
     {dirtyWarning ? <p className="simulator-dirty-warning" role="status">{t('simulatorDirtyWarning')}</p> : null}
+    {suggestions.length ? <div className="preset-grid simulator-suggestions" aria-label={t('simulatorSuggestions')}>
+      {suggestions.map(question => <button key={question} type="button" className="preset-card" dir="auto" disabled={busy} onClick={() => void sendText(question)}>{question}</button>)}
+      <button type="button" className="preset-card" onClick={() => document.getElementById('simulation-message')?.focus()}>{t('simulatorOwnQuestion')}</button>
+    </div> : null}
     <form className="simulator-compose field-action-row" onSubmit={send}><label className="sr-only" htmlFor="simulation-message">{t('simulatorPlaceholder')}</label><input id="simulation-message" dir="auto" value={text} onChange={event => setText(event.target.value)} maxLength={2000} placeholder={t('simulatorPlaceholder')} /><Button disabled={busy || !text.trim()}>{t('simulatorSend')}</Button></form>
   </section>;
 }

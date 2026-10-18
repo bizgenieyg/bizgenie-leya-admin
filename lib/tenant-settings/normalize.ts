@@ -10,6 +10,8 @@ const timeZones=(value:unknown)=>Array.from(new Set([...strings(value,[]),...DEF
 
 export function normalizeTenantSettings(value:unknown){const raw=object(value);return{
  business_sector:typeof raw.business_sector==='string'?raw.business_sector:'',
+ // Z6, read-only from the backend: replies by an instruction; three simulator questions per language.
+ instruction_answers:raw.instruction_answers===true,simulator_suggestions:object(raw.simulator_suggestions),
  messages_per_month:number(raw.messages_per_month,0),voice_minutes_per_month:number(raw.voice_minutes_per_month,0),warning_percent:number(raw.warning_percent,80),plan:typeof raw.plan==='string'?raw.plan:null,
  cabinet_language:['ru','en','he'].includes(String(raw.cabinet_language))?raw.cabinet_language:null,time_zone:typeof raw.time_zone==='string'?raw.time_zone:'Asia/Jerusalem',supported_time_zones:timeZones(raw.supported_time_zones),weekly_schedule:schedule(raw.weekly_schedule),
  auto_replies_paused:raw.auto_replies_paused===true,translate_owner_answer:raw.translate_owner_answer===true,polish_owner_answer:raw.polish_owner_answer!==false,client_discovery_questions:strings(raw.client_discovery_questions,[]).slice(0,10),greeting_templates:object(raw.greeting_templates),greeting_template_defaults:object(raw.greeting_template_defaults),escalation_remind_minutes:number(raw.escalation_remind_minutes,120),escalation_close_minutes:number(raw.escalation_close_minutes,1440),
