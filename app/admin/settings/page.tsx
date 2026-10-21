@@ -1,7 +1,13 @@
-'use client';
-import Link from 'next/link';
-import TenantSettings from '@/components/tenant/tenant-settings';
-import {useI18n} from '@/lib/i18n';
+import {redirect} from 'next/navigation';
 import AppShell from '@/components/ui/app-shell';
-import FuturePlans from '@/components/tenant/future-plans';
-export default function SettingsPage(){const{t}=useI18n();return <AppShell><main className="page-wrap"><div className="content-stack"><Link href="/admin" className="back-link"><span className="direction-icon">←</span> {t('backCabinet')}</Link><header className="page-heading"><div><p className="eyebrow">Leya</p><h1>{t('settingsTitle')}</h1><p>{t('settingsIntro')}</p></div></header><TenantSettings/><FuturePlans/></div></main></AppShell>;}
+import SettingsHeading from '@/components/tenant/settings-heading';
+import TenantSettings from '@/components/tenant/tenant-settings';
+import {getAccountProfile} from '@/lib/auth/profile';
+import {settingsSection} from '@/lib/tenant/labels';
+
+/** Z8 «Настройки»: all owner settings in sections; «Аккаунт» needs the account profile (server side). */
+export default async function SettingsPage({searchParams}:{searchParams:{section?:string}}){
+ const profile=await getAccountProfile();
+ if(!profile)redirect('/login?error=session_expired');
+ return <AppShell><main className="page-wrap"><div className="content-stack"><SettingsHeading/><TenantSettings profile={profile} section={settingsSection(searchParams.section)}/></div></main></AppShell>;
+}

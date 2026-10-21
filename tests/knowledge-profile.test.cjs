@@ -14,7 +14,7 @@ test('"Что знает ассистент": tenant-derived proxies, translated
 
 test('screen follows the mockup and the cabinet rules: tabs, understood list, cards, dashed empty topics, logical CSS',()=>{
  const ui=read('components/tenant/knowledge-profile.tsx'),css=read('app/globals.css');
- for(const key of ['kpAdd','kpFilled','kpTell','kpImprove','kpUnderstood','kpCorrect','kpBefore','kpSuggested','kpAccept','kpSkip','kpWaiting'])assert.match(ui,new RegExp(`'${key}'`));
+ for(const key of ['kpAdd','kpFilled','kpEmptyAdd','kpImprove','kpUnderstood','kpCorrect','kpBefore','kpSuggested','kpAccept','kpSkip','kpWaiting'])assert.match(ui,new RegExp(`'${key}'`));
  for(const tab of ['text','file','link','photo'])assert.match(ui,new RegExp(`'${tab}'`));
  assert.match(ui,/'voice'/,'task Z: voice tab');
  assert.match(ui,/useI18n/);
@@ -37,15 +37,19 @@ test('task V: offer topic label follows the sector, title uses the assistant nam
  const ui=read('components/tenant/knowledge-profile.tsx'),i18n=read('lib/i18n/index.tsx'),card=read('components/tenant/client-directory.tsx');
  assert.match(ui,/kpTopic_services_prices_\$\{offering\}/);
  assert.equal((ui.match(/t\(`kpTopic_\$\{topic\}`\)/g)??[]).length,1,'every topic label goes through topicLabel');assert.doesNotMatch(ui,/t\(`kpTopic_\$\{(?:card|fact|topic)\.topic\}`\)/);
- assert.match(ui,/name\?t\('kpTitleNamed',\{name\}\):t\('kpTitle'\)/);
+ // Z8: the owner's name or the localized default («Лея»), nominative only.
+ assert.match(ui,/const name=assistantLabel\(profile\.assistant_name,t\('assistantDefaultName'\)\)/);assert.match(ui,/title=\{t\('kpTitleNamed',\{name\}\)\}/);
  for(const key of ['kpTopic_services_prices_goods','kpTopic_services_prices_rental','clientCallsThemselves'])assert.equal((i18n.match(new RegExp(`${key}:`,'g'))??[]).length,3,key);
  assert.match(card,/card\.preferred_name\?/);assert.doesNotMatch(card,/preferred_name:/,'read only: never sent back');
 });
 
-test('task X 5a: the knowledge page mounts the simulator drawer, so its button opens it',()=>{
- const layout=read('app/admin/knowledge/layout.tsx');
- assert.match(layout,/<SimulatorDrawerProvider>/);assert.match(layout,/<SimulatorDrawer\/>/);
- assert.match(read('app/admin/knowledge/page.tsx'),/SimulatorOpenButton/);
+test('task X 5a / Z8: the drawer is mounted by the shell on every page; the knowledge heading has the one button',()=>{
+ const shell=read('components/ui/app-shell.tsx');
+ assert.match(shell,/<SimulatorDrawerProvider>/);assert.match(shell,/<SimulatorDrawer\/>/);
+ assert.match(read('components/ui/page-heading.tsx'),/<SimulatorOpenButton\/>/);
+ assert.match(read('components/tenant/knowledge-profile.tsx'),/<PageHeading title=/);
+ assert.doesNotMatch(read('app/admin/knowledge/page.tsx'),/SimulatorOpenButton|kp-simulator/);
+ assert.ok(!require('node:fs').existsSync('app/admin/knowledge/layout.tsx'),'no second drawer provider');
 });
 
 test('task Z: "Добавить знания" in three languages, voice recorder ≥44px with a fallback hint, owner-question cards',()=>{

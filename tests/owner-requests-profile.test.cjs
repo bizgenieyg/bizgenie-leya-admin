@@ -20,7 +20,7 @@ test('discovery questions are an owner setting edited on the assistant page (≤
   const editor = readFileSync('components/tenant/discovery-questions.tsx', 'utf8');
   assert.match(editor, /MAX_QUESTIONS = 10, MAX_CHARS = 200/);
   assert.match(editor, /client_discovery_questions: questions/);
-  assert.match(readFileSync('app/admin/assistant/page.tsx', 'utf8'), /<DiscoveryQuestions\/>/);
+  assert.match(readFileSync('components/tenant/tenant-settings.tsx', 'utf8'), /<DiscoveryQuestions\/>/);
   const dictionary = readFileSync('lib/i18n/index.tsx', 'utf8');
   for (const locale of ['Ru', 'En', 'He']) assert.match(dictionary, new RegExp(`\\.\\.\\.taskI${locale}`));
   const ru = dictionary.slice(dictionary.indexOf('const taskIRu='), dictionary.indexOf('const taskIEn'));

@@ -28,7 +28,7 @@ function fixture({ error = null, user = {}, throws = false, sectorSaveFails = fa
         return [state[slot], (next) => { state[slot] = next; }];
       } };
       if (name === 'next/navigation') return { useRouter: () => ({ push: (path) => navigation.push(path), replace: (path) => navigation.push(path), refresh() {} }) };
-      if (name === '@/lib/i18n') return { useI18n: () => ({ t: key => ({createBusinessError:'Не удалось создать бизнес. Попробуйте ещё раз.',businessExists:'К вашему аккаунту уже привязан бизнес.'}[key] || key) }) };
+      if (name === '@/lib/i18n') return { useI18n: () => ({ locale: 'he', t: key => ({createBusinessError:'Не удалось создать бизнес. Попробуйте ещё раз.',businessExists:'К вашему аккаунту уже привязан бизнес.'}[key] || key) }) };
       if (name === '../step-frame') return { StepFrame: ({ children }) => jsx('main', { children }), inputClass: 'field-control', buttonClass: 'button primary' };
       return { createClient: () => ({ auth: { getUser: async () => ({ data: { user }, error: null }) }, rpc: async (name, args) => {
         calls.push({ name, args });
@@ -80,12 +80,13 @@ test('step 1 creates a tenant with a single plan-less RPC and no tariff choice',
 
 test('optional custom sector is saved after signup; a failed save can be retried without creating another tenant',async()=>{
  const app=fixture({sectorSaveFails:true});
- nodes(app.render()).find(node=>node.props.id==='onboarding-business-sector').props.onChange({target:{value:'  мастер маникюра  '}});
+ nodes(app.render()).find(node=>node.props.id==='onboarding-business-sector').props.onChange('  мастер маникюра  ');
  await submit(app);
  assert.equal(app.calls.length,1);
  assert.equal(app.saves.length,1);
  assert.equal(app.saves[0].url,'/api/tenant-settings');
  assert.equal(JSON.parse(app.saves[0].options.body).business_sector,'мастер маникюра');
+ assert.equal(JSON.parse(app.saves[0].options.body).owner_language,'he','Z8: the assistant writes to the owner in the cabinet language of signup');
  assert.equal(app.navigation.length,0);
  await submit(app);
  assert.equal(app.calls.length,1);

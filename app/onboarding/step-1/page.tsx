@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {useI18n} from '@/lib/i18n';
 import {StepFrame,inputClass,buttonClass} from '../step-frame';
+import SectorInput from '@/components/tenant/sector-input';
 
 export default function OnboardingStepOnePage() {
-  const {t}=useI18n();
+  const {t,locale}=useI18n();
   const [ownerName, setOwnerName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [businessSector, setBusinessSector] = useState('');
@@ -50,10 +51,9 @@ export default function OnboardingStepOnePage() {
         setCreatedTenantId(data);
       }
 
-      if(businessSector.trim()){
-        const saved=await fetch('/api/tenant-settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_sector:businessSector.trim()})});
-        if(!saved.ok){setError(t('businessSectorSaveError'));return;}
-      }
+      // Z8: the assistant writes to the owner in the cabinet language they signed up in (changeable in «Настройки → Ассистент»).
+      const saved=await fetch('/api/tenant-settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner_language:locale,...(businessSector.trim()?{business_sector:businessSector.trim()}:{})})});
+      if(!saved.ok){setError(t('businessSectorSaveError'));return;}
 
       sessionStorage.setItem('onboarding_tenant_id', tenantId);
       sessionStorage.setItem('onboarding_business_category', category);
@@ -101,8 +101,7 @@ export default function OnboardingStepOnePage() {
 
           <div>
             <label className="field-label" htmlFor="onboarding-business-sector">{t('businessSector')}<span className="field-help">{t('businessSectorHelp')}</span></label>
-            <input className={`${inputClass} business-sector-input`} disabled={loading} id="onboarding-business-sector" dir="auto" list="onboarding-business-sector-options" maxLength={100} onChange={event=>setBusinessSector(event.target.value)} placeholder={t('businessSectorPlaceholder')} value={businessSector}/>
-            <datalist id="onboarding-business-sector-options">{t('businessSectorSuggestions').split('|').map(value=><option key={value} value={value}/>)}</datalist>
+            <SectorInput id="onboarding-business-sector" className={inputClass} disabled={loading} value={businessSector} onChange={setBusinessSector}/>
           </div>
 
           <div>

@@ -146,12 +146,12 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true, on
     {expired || error ? <button type="button" disabled={busy} className={buttonClass} onClick={() => run('read')}>{t('checkStatus')}</button>
       : canEdit && !busy && !shouldPoll(state.status) && !isConnected(state.status) && state.status
         ? <button type="button" className={buttonClass} onClick={() => run('connect')}>{actionText(state.status)}</button> : null}
-    {cabinet && canEdit ? <Link className="block text-sm text-link-inline" href="/onboarding/owner">{t('ownerSettings')}</Link> : null}
-    {cabinet && canEdit && isConnected(state.status) ? <Button type="button" disabled={busy} tone="danger" onClick={() => setConfirmDisconnect(true)}>{t('disconnect')}</Button> : null}
+    {/* Z8: only in «Настройки → WhatsApp», a red text button with a confirmation. */}
+    {cabinet && canEdit && isConnected(state.status) ? <Button type="button" disabled={busy} tone="danger-text" onClick={() => setConfirmDisconnect(true)}>{t('disconnectWhatsApp')}</Button> : null}
     {!cabinet ? <div className="mt-8 flex items-center justify-between gap-4">
       <Link className="text-sm text-link-inline" href="/admin">{t('skip')}</Link>
       {isConnected(state.status) ? <Link className={buttonClass} href="/onboarding/owner?after=whatsapp">{t('next')} <span className="direction-icon">→</span></Link> : null}
-    </div> : null}<ConfirmDialog open={confirmDisconnect} danger title={t('confirmAction')} onCancel={()=>setConfirmDisconnect(false)} onConfirm={()=>{setConfirmDisconnect(false);run('disconnect')}}><p>{t('disconnectConfirm')}</p></ConfirmDialog>
+    </div> : null}<ConfirmDialog open={confirmDisconnect} danger title={t('disconnectTitle')} confirmLabel={t('disconnectWhatsApp')} onCancel={()=>setConfirmDisconnect(false)} onConfirm={()=>{setConfirmDisconnect(false);run('disconnect')}}><p>{t('disconnectConfirm')}</p></ConfirmDialog>
     {cabinet && canEdit ? <ConfirmDialog open={confirmNumberChange} danger title={t('numberChangedTitle')} onCancel={()=>void resolveNumberChange(false)} onConfirm={()=>void resolveNumberChange(true)}><p>{t('resetTenantDataConfirm')}</p></ConfirmDialog> : null}
   </div>;
 }

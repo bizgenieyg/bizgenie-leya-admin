@@ -35,6 +35,6 @@ test('knowledge is its own section; the old Q&A editor and materials are out of 
  const knowledge=fs.readFileSync('app/admin/knowledge/page.tsx','utf8');
  assert.doesNotMatch(home,/KnowledgeEditor/);
  assert.doesNotMatch(assistant,/KnowledgeEditor|KnowledgeMaterials/);
- assert.match(assistant,/SimulatorOpenButton/);
+ assert.match(assistant,/redirect\('\/admin\/settings\?section=assistant'\)/, 'Z8: «Ассистент» is a section of «Настройки»');
  assert.match(knowledge,/KnowledgeProfile/);
 });

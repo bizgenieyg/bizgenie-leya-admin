@@ -249,3 +249,64 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 @keyframes kp-pulse{50%{opacity:.35}}
 @media(prefers-reduced-motion:reduce){.kp-record.recording .kp-record-dot{animation:none}}
 .kp-voice-preview{width:100%;max-width:100%}
+/* ---- Z8: menu, one «Проверить ответы», «Главная» WhatsApp card, «Настройки» sections, spacing scale ----
+   Scale 4/8/12/16/24/32 px; card padding 20 px (16 px on phones); 16 px between cards, 24 px from the heading to
+   the first card; buttons 36 px (44 px on phones), 32 px inside cards; one filled button per screen. */
+:root{--space-1:.25rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.5rem;--space-6:2rem;--card-padding:1.25rem;--control-height:2.25rem;--touch:2.25rem;--card-control:2rem}
+@media(max-width:37.4375rem){:root{--card-padding:1rem;--control-height:2.75rem;--touch:2.75rem;--card-control:2.75rem}}
+.content-stack{gap:var(--space-4)}
+.surface-card,.wa-card{padding:var(--card-padding)}
+.button{block-size:var(--control-height);min-block-size:var(--control-height)}
+.surface-card .button,.wa-card .button,.kp-card .button{block-size:var(--card-control);min-block-size:var(--card-control);padding-inline:var(--space-3)}
+.button.danger-text{background:transparent;border-color:transparent;color:var(--danger-text);padding-inline:var(--space-2)}
+.button.danger-text:hover{background:var(--danger-soft)}
+.z8-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:var(--space-3);margin:0 0 var(--space-2)}
+.z8-heading .page-heading-copy{min-width:0;flex:1 1 16rem}.z8-heading h1{margin:0}.z8-heading p{margin:var(--space-1) 0 0;color:var(--muted)}
+.page-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
+.label-placeholder{display:inline-block;inline-size:6rem;max-inline-size:100%;block-size:.75rem;border-radius:62.4375rem;background:var(--surface-soft);vertical-align:middle}
+.bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+/* Phones: «Проверить ответы» floats above the bottom menu at the end edge (fixed, not in the flow). */
+@media(max-width:37.4375rem){
+ .page-actions .simulator-open-button{position:fixed;z-index:31;inset-inline-end:var(--space-4);inset-block-end:calc(4.375rem + var(--space-2) + var(--space-3));min-block-size:2.75rem;block-size:2.75rem;border-radius:62.4375rem;box-shadow:var(--shadow-float);padding-inline:var(--space-4)}
+ body.simulator-drawer-open .page-actions .simulator-open-button{display:none}
+}
+/* «Главная»: the WhatsApp card, the same minimum height in every state and while loading (measured: the tallest state,
+   «не подключён» with its button, is ~296 px on a 375 px phone and ~173 px from 600 px up). */
+.wa-card{--wa-dot:var(--muted);display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-4);min-block-size:19.5rem;border:0.0625rem solid var(--border);border-radius:var(--radius-card);background:var(--surface)}
+.wa-card.skeleton-card{background:var(--surface-soft)}
+.wa-card h2{margin:0;font-size:1.125rem}.wa-card p{margin:var(--space-1) 0 0;color:var(--muted)}
+.wa-card-status{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:var(--space-3)}
+.wa-card-status .wa-card-action{grid-column:2;justify-self:start;margin-block-start:var(--space-2)}
+.wa-dot{inline-size:.75rem;block-size:.75rem;margin-block-start:.375rem;border-radius:50%;background:var(--wa-dot)}
+.wa-connected{--wa-dot:var(--accent)}.wa-not_connected{--wa-dot:var(--warning)}.wa-lost{--wa-dot:var(--danger);border-color:var(--danger)}
+.wa-card-numbers{display:grid;gap:var(--space-2);margin:0;align-content:start}
+.wa-card-numbers div{display:grid;gap:var(--space-1)}.wa-card-numbers dt{color:var(--muted);font-size:.8125rem}.wa-card-numbers dd{margin:0;overflow-wrap:anywhere}
+.wa-card-numbers a{color:var(--accent);font-weight:700}
+@media(min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5);min-block-size:11.5rem}.wa-card-numbers{border-inline-start:0.0625rem solid var(--border);padding-inline-start:var(--space-5)}}
+.home-badges{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.home-badges .soft-badge{text-decoration:none;font-size:.875rem;padding:var(--space-2) var(--space-3)}
+.soft-badge.attention{color:var(--warning);background:var(--warning-soft)}
+.skeleton-card,.skeleton-block{background:linear-gradient(90deg,var(--surface-soft) 25%,var(--canvas-alt) 50%,var(--surface-soft) 75%);background-size:200% 100%;animation:shimmer 1.3s infinite}
+.skeleton-block{min-block-size:8rem;border-radius:var(--radius-control)}
+@media(prefers-reduced-motion:reduce){.skeleton-card,.skeleton-block{animation:none}}
+/* «Что знает {имя}». */
+.kp-counter{margin:0;color:var(--muted);font-size:.875rem}
+/* «Настройки»: sections; an accordion on phones, always open on wider screens. */
+.settings-section{display:grid;gap:var(--space-3)}
+.settings-section.skeleton-card{min-block-size:5rem}
+.settings-section-title{margin:0;font-size:1.125rem}
+.settings-section-title button{display:flex;inline-size:100%;align-items:center;justify-content:space-between;gap:var(--space-3);min-block-size:var(--touch);padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:750;text-align:start;cursor:pointer}
+.settings-section-title svg{inline-size:1.25rem;block-size:1.25rem;flex:none;transition:transform .15s}
+.settings-section.open .settings-section-title svg{transform:rotate(180deg)}
+.settings-section-body{display:grid;gap:var(--space-4)}
+.settings-section-body>.field-help{margin:0}
+.settings-section .settings-subsection{margin:0}
+.settings-section h3{margin:0;font-size:1rem}
+.settings-current{margin:0;font-weight:650}
+.profile-panel{display:grid;gap:var(--space-5)}.profile-panel dl{margin:0}
+@media(max-width:37.4375rem){.settings-section:not(.open) .settings-section-body{display:none}}
+@media(min-width:37.5rem){.settings-section-title button{cursor:default;min-block-size:0}.settings-section-title svg{display:none}}
+/* The account button in the phone header: a 44 px circle (it collapsed to the letter's width). */
+.mobile-user-menu .profile-shortcut{inline-size:var(--touch);block-size:var(--touch);min-block-size:var(--touch);display:grid;place-items:center;padding:0;border:0.0625rem solid var(--border);border-radius:50%;background:var(--canvas-alt);font-weight:800}
+/* Dark theme: --danger-text is a pale tint there (made for text on --danger); a red text button uses --danger. */
+:root[data-theme="dark"] .button.danger-text{color:var(--danger)}

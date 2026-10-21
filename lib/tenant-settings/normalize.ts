@@ -10,6 +10,8 @@ const timeZones=(value:unknown)=>Array.from(new Set([...strings(value,[]),...DEF
 
 export function normalizeTenantSettings(value:unknown){const raw=object(value);return{
  business_sector:typeof raw.business_sector==='string'?raw.business_sector:'',
+ // Z8 «Настройки → Бизнес / Ассистент»: names of the business and the owner; the language the assistant writes to the owner in.
+ business_name:typeof raw.business_name==='string'?raw.business_name:'',owner_name:typeof raw.owner_name==='string'?raw.owner_name:'',owner_language:['ru','en','he'].includes(String(raw.owner_language))?raw.owner_language as 'ru'|'en'|'he':'ru',
  // Z6, read-only from the backend: replies by an instruction; three simulator questions per language.
  instruction_answers:raw.instruction_answers===true,simulator_suggestions:object(raw.simulator_suggestions),
  messages_per_month:number(raw.messages_per_month,0),voice_minutes_per_month:number(raw.voice_minutes_per_month,0),warning_percent:number(raw.warning_percent,80),plan:typeof raw.plan==='string'?raw.plan:null,

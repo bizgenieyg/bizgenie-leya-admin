@@ -3,6 +3,8 @@ import Link from 'next/link';
 import {type FormEvent,useCallback,useEffect,useRef,useState} from 'react';
 import {Button,ErrorState,LoadingState} from '@/components/ui/primitives';
 import {useFormat,useI18n} from '@/lib/i18n';
+import PageHeading from '@/components/ui/page-heading';
+import {assistantLabel,topicCounter} from '@/lib/tenant/labels';
 
 type Fact={id:string;topic:string;text:string;quote:string|null;source_id:string|null;updated_at:string;status?:string};
 type Topic={topic:string;required:boolean;facts:Fact[];updated_at:string|null};
@@ -22,7 +24,7 @@ type T=(key:string,vars?:Record<string,string|number>)=>string;
 const topicLabel=(t:T,topic:string,offering:Profile['offering'])=>topic==='services_prices'&&offering&&offering!=='services'?t(`kpTopic_services_prices_${offering}`):t(`kpTopic_${topic}`);
 const errorKey=async(r:Response,fallback:string)=>{const d=await r.json().catch(()=>({})) as {code?:string};return d.code??fallback;};
 
-/** "Что знает Лея": the business profile by topic, "Добавить что угодно", improvement cards (task R). */
+/** "Что знает {имя}": the business profile by topic, "Добавить что угодно", improvement cards (task R). */
 /** `onboarding` (Z6 step «Расскажите о бизнесе»): no page heading — the step frame has the title. */
 export default function KnowledgeProfile({onboarding=false}:{onboarding?:boolean}={}){
  const{t}=useI18n(),format=useFormat();
@@ -31,14 +33,21 @@ export default function KnowledgeProfile({onboarding=false}:{onboarding?:boolean
  const load=useCallback(async()=>{setError('');const r=await fetch('/api/knowledge-profile',{cache:'no-store'});if(!r.ok){setError(t(await errorKey(r,'kpErrorLoad')));return;}setProfile(await r.json() as Profile);},[t]);
  useEffect(()=>{void load().catch(()=>setError(t('kpErrorLoad')));},[load,t]);
  if(!profile)return error?<ErrorState message={error} onRetry={()=>void load()}/>:<LoadingState label={t('loading')}/>;
- const name=profile.assistant_name?.trim();
- const shown=profile.topics.filter(topic=>topic.facts.length||topic.required);
+ const name=assistantLabel(profile.assistant_name,t('assistantDefaultName'));
+ // Z8: the counter counts exactly the cards shown (required topics and topics with facts).
+ const{shown,filled,total}=topicCounter(profile.topics);
  const current=profile.topics.find(topic=>topic.topic===open),offering=profile.offering;
+ const add=<Button onClick={()=>setAdding({topic:null})}>{t('kpAdd')}</Button>;
+ const questions=profile.owner_questions?.length?<section className="kp-audit" aria-labelledby="kp-questions-title">
+   <h2 id="kp-questions-title">{t('kpOwnerQuestions',{count:profile.owner_questions.length})}</h2>
+   <p className="field-help">{t('kpOwnerQuestionsHelp')}</p>
+   {profile.owner_questions.map(q=><OwnerQuestionCard key={q.id} question={q} offering={offering} onDone={load}/>)}
+  </section>:null;
  return <div className="kp">
-  <header className="page-heading kp-head">
-   {onboarding?<p>{t('kpFilled',{filled:profile.filled,total:profile.required})}</p>:<div><p className="eyebrow">{name||'Leya'}</p><h1>{name?t('kpTitleNamed',{name}):t('kpTitle')}</h1><p>{t('kpFilled',{filled:profile.filled,total:profile.required})}</p></div>}
-   <Button onClick={()=>setAdding({topic:null})}>{t('kpAdd')}</Button>
-  </header>
+  {onboarding?<header className="page-heading kp-head"><p>{t('kpFilled',{filled,total})}</p>{add}</header>
+   :<PageHeading title={t('kpTitleNamed',{name})} help={t('kpSubtitle')} actions={add}/>}
+  {questions}
+  {onboarding?null:<p className="kp-counter">{t('kpFilled',{filled,total})}</p>}
   <p className="field-help">{t('kpAddHelp')}</p>
   {error?<p role="alert" className="error-copy">{error}</p>:null}
   <div className="kp-topics">
@@ -49,15 +58,10 @@ export default function KnowledgeProfile({onboarding=false}:{onboarding?:boolean
       {topic.updated_at?<small>{t('kpUpdated',{date:format.date(topic.updated_at)})}</small>:null}
      </button>
     :<button key={topic.topic} type="button" className="kp-topic empty" onClick={()=>setAdding({topic:topic.topic})}>
-      <strong>{topicLabel(t,topic.topic,offering)}</strong><span className="kp-tell">{t('kpTell')} <span className="direction-icon">→</span></span>
+      <strong>{topicLabel(t,topic.topic,offering)}</strong><span className="kp-tell">{t('kpEmptyAdd')} <span className="direction-icon">→</span></span>
      </button>)}
   </div>
   {current?<TopicFacts topic={current} sources={profile.sources} offering={offering} onChanged={load}/>:null}
-  {profile.owner_questions?.length?<section className="kp-audit" aria-labelledby="kp-questions-title">
-   <h2 id="kp-questions-title">{t('kpOwnerQuestions',{count:profile.owner_questions.length})}</h2>
-   <p className="field-help">{t('kpOwnerQuestionsHelp')}</p>
-   {profile.owner_questions.map(q=><OwnerQuestionCard key={q.id} question={q} offering={offering} onDone={load}/>)}
-  </section>:null}
   {profile.audit.length?<section className="kp-audit" aria-labelledby="kp-audit-title">
    <h2 id="kp-audit-title">{t('kpImprove',{count:profile.audit.length})}</h2>
    {profile.audit.map(card=><AuditCard key={card.id} card={card} offering={offering} onDone={load}/>)}
@@ -81,7 +85,7 @@ function FactRow({fact,source,onChanged,draft=false}:{fact:Fact;source?:Profile[
  const call=async(init:RequestInit)=>{setBusy(true);setError('');try{const r=await fetch(`/api/knowledge-profile/facts/${fact.id}`,init);if(!r.ok){setError(t(await errorKey(r,'kpErrorSave')));return;}setEditing(false);await onChanged();}finally{setBusy(false);}};
  const save=(event:FormEvent)=>{event.preventDefault();void call({method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});};
  return <div className="kp-fact">
-  {editing?<form onSubmit={save} className="kp-edit"><label className="sr-only" htmlFor={`fact-${fact.id}`}>{t('kpFactText')}</label><textarea id={`fact-${fact.id}`} className="field-control" dir="auto" rows={2} maxLength={500} value={text} onChange={e=>setText(e.target.value)}/><div className="kp-actions"><Button disabled={busy||!text.trim()}>{t('save')}</Button><Button type="button" tone="quiet" onClick={()=>{setEditing(false);setText(fact.text);}}>{t('cancel')}</Button></div></form>
+  {editing?<form onSubmit={save} className="kp-edit"><label className="sr-only" htmlFor={`fact-${fact.id}`}>{t('kpFactText')}</label><textarea id={`fact-${fact.id}`} className="field-control" dir="auto" rows={2} maxLength={500} value={text} onChange={e=>setText(e.target.value)}/><div className="kp-actions"><Button tone="secondary" disabled={busy||!text.trim()}>{t('save')}</Button><Button type="button" tone="quiet" onClick={()=>{setEditing(false);setText(fact.text);}}>{t('cancel')}</Button></div></form>
    :<p dir="auto">{fact.text}</p>}
   {fact.quote?<details className="kp-quote"><summary>{t('kpSource')}{source?.title?`: ${source.title}`:''}</summary><blockquote dir="auto">«{fact.quote}»</blockquote></details>:null}
   {error?<p role="alert" className="error-copy">{error}</p>:null}
@@ -99,14 +103,14 @@ function AuditCard({card,offering,onDone}:{card:Card;offering:Profile['offering'
    <p dir="auto">{card.question}</p>
    <label className="sr-only" htmlFor={`gap-${card.id}`}>{t('kpYourAnswer')}</label>
    <textarea id={`gap-${card.id}`} className="field-control" dir="auto" rows={2} maxLength={500} placeholder={t('kpYourAnswer')} value={text} onChange={e=>setText(e.target.value)}/>
-   <div className="kp-actions"><Button disabled={busy||!text.trim()} onClick={()=>void decide('answer')}>{t('save')}</Button><Button tone="secondary" disabled={busy} onClick={()=>void decide('skip')}>{t('kpSkip')}</Button></div>
+   <div className="kp-actions"><Button tone="secondary" disabled={busy||!text.trim()} onClick={()=>void decide('answer')}>{t('save')}</Button><Button tone="secondary" disabled={busy} onClick={()=>void decide('skip')}>{t('kpSkip')}</Button></div>
   </>:<>
    <div className="kp-compare"><p dir="auto"><strong>{t('kpBefore')}</strong> {card.before_text}</p>
     {editing?<div><label className="field-label" htmlFor={`card-${card.id}`}>{t('kpSuggested')}</label><textarea id={`card-${card.id}`} className="field-control" dir="auto" rows={2} maxLength={500} value={text} onChange={e=>setText(e.target.value)}/></div>
      :<p dir="auto"><strong>{t('kpSuggested')}</strong> {card.suggested_text}</p>}</div>
    {card.reason&&card.check_type!=='conflict'?<p className="field-help" dir="auto">{card.reason}</p>:null}
    <div className="kp-actions">
-    {editing?<Button disabled={busy||!text.trim()} onClick={()=>void decide('edit')}>{t('save')}</Button>:<Button disabled={busy} onClick={()=>void decide('accept')}>{t('kpAccept')}</Button>}
+    {editing?<Button tone="secondary" disabled={busy||!text.trim()} onClick={()=>void decide('edit')}>{t('save')}</Button>:<Button tone="secondary" disabled={busy} onClick={()=>void decide('accept')}>{t('kpAccept')}</Button>}
     {editing?<Button tone="quiet" onClick={()=>{setEditing(false);setText(card.suggested_text??'');}}>{t('cancel')}</Button>:<Button tone="secondary" disabled={busy} onClick={()=>setEditing(true)}>{t('edit')}</Button>}
     <Button tone="secondary" disabled={busy} onClick={()=>void decide('skip')}>{t('kpSkip')}</Button>
    </div>
@@ -171,7 +175,7 @@ function OwnerQuestionCard({question,offering,onDone}:{question:OwnerQuestion;of
   <p dir="auto">{question.question}</p>
   <label className="sr-only" htmlFor={`oq-${question.id}`}>{t('kpYourAnswer')}</label>
   <textarea id={`oq-${question.id}`} className="field-control" dir="auto" rows={2} maxLength={5000} placeholder={t('kpYourAnswer')} value={text} onChange={e=>setText(e.target.value)}/>
-  <div className="kp-actions"><Button disabled={busy||!text.trim()} onClick={()=>void decide('answer')}>{t('save')}</Button><Button tone="secondary" disabled={busy} onClick={()=>void decide('skip')}>{t('kpSkip')}</Button></div>
+  <div className="kp-actions"><Button tone="secondary" disabled={busy||!text.trim()} onClick={()=>void decide('answer')}>{t('save')}</Button><Button tone="secondary" disabled={busy} onClick={()=>void decide('skip')}>{t('kpSkip')}</Button></div>
   {error?<p role="alert" className="error-copy">{error}</p>:null}
  </article>;
 }

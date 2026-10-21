@@ -14,7 +14,7 @@ const mono=IBM_Plex_Mono({subsets:['latin','cyrillic'],weight:['400','500','600'
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, interactiveWidget: 'resizes-content' };
 
 export const metadata: Metadata = {
-  title: 'Leya — ваш помощник в WhatsApp',
+  title: 'Leya — ваш ИИ-ассистент в WhatsApp',
   description: 'Личный кабинет Leya для малого бизнеса',
 };
 

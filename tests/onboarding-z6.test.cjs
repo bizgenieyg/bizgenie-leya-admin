@@ -28,12 +28,13 @@ test('Z6: step-2 (tone, greetings) and step-4 (FAQ) are out of the path; direct 
 });
 
 test('Z6 assistant section: tone, style, greetings and discovery chips hidden on the instruction path; simulator stays', () => {
-  const page = read('app/admin/assistant/page.tsx');
-  assert.match(page, /useInstructionMode\(\)/);
-  assert.match(page, /\{byInstruction\?null:<section[^>]*><div className="section-heading"><div><h2>\{t\('discoveryTitle'\)\}/);
-  assert.match(page, /\{byInstruction\?null:<section[^>]*><div className="section-heading"><div><h2>\{t\('greetingTitle'\)\}/);
-  assert.match(page, /<AssistantSettings hideStyle=\{byInstruction\}\/>/);
-  assert.match(page, /<SimulatorOpenButton\/>/);
+  // Z8: the section is «Настройки → Ассистент»; the instruction mode comes with the settings already loaded.
+  const page = read('components/tenant/tenant-settings.tsx');
+  assert.match(page, /const legacy=!s\.instruction_answers;/);
+  assert.match(page, /\{legacy\?<><div className="settings-subsection"><h3>\{t\('discoveryTitle'\)\}/);
+  assert.match(page, /<h3>\{t\('greetingTitle'\)\}<\/h3><p className="field-help">\{t\('greetingHelp'\)\}<\/p><GreetingTemplates\/>/);
+  assert.match(page, /<AssistantSettings hideStyle=\{!legacy\} ownerLanguage=\{s\.owner_language\}\/>/);
+  assert.match(read('components/ui/page-heading.tsx'), /<SimulatorOpenButton\/>/);
   assert.match(read('components/tenant/assistant-settings.tsx'), /\{hideStyle\?null:<><label htmlFor="tone"/);
   assert.match(read('app/api/tenant-settings/route.ts'), /'instruction_answers','simulator_suggestions'/);
   const simulator = read('components/tenant/conversation-simulator.tsx');

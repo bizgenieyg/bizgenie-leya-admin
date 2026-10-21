@@ -107,6 +107,8 @@ export async function proxyWaha(request: Request, operation: Operation): Promise
     return Response.json({ status, qrAvailable: status === 'SCAN_QR_CODE' && data?.qrAvailable !== false,
       ...(status === 'FAILED' && data?.reason === 'waha_status_unavailable' ? { reason: 'wahaStatusUnavailable' } : {}),
       ...(data?.numberChanged === true ? { numberChanged: true } : {}),
+      // Z8: the connected business number for the home card.
+      ...(status === 'WORKING' && typeof data?.phone === 'string' && /^\+\d{8,15}$/.test(data.phone) ? { phone: data.phone } : {}),
     }, { status: upstream.status, headers });
   } catch {
     console.error('waha_proxy_request_failed', { operation });

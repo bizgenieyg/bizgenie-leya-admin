@@ -17,7 +17,7 @@ test('groups screen is tenant-proxied, read-only and present in five-item naviga
 
 test('new dashboard copy is translated in all cabinet languages',()=>{
   const dictionary=fs.readFileSync('lib/i18n/index.tsx','utf8');
-  for(const key of ['groupsNav','groupsTitle','groupsInfo','groupMembers','groupsLoadError','feedbackTitle','feedbackAction','ownerPhoneFormat','qrNumberRisk']){
+  for(const key of ['groupsNav','groupsTitle','groupsInfo','groupMembers','groupsLoadError','feedbackTitle','feedbackAction','qrNumberRisk']){
     assert.equal((dictionary.match(new RegExp(`${key}:`,'g'))||[]).length,3,key);
   }
 });
@@ -34,9 +34,12 @@ test('field-action rows keep buttons level with inputs and sector suggestions st
   const onboarding=fs.readFileSync('app/onboarding/step-1/page.tsx','utf8');
   assert.match(css,/\.field-action-row>\.button\{block-size:var\(--control-height\)/);
   assert.match(css,/business-sector-input::-webkit-calendar-picker-indicator/);
-  assert.match(settings,/className="field-action-row"/);
-  assert.match(settings,/className="field-control business-sector-input"[^>]*list="settings-business-sector-options"/);
-  assert.match(onboarding,/business-sector-input[^>]*list="onboarding-business-sector-options"/);
+  // Z8: one grouped sector input (components/tenant/sector-input.tsx) in step 1 and «Настройки → Бизнес».
+  const sector=fs.readFileSync('components/tenant/sector-input.tsx','utf8');
+  assert.match(sector,/className=\{`\$\{className\} business-sector-input`\}[^>]*list=\{`\$\{id\}-options`\}/);
+  assert.match(sector,/value=\{item\} label=\{group\.label\}\/>/);
+  assert.match(settings,/<SectorInput id="settings-business-sector"/);
+  assert.match(onboarding,/<SectorInput id="onboarding-business-sector"/);
   for(const file of ['components/tenant/client-directory.tsx','components/tenant/conversation-simulator.tsx','components/tenant/knowledge-editor.tsx']){
     assert.match(fs.readFileSync(file,'utf8'),/field-action-row/,file);
   }

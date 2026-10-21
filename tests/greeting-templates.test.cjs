@@ -10,7 +10,8 @@ test('greeting templates are an owner field on the assistant page with defaults 
   assert.match(ui, /LANGS = \['ru', 'he', 'en'\]/);
   assert.match(ui, /t\('greetingReset'\)/);
   assert.match(ui, /setDirty\('greetings'/);
-  assert.match(readFileSync('app/admin/assistant/page.tsx', 'utf8'), /<GreetingTemplates\/>/);
+  // Z8: in «Настройки → Ассистент», only on the legacy path (they do not apply to replies by an instruction).
+  assert.match(readFileSync('components/tenant/tenant-settings.tsx', 'utf8'), /\{legacy\?<>[^]*<GreetingTemplates\/>/);
   const dictionary = readFileSync('lib/i18n/index.tsx', 'utf8');
   for (const locale of ['Ru', 'En', 'He']) assert.match(dictionary, new RegExp(`\\.\\.\\.taskN${locale}[,}]`));
   assert.match(dictionary, /greetingReset:'Вернуть по умолчанию'/);

@@ -5,14 +5,14 @@ const { readFileSync } = require('node:fs');
 const drawer = readFileSync('components/tenant/simulator-drawer.tsx', 'utf8');
 const drawerContext = readFileSync('lib/tenant/simulator-drawer.tsx', 'utf8');
 const css = readFileSync('app/globals.css', 'utf8');
-const page = readFileSync('app/admin/assistant/page.tsx', 'utf8');
-const layout = readFileSync('app/admin/assistant/layout.tsx', 'utf8');
+const page = readFileSync('components/ui/page-heading.tsx', 'utf8');
+const layout = readFileSync('components/ui/app-shell.tsx', 'utf8');
 const simulator = readFileSync('components/tenant/conversation-simulator.tsx', 'utf8');
 const login = readFileSync('app/login/page.tsx', 'utf8');
 const dictionary = readFileSync('lib/i18n/index.tsx', 'utf8');
 const redirect = readFileSync('lib/auth/redirect.ts', 'utf8');
 
-test('the assistant section opens the simulator in a drawer with an open button on every page', () => {
+test('Z8: every cabinet page opens the simulator in one drawer (shell) from one button (page heading)', () => {
   assert.match(page, /SimulatorOpenButton/);
   assert.match(layout, /SimulatorDrawerProvider/);
   assert.match(layout, /<SimulatorDrawer\s*\/>/);
@@ -97,7 +97,10 @@ test('no tone example in ru, en or he contains forbidden filler phrases', () => 
 });
 
 test('the new task K dictionary keys exist for every locale and are spread into all three dictionaries', () => {
-  assert.match(dictionary, /const taskKRu=\{simulatorOpenButton:'Проверить ассистента'/);
+  // Z8: «Проверить ответы» / «Check replies» / «בדיקת תשובות».
+  assert.match(dictionary, /const taskKRu=\{simulatorOpenButton:"Проверить ответы"/);
+  assert.match(dictionary, /const taskKEn:Record<keyof typeof taskKRu,string>=\{simulatorOpenButton:"Check replies"/);
+  assert.match(dictionary, /const taskKHe:Record<keyof typeof taskKRu,string>=\{simulatorOpenButton:"בדיקת תשובות"/);
   assert.match(dictionary, /const taskKEn:Record<keyof typeof taskKRu,string>=/);
   assert.match(dictionary, /const taskKHe:Record<keyof typeof taskKRu,string>=/);
   assert.match(dictionary, /\.\.\.taskKRu[,}]/);
@@ -129,7 +132,7 @@ test('only the message list scrolls in the drawer; heading, warning and input st
 test('cabinet texts about the assistant are neutral; the assistant name is only a standalone label', () => {
   const lines = dictionary.split('\n').filter(line => /Ле[яиюе]/.test(line));
   const pairs = lines.join('\n').match(/[A-Za-z0-9_]+:'[^']*Ле[яиюе][^']*'/g) ?? [];
-  assert.deepEqual(pairs.map(p => p.split(':')[0]).sort(), ['feedbackSubject', 'feedbackTitle', 'loginSubtitle', 'signupSubtitle'], 'only product texts mention Leya');
+  assert.deepEqual(pairs.map(p => p.split(':')[0]).sort(), ['feedbackTitle', 'loginSubtitle', 'signupSubtitle'], 'only product texts mention Leya');
   assert.doesNotMatch(dictionary, /WhatsApp отключён — Лея/);
   const simulator = readFileSync('components/tenant/conversation-simulator.tsx', 'utf8');
   assert.match(simulator, /useAssistantName\(\) \?\? t\('leyaResponder'\)/);
