@@ -50,6 +50,8 @@ export default function TenantSettings({profile,section}:{profile:AccountProfile
  const load=useCallback(async()=>{const r=await fetch('/api/tenant-settings',{cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error(translatedApiError(t,d,'settingsLoadError'));setS(normalizeTenantSettings(d.settings) as S);setU(normalizeUsage(d.usage) as U);},[t]);
  // The owner phone section comes with the first load: nothing in the page grows after it is shown.
  useEffect(()=>{void Promise.all([load(),fetch('/api/owner-settings',{cache:'no-store'}).then(async r=>{if(!r.ok)return;const d=await r.json();setOwnerPhone({phone:d.phone??'',quietStart:d.quietStart??'',quietEnd:d.quietEnd??'',paired:d.paired===true});}).catch(()=>undefined).finally(()=>setOwnerPhone(value=>value??null))]).catch(()=>setError(t('settingsLoadError')));},[load,t]);
+ // A link to another section on an already open page (?section=…) opens that section, not only the first one loaded.
+ useEffect(()=>{if(section)setOpen(section);},[section]);
  useEffect(()=>{if(section&&s&&typeof document!=='undefined')document.getElementById(`settings-${section}`)?.scrollIntoView?.({block:'start'});},[section,s]);
  const update=<K extends keyof S>(k:K,v:S[K])=>setS(x=>x?{...x,[k]:v}:x);
  const day=(key:string,p:Partial<Day>)=>setS(x=>x?{...x,weekly_schedule:{...x.weekly_schedule,[key]:{...x.weekly_schedule[key],...p}}}:x);

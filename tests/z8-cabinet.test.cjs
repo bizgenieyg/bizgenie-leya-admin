@@ -186,3 +186,36 @@ test('Z8: the business number reaches the card only as «+digits» and only whil
   assert.match(read('lib/waha/proxy.ts'), /status === 'WORKING' && typeof data\?\.phone === 'string' && \/\^\\\+\\d\{8,15\}\$\/\.test\(data\.phone\)/);
   assert.match(read('lib/waha/connection.ts'), /typeof data\.phone === 'string' && \/\^\\\+\\d\{8,15\}\$\/\.test\(data\.phone\) \? \{ phone: data\.phone \}/);
 });
+
+test('Z8 review: a new ?section= on an open «Настройки» page opens that section', () => {
+  const source = read('components/tenant/tenant-settings.tsx');
+  assert.match(source, /useState<SettingsSection>\(section\?\?'whatsapp'\)/);
+  assert.match(source, /useEffect\(\(\)=>\{if\(section\)setOpen\(section\);\},\[section\]\);/);
+  // Rendered: the same component instance gets section 'account' after 'whatsapp' → the account card is the open one.
+  let index = 0, dirty = true; const slots = [], effects = [];
+  const exports = {}, jsx = (type, p) => ({ type, props: p });
+  const fetch = async url => ({ ok: true, json: async () => url.includes('owner-settings') ? { phone: '', paired: false } : { settings: {}, usage: {} } });
+  vm.runInNewContext(compile('components/tenant/tenant-settings.tsx', true), { exports, fetch, Promise, Error, Math, Date, JSON, Object, Array, Number, String, document: undefined, require(name) {
+    if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'fragment' };
+    if (name === 'react') return {
+      useState(initial) { const key = index++; if (!(key in slots)) slots[key] = typeof initial === 'function' ? initial() : initial; return [slots[key], next => { slots[key] = typeof next === 'function' ? next(slots[key]) : next; dirty = true; }]; },
+      useEffect(fn, deps) { const key = index++, old = slots[key]; if (!old || deps.some((d, i) => d !== old.deps[i])) { slots[key] = { deps }; effects.push(fn); } },
+      useCallback: fn => fn, useMemo: fn => fn(),
+    };
+    if (name === '@/lib/i18n') return { useI18n: () => ({ t: k => k, locale: 'ru', setLocale() {} }), useFormat: () => ({ number: String, date: String, month: String }) };
+    if (name === '@/lib/tenant-settings/normalize') return { normalizeTenantSettings: () => ({ business_name: 'B', owner_name: 'O', owner_language: 'ru', business_sector: '', instruction_answers: true, supported_time_zones: [], weekly_schedule: Object.fromEntries([0,1,2,3,4,5,6].map(i => [String(i), { mode: 'day_off' }])), exceptions: [], enabled_agents: [], time_zone: 'Asia/Jerusalem' }), normalizeUsage: () => ({ events: {} }) };
+    if (name === '@/lib/tenant/labels') return { SETTINGS_SECTIONS: ['whatsapp', 'phone', 'business', 'assistant', 'schedule', 'account'] };
+    if (name === '@/lib/i18n/api-error') return { translatedApiError: () => 'e' };
+    if (name === '@/lib/tenant-settings/time-zone') return { timeZoneOptionLabel: z => z };
+    return new Proxy({}, { get: () => 'C' });
+  } });
+  const render = props => { index = 0; const tree = exports.default(props); while (effects.length) effects.shift()(); return tree; };
+  const walk = tree => Array.isArray(tree) ? tree.flatMap(walk) : !tree || typeof tree !== 'object' ? [] : [tree, ...walk(tree.props?.children), ...(typeof tree.props?.render === 'function' ? walk(tree.props.render()) : [])];
+  const openId = tree => walk(tree).find(n => n.props?.open === true)?.props.id;
+  const settle = async props => { let tree; for (let i = 0; i < 12; i++) { await Promise.resolve(); tree = render(props); } return tree; };
+  return (async () => {
+    const props = { profile: {}, section: 'whatsapp' };
+    assert.equal(openId(await settle(props)), 'whatsapp');
+    assert.equal(openId(await settle({ ...props, section: 'account' })), 'account');
+  })();
+});
