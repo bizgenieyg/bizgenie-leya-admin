@@ -333,3 +333,6 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .button.warning:hover{background:var(--warning-soft)}
 .wa-paused{--wa-dot:var(--warning);border-color:var(--warning);border-inline-start:0.1875rem solid var(--warning);background:var(--warning-soft)}
 .wa-lost{border-inline-start:0.1875rem solid var(--danger)}
+/* Z8.1 review: the schedule row follows the content area too (3 columns only when they fit). */
+@media(min-width:40rem){.schedule-row{grid-template-columns:minmax(5.5rem,.8fr) minmax(0,1.4fr)}}
+@container page (min-width:38rem){.schedule-row{grid-template-columns:minmax(7rem,.75fr) minmax(10rem,1.2fr) minmax(13rem,1.4fr)}}

@@ -36,7 +36,7 @@ test('Z8.1: profile unavailable ≠ expired session — «Настройки» o
   const page = read('app/admin/settings/page.tsx');
   assert.match(page, /if\(!account\.signedIn\)redirect\('\/login\?error=session_expired'\);/);
   assert.doesNotMatch(page, /if\(!profile\)redirect/);
-  assert.match(read('components/tenant/tenant-settings.tsx'), /\{profile\?<ProfilePanel profile=\{profile\}\/>:<ErrorState message=\{t\('accountLoadError'\)\} onRetry=\{\(\)=>router\.refresh\(\)\}\/>\}/);
+  assert.match(read('components/tenant/tenant-settings.tsx'), /const account=profile\?<ProfilePanel profile=\{profile\}\/>:<ErrorState message=\{t\('accountLoadError'\)\} onRetry=\{\(\)=>router\.refresh\(\)\}\/>;/);
   const route = read('app/api/profile/route.ts');
   assert.match(route, /if\(!state\.signedIn\)return Response\.json\(\{code:'connectionSessionExpired'\},\{status:401\}\)/);
   assert.match(route, /\{status:503\}/);
@@ -96,4 +96,42 @@ test('Z8.1: «Ответы клиентам» are part of the WhatsApp card — 
   assert.doesNotMatch(home, /EmergencyStop/, 'no separate link row under the card');
   for (const [b, v] of [['taskZ81Ru=', 'Остановить все ответы'], ['taskZ81En', 'Stop all replies'], ['taskZ81He', 'עצירת כל התשובות']]) assert.ok(read('lib/i18n/index.tsx').split('\n').find(l => l.startsWith(`const ${b}`)).includes(v));
   assert.match(read('app/globals.css'), /\.wa-paused\{[^}]*border-inline-start:0\.1875rem solid var\(--warning\)/);
+});
+
+test('Z8.1 review: backend down → «Настройки» show an error with «Повторить» and the «Аккаунт» state, not endless placeholders', async () => {
+  let index = 0; const slots = [], effects = [], exports = {}, jsx = (type, p) => ({ type, props: p });
+  let refreshed = 0;
+  vm.runInNewContext(compile('components/tenant/tenant-settings.tsx', true), { exports, Promise, Error, Math, Date, JSON, Object, Array, Number, String, document: undefined,
+    fetch: async () => ({ ok: false, status: 502, json: async () => ({ code: 'serviceUnavailable' }) }), require(name) {
+    if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'fragment' };
+    if (name === 'react') return {
+      useState(initial) { const key = index++; if (!(key in slots)) slots[key] = typeof initial === 'function' ? initial() : initial; return [slots[key], next => { slots[key] = typeof next === 'function' ? next(slots[key]) : next; }]; },
+      useEffect(fn, deps) { const key = index++, old = slots[key]; if (!old || deps.some((d, i) => d !== old.deps[i])) { slots[key] = { deps }; effects.push(fn); } },
+      useCallback: fn => fn, useMemo: fn => fn(),
+    };
+    if (name === 'next/navigation') return { useRouter: () => ({ refresh() { refreshed++; } }) };
+    if (name === '@/lib/i18n') return { useI18n: () => ({ t: k => k, locale: 'ru', setLocale() {} }), useFormat: () => ({}) };
+    if (name === '@/lib/tenant/labels') return { SETTINGS_SECTIONS: ['whatsapp', 'phone', 'business', 'assistant', 'schedule', 'account'] };
+    if (name === '@/lib/i18n/api-error') return { translatedApiError: (_t, _d, key) => key };
+    if (name === '@/components/ui/primitives') return { ErrorState: 'ErrorState', Button: 'Button', Check: 'Check', Select: 'Select', Switch: 'Switch' };
+    return new Proxy({}, { get: () => 'C' });
+  } });
+  // useCallback returns a new function each render here: run the first effect only, as React would with stable deps.
+  const render = () => { index = 0; const tree = exports.default({ profile: null, section: null }); while (effects.length) effects.shift()(); return tree; };
+  let tree = render();
+  for (let i = 0; i < 10; i++) { await new Promise(r => setTimeout(r, 0)); index = 0; tree = exports.default({ profile: null, section: null }); effects.length = 0; }
+  const all = nodes(tree);
+  const errors = all.filter(n => n.type === 'ErrorState');
+  assert.ok(!all.some(n => /skeleton-card/.test(n.props?.className ?? '')), 'no placeholders after the failure');
+  assert.equal(errors[0].props.message, 'settingsLoadError');
+  errors[0].props.onRetry(); assert.equal(refreshed, 1);
+  const accountCard = all.find(n => n.props?.id === 'account');
+  assert.ok(accountCard, 'the «Аккаунт» section is shown');
+  assert.equal(nodes(accountCard.props.children).find(n => n.type === 'ErrorState').props.message, 'accountLoadError');
+});
+
+test('Z8.1 review: the schedule row switches to 3 columns by the content width, not the window', () => {
+  const css = read('app/globals.css'), block = css.slice(css.indexOf('Z8.1 review: the schedule row'));
+  assert.match(block, /@media\(min-width:40rem\)\{\.schedule-row\{grid-template-columns:minmax\(5\.5rem,\.8fr\) minmax\(0,1\.4fr\)\}\}/);
+  assert.match(block, /@container page \(min-width:38rem\)\{\.schedule-row\{grid-template-columns:minmax\(7rem,\.75fr\) minmax\(10rem,1\.2fr\) minmax\(13rem,1\.4fr\)\}\}/);
 });
