@@ -205,3 +205,33 @@ test('Z9 «Главная»: one column, the business number once; the owner num
   assert.match(home, /owner:!s\?'ok':!s\.owner_phone\?'missing':s\.paired\?'ok':'unconfirmed'/);
   assert.doesNotMatch(read('components/tenant/whatsapp-home-card.tsx'), /waOwnerLine|waBusinessNumber|section=phone/);
 });
+
+test('Z9 review: edits made while «Сохранить» is on its way are kept and stay unsaved', async () => {
+  let release; const pending = new Promise(resolve => { release = resolve; });
+  let server = { ...SETTINGS };
+  const page = mountSettings({ backend: async (url, options = {}) => {
+    if (url.includes('owner-settings')) return { ok: true, body: { phone: '', paired: false } };
+    if (options.method === 'PATCH') { await pending; server = { ...server, ...JSON.parse(options.body) }; return { ok: true, body: {} }; }
+    return { ok: true, body: { settings: server, usage: {} } };
+  } });
+  await page.settle();
+  type(page, 'settings-business-name', 'Первое');
+  page.button(page.bar(), 'save').props.onClick(); await tick(); page.render();
+  type(page, 'settings-owner-name', 'Ирина');
+  release(); await page.settle();
+  assert.equal(input(page, 'settings-business-name').props.value, 'Первое');
+  assert.equal(input(page, 'settings-owner-name').props.value, 'Ирина', 'the later edit is not overwritten');
+  assert.match(text(page.bar()), /unsavedChanges/, 'and still waits for «Сохранить» — no «✓ Сохранено»');
+  page.button(page.bar(), 'save').props.onClick(); await page.settle();
+  assert.deepEqual(JSON.parse(page.calls.filter(c => c.options.method === 'PATCH')[1].options.body), { owner_name: 'Ирина' });
+});
+
+test('Z9 review: a new cabinet language does not reload the page data or drop the draft', async () => {
+  const page = mountSettings(); await page.settle();
+  type(page, 'settings-business-name', 'Не сохранено');
+  const loads = page.calls.length;
+  page.setLanguage('he'); await page.settle();
+  assert.equal(page.calls.length, loads, 'no reload');
+  assert.equal(input(page, 'settings-business-name').props.value, 'Не сохранено');
+  assert.ok(page.bar(), 'the save bar stays');
+});

@@ -23,7 +23,8 @@ const SETTINGS = { business_name: 'Ноготки', owner_name: 'Ира', assist
 function mountSettings({ backend, props = { profile: { email: 'o@x.test' }, section: null }, settings = SETTINGS } = {}) {
   let index = 0; const slots = [], effects = [], calls = [], exports = {}, jsx = (type, p) => ({ type, props: p });
   const dirtyReports = [], refreshes = [];
-  const translate = (k, v = {}) => Object.entries(v).reduce((s, [a, b]) => s.replaceAll(`{${a}}`, String(b)), k);
+  let locale = 'ru';
+  let translate = (k, v = {}) => Object.entries(v).reduce((s, [a, b]) => s.replaceAll(`{${a}}`, String(b)), k);
   const answer = backend ?? ((url, options = {}) => url.includes('owner-settings') ? { ok: true, body: { phone: settings.owner_phone, paired: settings.paired, pendingPhone: settings.pending_owner_phone } }
     : options.method === 'PATCH' ? { ok: true, body: { saved: true } } : { ok: true, body: { settings, usage: {} } });
   const fetch = async (url, options = {}) => { calls.push({ url: String(url), options }); const r = await answer(String(url), options); if (r instanceof Error) throw r; return { ok: r.ok, status: r.status ?? (r.ok ? 200 : 500), json: async () => r.body }; };
@@ -41,7 +42,7 @@ function mountSettings({ backend, props = { profile: { email: 'o@x.test' }, sect
     };
     if (name === 'next/navigation') return { useRouter: () => ({ refresh() { refreshes.push(1); } }) };
     // One `t` for the page's lifetime, as the provider gives it (a new `t` would mean a new language → a reload).
-    if (name === '@/lib/i18n') return { useI18n: () => ({ t: translate, locale: 'ru' }), useFormat: () => ({ month: String, date: String, number: String }) };
+    if (name === '@/lib/i18n') return { useI18n: () => ({ t: translate, locale }), useFormat: () => ({ month: String, date: String, number: String }) };
     if (name === '@/lib/i18n/api-error') return { translatedApiError: (_t, d, key) => d?.code ?? key };
     if (name === '@/lib/tenant-settings/normalize') return normalize;
     if (name === '@/lib/tenant/simulator-drawer') return { useSimulatorDrawer: () => ({ setDirty: (source, value) => dirtyReports.push([source, value]) }) };
@@ -58,6 +59,8 @@ function mountSettings({ backend, props = { profile: { email: 'o@x.test' }, sect
   const bar = () => all().find(n => /(^| )save-bar( |$)/.test(n.props?.className ?? ''));
   const button = (root, label) => nodes(root).find(n => n.type === 'Button' && text(n) === label);
   const body = () => all().filter(n => n.type === 'p').map(text).join(' | ');
-  return { render, settle, all, byId, bar, button, body, calls, dirtyReports, refreshes, text, nodes };
+  // A new cabinet language: the provider gives a new `t`.
+  const setLanguage = next => { locale = next; translate = (k, v = {}) => Object.entries(v).reduce((s, [a, b]) => s.replaceAll(`{${a}}`, String(b)), k); };
+  return { setLanguage, render, settle, all, byId, bar, button, body, calls, dirtyReports, refreshes, text, nodes };
 }
 module.exports = { mountSettings, SETTINGS, nodes, text, read, compile, loadModule, tick };

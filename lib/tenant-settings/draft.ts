@@ -50,3 +50,7 @@ export function draftPatch(saved:Draft,draft:Draft):Record<string,unknown>{
  }
  return patch;
 }
+/** After a save: the server values, except fields changed again after the request was sent (they stay unsaved). */
+export function rebaseDraft(sent:Draft,current:Draft,server:Draft):Draft{
+ return Object.fromEntries((Object.keys(DRAFT_SECTIONS) as (keyof Draft)[]).map(key=>[key,current[key]!==sent[key]?current[key]:server[key]])) as Draft;
+}

@@ -17,7 +17,7 @@ import {Button,Check,ConfirmDialog,ErrorState,Select,Switch} from '@/components/
 import {useRouter} from 'next/navigation';
 import {timeZoneLabel} from '@/lib/tenant-settings/time-zone';
 import {useSimulatorDrawer} from '@/lib/tenant/simulator-drawer';
-import {draftFrom,draftPatch,draftProblem,dirtySections,type Draft} from '@/lib/tenant-settings/draft';
+import {draftFrom,draftPatch,draftProblem,dirtySections,rebaseDraft,type Draft} from '@/lib/tenant-settings/draft';
 import {useKeyboardInset,useLeaveGuard} from '@/lib/tenant-settings/leave-guard';
 type X={id:string;start_date:string;end_date:string;kind:'day_off'|'special_hours';work_start:string|null;work_end:string|null;name:string;recurs_annually:boolean};
 type S=Record<string,unknown>&{plan:string|null;messages_per_month:number;time_zone:string;supported_time_zones:string[];instruction_answers:boolean;exceptions:X[];owner_phone:string;paired:boolean;pending_owner_phone:string};
@@ -56,10 +56,13 @@ export default function TenantSettings({profile,section}:{profile:AccountProfile
  const[s,setS]=useState<S|null>(null),[u,setU]=useState<U|null>(null),[saved,setSaved]=useState<Draft|null>(null),[draft,setDraft]=useState<Draft|null>(null);
  const[error,setError]=useState(''),[status,setStatus]=useState<Status>({kind:'idle'}),[busy,setBusy]=useState(false),[exception,setException]=useState(blank()),[editing,setEditing]=useState<string|null>(null);
  const[ownerPhone,setOwnerPhone]=useState<OwnerPhone|null|undefined>(undefined),[now,setNow]=useState(()=>new Date());
- const barRef=useRef<HTMLDivElement>(null);
+ const barRef=useRef<HTMLDivElement>(null),savedRef=useRef<Draft|null>(null),draftRef=useRef<Draft|null>(null);
+ savedRef.current=saved;draftRef.current=draft;
  const apply=useCallback((d:Record<string,unknown>)=>{const settings=normalizeTenantSettings(d.settings) as S;setS(settings);setU(normalizeUsage(d.usage) as U);const next=draftFrom(settings);setSaved(next);return next;},[]);
- const load=useCallback(async()=>{const r=await fetch('/api/tenant-settings',{cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error(translatedApiError(t,d,'settingsLoadError'));return apply(d);},[t,apply]);
- const loadAll=useCallback(()=>{setError('');return Promise.all([load().then(next=>setDraft(next)),fetch('/api/owner-settings',{cache:'no-store'}).then(async r=>{if(!r.ok)return;const d=await r.json();setOwnerPhone({phone:d.phone??'',paired:d.paired===true,pendingPhone:d.pendingPhone??''});}).catch(()=>undefined).finally(()=>setOwnerPhone(value=>value??null))]).catch(()=>setError(t('settingsLoadError')));},[load,t]);
+ // Z9 review: the loaders do not depend on `t` — a new cabinet language must not reload and wipe the draft.
+ const tRef=useRef(t);tRef.current=t;
+ const load=useCallback(async()=>{const r=await fetch('/api/tenant-settings',{cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error(translatedApiError(tRef.current,d,'settingsLoadError'));return apply(d);},[apply]);
+ const loadAll=useCallback(()=>{setError('');return Promise.all([load().then(next=>setDraft(current=>current&&savedRef.current&&dirtySections(savedRef.current,current).size?current:next)),fetch('/api/owner-settings',{cache:'no-store'}).then(async r=>{if(!r.ok)return;const d=await r.json();setOwnerPhone({phone:d.phone??'',paired:d.paired===true,pendingPhone:d.pendingPhone??''});}).catch(()=>undefined).finally(()=>setOwnerPhone(value=>value??null))]).catch(()=>setError(tRef.current('settingsLoadError')));},[load]);
  useEffect(()=>{void loadAll();},[loadAll]);
  useEffect(()=>{const timer=setInterval(()=>setNow(new Date()),30000);return()=>clearInterval(timer);},[]);
  useEffect(()=>{if(section&&s&&typeof document!=='undefined')document.getElementById(`settings-${section}`)?.scrollIntoView?.({block:'start'});},[section,s]);
@@ -72,9 +75,10 @@ export default function TenantSettings({profile,section}:{profile:AccountProfile
  useEffect(()=>{if(status.kind!=='saved')return;const timer=setTimeout(()=>setStatus({kind:'idle'}),3000);return()=>clearTimeout(timer);},[status]);
  const set=<K extends keyof Draft>(key:K,value:Draft[K])=>{setDraft(x=>x?{...x,[key]:value}:x);setStatus(x=>x.kind==='saved'?{kind:'idle'}:x);};
  const problem=draft?draftProblem(draft):null;
- async function save(){if(!saved||!draft||problem)return;setStatus({kind:'saving'});
+ async function save(){if(!saved||!draft||problem)return;const sent=draft;setStatus({kind:'saving'});
   try{const r=await fetch('/api/tenant-settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(draftPatch(saved,draft))}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(translatedApiError(t,d,'saveNotSaved'));
-   const next=await load();setDraft(next);setStatus({kind:'saved'});}
+   // Z9 review: edits made while the request was on its way stay in the draft (the bar stays for them).
+   const next=await load(),merged=rebaseDraft(sent,draftRef.current??sent,next);setDraft(merged);setStatus(dirtySections(next,merged).size?{kind:'idle'}:{kind:'saved'});}
   catch(e){setStatus({kind:'error',message:e instanceof Error?e.message:t('saveNotSaved')});}}
  async function saveX(e:FormEvent){e.preventDefault();setBusy(true);setError('');try{const r=await fetch('/api/schedule-exceptions'+(editing?`?id=${editing}`:''),{method:editing?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(exception)}),d=await r.json();if(!r.ok)throw new Error(translatedApiError(t,d,'saveError'));setException(blank());setEditing(null);await load();}catch(e){setError(e instanceof Error?e.message:t('saveError'));}finally{setBusy(false);}}
  async function remove(id:string){setBusy(true);setError('');try{const r=await fetch(`/api/schedule-exceptions?id=${id}`,{method:'DELETE'});if(!r.ok)throw new Error();await load();}catch{setError(t('deleteError'));}finally{setBusy(false);}}
