@@ -10,10 +10,13 @@ test('auto_resume_hours is an owner setting (1–48, default 4) with labels in a
     assert.match(fields.split('export const operatorOnly')[1], new RegExp(`'${key}'`));
   const settings = readFileSync('components/tenant/tenant-settings.tsx', 'utf8');
   assert.match(settings, /min=\{1\} max=\{48\}/);
-  assert.match(settings, /auto_resume_hours:Math\.min\(48,Math\.max\(1,/);
+  // Z9: saved with the other settings; 1–48 checked before the save, a whole number is sent.
+  const draft = readFileSync('lib/tenant-settings/draft.ts', 'utf8');
+  assert.match(draft, /draft\.auto_resume_hours<1\|\|draft\.auto_resume_hours>48/);
+  assert.match(draft, /patch\.auto_resume_hours=Math\.round\(Number\(draft\.auto_resume_hours\)\)/);
   assert.match(readFileSync('lib/tenant-settings/normalize.ts', 'utf8'), /auto_resume_hours:number\(raw\.auto_resume_hours,4\)/);
   const dictionary = readFileSync('lib/i18n/index.tsx', 'utf8');
-  assert.equal((dictionary.match(/autoResumeHours:'/g) ?? []).length, 3);
-  assert.equal((dictionary.match(/autoResumeHoursHelp:'/g) ?? []).length, 3);
-  assert.doesNotMatch(dictionary.match(/autoResumeHours:'[^']*'/g).join(' '), /агент|тенант|эскалац|порог/i);
+  // Z9: «Ассистент снова отвечает через [N] ч после вашего ответа» in all three languages.
+  for (const key of ['z9ResumeBefore', 'z9ResumeAfter', 'z9ResumeLabel']) assert.equal((dictionary.match(new RegExp(`"${key}":"`, 'g')) ?? []).length, 3);
+  assert.doesNotMatch(dictionary.match(/"z9Resume[A-Za-z]+":"[^"]*"/g).join(' '), /агент|тенант|эскалац|порог/i);
 });

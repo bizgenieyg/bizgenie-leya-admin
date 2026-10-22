@@ -6,6 +6,7 @@ import { beginSession, requestSession, isConnected, shouldPoll, backendUnavailab
 import { buttonClass } from '@/app/onboarding/step-frame';
 import {useI18n} from '@/lib/i18n';
 import {Button,ConfirmDialog,ErrorState,Spinner} from '@/components/ui/primitives';
+import {formatPhone} from '@/lib/tenant/phone';
 
 export default function WhatsAppConnection({ cabinet = false, canEdit = true, onStatusChange }: { cabinet?: boolean; canEdit?: boolean; onStatusChange?: (status: string) => void }) {
   const {t}=useI18n();
@@ -128,6 +129,8 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true, on
       {state.status === 'STARTING' || busy ? <Spinner/> : null}
       {expired ? t('waitExpired')
         : state.status ? statusText(state.status) : busy ? t('checkingConnection') : t('statusUnavailable')}
+      {/* Z9: the business number, once, in the common form. */}
+      {cabinet && isConnected(state.status) && state.phone ? <> · <bdi dir="ltr">{formatPhone(state.phone)}</bdi></> : null}
     </p>
     {state.status === 'FAILED' && state.reason ? <p className="mb-4 text-sm error-copy">{t(state.reason==='wahaStatusUnavailable'?state.reason:'statusFailed')}</p> : null}
     {scanning ? <section className="qr-scan">
@@ -145,7 +148,9 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true, on
     {numberChangeError ? <ErrorState message={numberChangeError} onRetry={()=>{setNumberChangeError('');setConfirmNumberChange(true);}}/> : null}
     {expired || error ? <button type="button" disabled={busy} className={buttonClass} onClick={() => run('read')}>{t('checkStatus')}</button>
       : canEdit && !busy && !shouldPoll(state.status) && !isConnected(state.status) && state.status
-        ? <button type="button" className={buttonClass} onClick={() => run('connect')}>{actionText(state.status)}</button> : null}
+        ? <button type="button" className={cabinet ? 'button secondary wa-reconnect' : buttonClass} onClick={() => run('connect')}>{actionText(state.status)}</button> : null}
+    {/* Z9: the warning moved here from the owner phone block — plain text, no coloured banner. */}
+    {cabinet ? <p className="setting-help">{t('z9WaRisk')}</p> : null}
     {/* Z8: only in «Настройки → WhatsApp», a red text button with a confirmation. */}
     {cabinet && canEdit && isConnected(state.status) ? <Button type="button" disabled={busy} tone="danger-text" onClick={() => setConfirmDisconnect(true)}>{t('disconnectWhatsApp')}</Button> : null}
     {!cabinet ? <div className="mt-8 flex items-center justify-between gap-4">

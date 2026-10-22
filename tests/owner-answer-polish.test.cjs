@@ -8,9 +8,11 @@ test('polish toggle is owner-editable with the agreed label in all cabinet langu
   const dictionary = readFileSync('lib/i18n/index.tsx', 'utf8');
   assert.match(fields, /export const editable = \[[^\]]*'polish_owner_answer'/);
   assert.doesNotMatch(fields.split('export const operatorOnly')[1], /polish_owner_answer/);
-  assert.match(settings, /polish_owner_answer:s\.polish_owner_answer/);
-  assert.match(settings, /t\('polishOwnerAnswers'\)/);
-  assert.match(dictionary, /polishOwnerAnswers:'Оформлять мои ответы клиентам'/);
+  // Z9: «Дописывать мои короткие ответы», saved with the other settings (the draft).
+  assert.match(settings, /checked=\{draft\.polish_owner_answer\} onChange=\{checked=>set\('polish_owner_answer',checked\)\}/);
+  assert.match(settings, /t\('z9Polish'\)/);
+  assert.match(dictionary, /"z9Polish":"Дописывать мои короткие ответы"/);
+  assert.match(dictionary, /"z9PolishHelp":"Ваше короткое «да» клиент получит вежливой фразой"/);
   for (const locale of ['Ru', 'En', 'He']) assert.match(dictionary, new RegExp(`\\.\\.\\.ownerAnswer${locale}`));
   assert.match(readFileSync('lib/tenant-settings/normalize.ts', 'utf8'), /polish_owner_answer:raw\.polish_owner_answer!==false/);
 });

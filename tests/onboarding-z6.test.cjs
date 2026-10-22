@@ -31,9 +31,9 @@ test('Z6 assistant section: tone, style, greetings and discovery chips hidden on
   // Z8: the section is «Настройки → Ассистент»; the instruction mode comes with the settings already loaded.
   const page = read('components/tenant/tenant-settings.tsx');
   assert.match(page, /const legacy=!s\.instruction_answers;/);
-  assert.match(page, /\{legacy\?<><div className="settings-subsection"><h3>\{t\('discoveryTitle'\)\}/);
-  assert.match(page, /<h3>\{t\('greetingTitle'\)\}<\/h3><p className="field-help">\{t\('greetingHelp'\)\}<\/p><GreetingTemplates\/>/);
-  assert.match(page, /<AssistantSettings hideStyle=\{!legacy\} ownerLanguage=\{s\.owner_language\}\/>/);
+  // Z9: tone and style (own save), discovery and greetings only without an instruction; the name is in the save bar.
+  assert.match(page, /\{legacy\?<><div className="settings-subsection"><AssistantSettings styleOnly\/><\/div><div className="settings-subsection"><h3>\{t\('discoveryTitle'\)\}/);
+  assert.match(page, /<h3>\{t\('greetingTitle'\)\}<\/h3><GreetingTemplates\/>/);
   assert.match(read('components/ui/page-heading.tsx'), /<SimulatorOpenButton\/>/);
   assert.match(read('components/tenant/assistant-settings.tsx'), /\{hideStyle\?null:<><label htmlFor="tone"/);
   assert.match(read('app/api/tenant-settings/route.ts'), /'instruction_answers','simulator_suggestions'/);

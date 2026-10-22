@@ -26,12 +26,13 @@ async function proxy(request: Request) {
    if(Object.keys(input).some(key=>!editable.includes(key)))return fail('settingsInvalid',400);
    if('business_sector' in input&&(typeof input.business_sector!=='string'||input.business_sector.trim().length>100))return fail('settingsInvalid',400);
    const saved=await call('/api/admin/tenant-settings','PATCH',input);
-   if(!saved.ok)return fail(saved.status===400?'settingsInvalid':'serviceUnavailable',saved.status);
+   // Z9: a rejected save keeps its reason as a code (the cabinet translates it); a backend text is never shown.
+   if(!saved.ok){const reason=saved.status===400?await saved.json().catch(()=>null):null;return fail(reason?.code==='quiet_hours_equal'?'quietHoursEqual':saved.status===400?'settingsInvalid':'serviceUnavailable',saved.status);}
    return Response.json({saved:true},{headers});
   }
   const [settings,usage]=await Promise.all([call('/api/admin/tenant-settings'),call('/api/admin/usage')]);
   if(!settings.ok||!usage.ok)return fail('serviceUnavailable',502);
-  const raw=normalizeTenantSettings(await settings.json());const safe=Object.fromEntries([...editable,...system,'owner_phone','paired','exceptions','supported_time_zones','greeting_template_defaults','instruction_answers','simulator_suggestions'].map(key=>[key,raw[key as keyof typeof raw]]));
+  const raw=normalizeTenantSettings(await settings.json());const safe=Object.fromEntries([...editable,...system,'owner_phone','paired','pending_owner_phone','quiet_hours_start','quiet_hours_end','exceptions','supported_time_zones','greeting_template_defaults','instruction_answers','simulator_suggestions'].map(key=>[key,raw[key as keyof typeof raw]]));
   return Response.json({settings:safe,usage:await usage.json()},{headers});
  }catch{console.error('tenant_settings_proxy_failed');return fail('serviceUnavailable',502);}
 }

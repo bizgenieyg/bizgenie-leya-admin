@@ -15,10 +15,12 @@ export function whatsappCardState(status: string): WhatsAppCardState {
 }
 
 /** «Настройки» sections in display order; `?section=` opens one of them (old /admin/assistant and /admin/profile redirect here). */
-export const SETTINGS_SECTIONS = ['whatsapp', 'phone', 'business', 'assistant', 'schedule', 'account'] as const;
+export const SETTINGS_SECTIONS = ['assistant', 'business', 'contact', 'quiet', 'whatsapp', 'account'] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+/** Z9: old links (Z8 sections) still open the section that now holds those settings. */
+const SECTION_ALIASES: Record<string, SettingsSection> = { phone: 'contact', schedule: 'quiet' };
 export const settingsSection = (value: unknown): SettingsSection | null =>
-  typeof value === 'string' && (SETTINGS_SECTIONS as readonly string[]).includes(value) ? value as SettingsSection : null;
+  typeof value !== 'string' ? null : (SETTINGS_SECTIONS as readonly string[]).includes(value) ? value as SettingsSection : SECTION_ALIASES[value] ?? null;
 
 /** Sector suggestion groups (texts in the dictionaries: sectorGroup_<key>, sectorItems_<key> joined by «|»). */
 export const SECTOR_GROUPS = ['beauty_health', 'education', 'food', 'retail', 'projects', 'business', 'other'] as const;

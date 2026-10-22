@@ -3,11 +3,14 @@
 // drift is caught automatically.
 
 // Owner/admin can change these from the cabinet.
-export const editable = ['business_sector', 'business_name', 'owner_name', 'owner_language', 'cabinet_language', 'time_zone', 'weekly_schedule', 'auto_replies_paused', 'enabled_agents', 'summary_frequency', 'summary_time', 'summary_weekday', 'polish_owner_answer', 'auto_resume_hours', 'client_discovery_questions', 'greeting_templates'];
+// Z9: enabled_agents and weekly_schedule are no longer owner settings («Не беспокоить» replaces the schedule; the
+// stored values are kept, changeable only with ADMIN_SECRET); the assistant name and quiet hours are saved here.
+export const editable = ['business_sector', 'business_name', 'owner_name', 'assistant_name', 'owner_language', 'cabinet_language', 'time_zone', 'quiet_hours_start', 'quiet_hours_end', 'auto_replies_paused', 'summary_frequency', 'summary_time', 'summary_weekday', 'polish_owner_answer', 'auto_resume_hours', 'client_discovery_questions', 'greeting_templates'];
 
 // Operator-only runtime fields: rejected for cabinet users, changeable only by a caller
 // holding ADMIN_SECRET directly (see backend src/routes/admin.ts).
 export const operatorOnly = [
+  'enabled_agents', 'weekly_schedule',
   'translate_owner_answer', 'escalation_remind_minutes', 'escalation_close_minutes',
   'deferred_max_age_hours', 'context_message_count',
   'context_retention_hours', 'history_fetch_limit', 'history_max_characters', 'history_timeout_seconds', 'lid_lookup_timeout_seconds', 'lid_backfill_pause_ms', 'knowledge_full_context_chars', 'knowledge_unit_max_chars', 'knowledge_similarity_floor', 'message_retention_days', 'intent_confidence_threshold',

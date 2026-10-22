@@ -17,7 +17,7 @@ test('groups screen is tenant-proxied, read-only and present in five-item naviga
 
 test('new dashboard copy is translated in all cabinet languages',()=>{
   const dictionary=fs.readFileSync('lib/i18n/index.tsx','utf8');
-  for(const key of ['groupsNav','groupsTitle','groupsInfo','groupMembers','groupsLoadError','feedbackTitle','feedbackAction','qrNumberRisk']){
+  for(const key of ['groupsNav','groupsTitle','groupsInfo','groupMembers','groupsLoadError','feedbackTitle','feedbackAction']){
     assert.equal((dictionary.match(new RegExp(`${key}:`,'g'))||[]).length,3,key);
   }
 });

@@ -279,10 +279,10 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .wa-card-status .wa-card-action{grid-column:2;justify-self:start;margin-block-start:var(--space-2)}
 .wa-dot{inline-size:.75rem;block-size:.75rem;margin-block-start:.375rem;border-radius:50%;background:var(--wa-dot)}
 .wa-connected{--wa-dot:var(--accent)}.wa-not_connected{--wa-dot:var(--warning)}.wa-lost{--wa-dot:var(--danger);border-color:var(--danger)}
-.wa-card-numbers{display:grid;gap:var(--space-2);margin:0;align-content:start}
-.wa-card-numbers div{display:grid;gap:var(--space-1)}.wa-card-numbers dt{color:var(--muted);font-size:.8125rem}.wa-card-numbers dd{margin:0;overflow-wrap:anywhere}
-.wa-card-numbers a{color:var(--accent);font-weight:700}
-@media(min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5);min-block-size:11.5rem}.wa-card-numbers{border-inline-start:0.0625rem solid var(--border);padding-inline-start:var(--space-5)}}
+
+
+
+@media(min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5);min-block-size:11.5rem}}
 .home-badges{display:flex;flex-wrap:wrap;gap:var(--space-2)}
 .home-badges .soft-badge{text-decoration:none;font-size:.875rem;padding:var(--space-2) var(--space-3)}
 .soft-badge.attention{color:var(--warning);background:var(--warning-soft)}
@@ -304,7 +304,7 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .settings-section h3{margin:0;font-size:1rem}
 .settings-current{margin:0;font-weight:650}
 .profile-panel{display:grid;gap:var(--space-5)}.profile-panel dl{margin:0}
-@media(max-width:37.4375rem){.settings-section:not(.open) .settings-section-body{display:none}}
+@media(max-width:37.4375rem){}
 @media(min-width:37.5rem){.settings-section-title button{cursor:default;min-block-size:0}.settings-section-title svg{display:none}}
 /* The account button in the phone header: a 44 px circle (it collapsed to the letter's width). */
 .mobile-user-menu .profile-shortcut{inline-size:var(--touch);block-size:var(--touch);min-block-size:var(--touch);display:grid;place-items:center;padding:0;border:0.0625rem solid var(--border);border-radius:50%;background:var(--canvas-alt);font-weight:800}
@@ -316,8 +316,8 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 @media(min-width:56.25rem){.kp-topics{grid-template-columns:minmax(0,1fr)}}
 @container page (min-width:34rem){.kp-topics,.kp-compare{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container page (min-width:52rem){.kp-topics{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr)}.wa-card-numbers{border-inline-start:0;padding-inline-start:0}}
-@container page (min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5)}.wa-card-numbers{border-inline-start:0.0625rem solid var(--border);padding-inline-start:var(--space-5)}}
+@media(min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr)}}
+@container page (min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5)}}
 @media(min-width:40rem){.settings-fields,.contact-controls{grid-template-columns:minmax(0,1fr)}}
 @container page (min-width:36rem){.settings-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .usage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -336,3 +336,63 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 /* Z8.1 review: the schedule row follows the content area too (3 columns only when they fit). */
 @media(min-width:40rem){.schedule-row{grid-template-columns:minmax(5.5rem,.8fr) minmax(0,1.4fr)}}
 @container page (min-width:38rem){.schedule-row{grid-template-columns:minmax(7rem,.75fr) minmax(10rem,1.2fr) minmax(13rem,1.4fr)}}
+
+/* Z9 «Настройки»: one column up to 640 px at the start edge; cards 20 (16 on phones) inside, 16 between; a setting
+   is the label 15, one line of help 13, the field 8 below; every field one height (40 desktop / 44 phone). */
+.settings-stack{max-inline-size:40rem;inline-size:100%;justify-self:start;gap:var(--space-4)}
+.settings-stack .settings-section{padding:1.25rem;gap:0;scroll-margin-block-start:5.5rem}
+.settings-stack .settings-section-title{display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-3);font-size:1.0625rem;font-weight:700}
+.unsaved-dot{inline-size:.5rem;block-size:.5rem;flex:none;border-radius:50%;background:var(--warning)}
+.settings-stack .settings-section-body{display:grid;gap:var(--space-4)}
+.setting-row{display:grid;justify-items:start;gap:var(--space-2);min-inline-size:0}
+.setting-row>.setting-help{margin-block-start:calc(-1*var(--space-1))}
+.setting-label{font-size:.9375rem;font-weight:600;line-height:1.35}
+.setting-help{margin:0;font-size:.8125rem;line-height:1.35;color:var(--muted)}
+.setting-value{margin:0;font-size:.9375rem;line-height:1.4}
+.setting-inline{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
+.setting-inline>.setting-label{font-weight:400}
+.settings-stack .switch-row{inline-size:100%;min-block-size:2.5rem;font-size:.9375rem;font-weight:600}
+.settings-stack .field-control{margin:0;block-size:2.5rem;min-block-size:2.5rem;font-size:.9375rem;color:var(--text)}
+.settings-stack .select-control.field-control{padding:0;border:0;background:transparent}
+.settings-stack .select-control.field-control select,.settings-stack input.field-control{block-size:2.5rem;min-block-size:2.5rem;padding-block:0!important;font-size:.9375rem;color:var(--text)}
+.settings-stack .field-time{inline-size:6rem;padding-inline:.5rem!important}
+.settings-stack input.field-number{padding-inline:.625rem!important}
+.settings-stack .field-number{inline-size:4.5rem}
+.settings-stack .field-phone{inline-size:15rem;max-inline-size:100%}
+.settings-stack .field-list{inline-size:17.5rem;max-inline-size:100%}
+.settings-stack .field-country{inline-size:6.5rem}
+.settings-stack .field-text{inline-size:100%}
+.owner-phone-form{display:grid;gap:var(--space-2);inline-size:100%}
+.owner-phone-inputs{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.settings-stack .row-actions{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.settings-stack .button,.wa-card .button.small{inline-size:auto;width:auto;min-block-size:2.25rem;padding-block:0;padding-inline:var(--space-4)}
+.settings-stack .button.small,.wa-card .button.small{min-block-size:2rem;font-size:.875rem}
+.settings-stack .button.danger-text{padding-inline:0}
+.settings-stack .wa-reconnect{inline-size:auto;min-block-size:2.25rem;padding-block:0}
+.warning-copy{color:var(--warning)}
+.dnd-range>span{font-size:.9375rem}
+@media(max-width:37.5rem){
+ .settings-stack{max-inline-size:none}
+ .settings-stack .settings-section{padding:1rem}
+ .settings-stack .field-control,.settings-stack .select-control.field-control select,.settings-stack input.field-control{block-size:2.75rem;min-block-size:2.75rem;font-size:1rem}
+ .settings-stack .switch-row{min-block-size:2.75rem}
+ .settings-stack .button{min-block-size:2.75rem}
+}
+/* The save bar: sticky at the bottom of the page, above the on-screen keyboard (--keyboard-inset, set by the page);
+   the page keeps a bottom space of the bar height, and a focused field scrolls clear of it. */
+.save-bar{position:sticky;inset-block-end:calc(var(--keyboard-inset,0px) + var(--space-3));z-index:15;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3) var(--space-4);border:.0625rem solid var(--border);border-radius:var(--radius-control);background:var(--surface);box-shadow:0 .5rem 1.5rem color-mix(in srgb,var(--text) 14%,transparent)}
+.save-bar p{margin:0;font-size:.9375rem;font-weight:600}
+.save-bar-actions{display:flex;gap:var(--space-2);margin-inline-start:auto}
+.save-bar-saved{color:var(--accent)}
+.has-save-bar{padding-block-end:var(--space-2)}
+.has-save-bar :is(input,select,textarea){scroll-margin-block-end:calc(var(--save-bar-height,4rem) + var(--keyboard-inset,0px) + var(--space-4))}
+/* Z9 «Главная»: the WhatsApp card in one column; the owner number only when it needs an action. */
+.wa-card .wa-card-owner{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3);padding-block-start:var(--space-3);border-block-start:.0625rem solid var(--border);color:var(--warning)}
+.wa-card,.wa-card.wa-paused,.wa-card.wa-lost,.wa-card.wa-not_connected,.wa-card.wa-connected{grid-template-columns:minmax(0,1fr);gap:var(--space-4);min-block-size:10rem;align-content:space-between}
+/* Z9, below 56.25rem the bottom menu is fixed: the save bar sits above it (or above the keyboard, whichever is
+   higher); the floating «Проверить ответы» steps aside while the bar is shown. */
+@media(max-width:56.1875rem){
+ .save-bar{inset-block-end:calc(max(var(--keyboard-inset,0px),4.375rem + var(--space-2)) + var(--space-3))}
+ body:has(.save-bar) .page-actions .simulator-open-button{display:none}
+}
+.settings-stack .row-actions>.button,.settings-stack .row-actions>button{flex:0 0 auto;inline-size:auto;width:auto}

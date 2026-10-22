@@ -24,7 +24,8 @@ const tones=[
  * that loaded the settings, saved to owner_language. «Языки ответов» (allowed_languages) is not shown: on the
  * instruction path clients get the language of their last message; the stored value is left as is.
  */
-export default function AssistantSettings({ onboarding = false, hideStyle = false, ownerLanguage }: { onboarding?: boolean; hideStyle?: boolean; ownerLanguage?: string }) {
+/** `styleOnly` (Z9, «Настройки → Ассистент» of a tenant without an instruction): tone and style with their own save; the name is in the save bar. */
+export default function AssistantSettings({ onboarding = false, hideStyle = false, styleOnly = false, ownerLanguage }: { onboarding?: boolean; hideStyle?: boolean; styleOnly?: boolean; ownerLanguage?: string }) {
   const {t}=useI18n();
   const router = useRouter();
   const [name, setName] = useState('');
@@ -84,7 +85,7 @@ export default function AssistantSettings({ onboarding = false, hideStyle = fals
       requireRole(['owner', 'admin']);
       if (currentTenantId !== tenantId) throw new Error(t('profileSaveError'));
       const { data, error } = await supabase.from('assistant_profiles').update({
-        assistant_name: name.trim(),
+        ...(styleOnly ? {} : { assistant_name: name.trim() }),
         ...(hideStyle ? {} : { tone: tone.trim() || null, style_profile_md: style.trim() || null }),
       }).eq('tenant_id', tenantId).select('tenant_id').single();
       if (error || !data) throw new Error(t('profileSaveError'));
@@ -95,7 +96,7 @@ export default function AssistantSettings({ onboarding = false, hideStyle = fals
       }
       setSnapshot(JSON.stringify({name: name.trim(), tone, style}));
       // The menu («Что знает {имя}») follows the new name without a reload.
-      if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') window.dispatchEvent(new CustomEvent(ASSISTANT_NAME_EVENT, { detail: name.trim() }));
+      if (!styleOnly && typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') window.dispatchEvent(new CustomEvent(ASSISTANT_NAME_EVENT, { detail: name.trim() }));
       if (onboarding) router.push('/onboarding/step-3');
       else setSaved(true);
     } catch {
@@ -115,7 +116,7 @@ export default function AssistantSettings({ onboarding = false, hideStyle = fals
       {!loading && tenantId && !canEdit ? <p className="mb-4 text-sm muted">{t('readOnly')}</p> : null}
       <form className="compact-form" onSubmit={handleSubmit}>
         <fieldset className="compact-form" disabled={loading || saving || !tenantId || !canEdit}>
-          <label htmlFor="assistant-name" className="field-label">{t('assistantName')}<span className="field-help">{t('assistantNameHelp')}</span><input id="assistant-name" className="field-control" dir="auto" required maxLength={60} value={name} onChange={(event) => setName(event.target.value)} /></label>
+          {styleOnly ? null : <label htmlFor="assistant-name" className="field-label">{t('assistantName')}<span className="field-help">{t('assistantNameHelp')}</span><input id="assistant-name" className="field-control" dir="auto" required maxLength={60} value={name} onChange={(event) => setName(event.target.value)} /></label>}
           {ownerLanguage !== undefined ? <label htmlFor="owner-language" className="field-label">{t('ownerLanguage')}<span className="field-help">{t('ownerLanguageHelp')}</span><Select id="owner-language" className="field-control" value={language} onChange={(event) => setLanguage(event.target.value)}>{ownerLanguages.map(({ id, key }) => <option key={id} value={id}>{t(key)}</option>)}</Select></label> : null}
           {hideStyle?null:<><label htmlFor="tone" className="field-label">{t('tone')}<Select id="tone" className="field-control" value={tone} onChange={(event) => changeTone(event.target.value)}>{tones.map(item=><option key={item.id} value={item.id}>{t(item.label)}</option>)}</Select><span className="field-help">{t(tones.find(item=>item.id===tone)?.help??'toneFriendlyProfessionalHelp')}</span></label>
           <div className="tone-preview"><span>{t('tonePreview')}</span><p>{toneExample}</p></div><label htmlFor="style" className="field-label">{t('answerStyle')}<span className="field-help">{t('answerStyleHelp')}</span><textarea id="style" className="field-control" rows={3} placeholder={toneExample} value={style} onChange={(event) => setStyle(event.target.value)} /></label></>}
