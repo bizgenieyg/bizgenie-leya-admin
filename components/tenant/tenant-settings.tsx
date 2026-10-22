@@ -15,7 +15,8 @@ import WhatsAppStatus from './whatsapp-status';
 import type {AccountProfile} from '@/lib/auth/profile';
 import {SETTINGS_SECTIONS,type SettingsSection} from '@/lib/tenant/labels';
 import {translatedApiError} from '@/lib/i18n/api-error';
-import {Button,Check,Select,Switch} from '@/components/ui/primitives';
+import {Button,Check,ErrorState,Select,Switch} from '@/components/ui/primitives';
+import {useRouter} from 'next/navigation';
 import {timeZoneOptionLabel} from '@/lib/tenant-settings/time-zone';
 type Day={mode:'working_day'|'day_off'|'working_hours';start?:string;end?:string};type Schedule=Record<string,Day>;
 type X={id:string;start_date:string;end_date:string;kind:'day_off'|'special_hours';work_start:string|null;work_end:string|null;name:string;recurs_annually:boolean};
@@ -43,8 +44,8 @@ function SettingsCard({id,title,help,open,onOpen,children}:{id:SettingsSection;t
  * the sections are an accordion; `section` (from ?section=, old /admin/assistant and /admin/profile) opens one.
  * Nothing is rendered from the settings until they are loaded — placeholders of the section size meanwhile.
  */
-export default function TenantSettings({profile,section}:{profile:AccountProfile;section:SettingsSection|null}){
- const{t,locale,setLocale}=useI18n(),format=useFormat();const DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].map(key=>t(key));
+export default function TenantSettings({profile,section}:{profile:AccountProfile|null;section:SettingsSection|null}){
+ const{t,locale,setLocale}=useI18n(),format=useFormat(),router=useRouter();const DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].map(key=>t(key));
  const[s,setS]=useState<S|null>(null),[u,setU]=useState<U|null>(null),[draft,setDraft]=useState(blank()),[editing,setEditing]=useState<string|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState<{section:string;text:string}|null>(null),[busy,setBusy]=useState(false);
  const[open,setOpen]=useState<SettingsSection>(section??'whatsapp'),[ownerPhone,setOwnerPhone]=useState<OwnerPhone|null|undefined>(undefined);
  const load=useCallback(async()=>{const r=await fetch('/api/tenant-settings',{cache:'no-store'}),d=await r.json();if(!r.ok)throw new Error(translatedApiError(t,d,'settingsLoadError'));setS(normalizeTenantSettings(d.settings) as S);setU(normalizeUsage(d.usage) as U);},[t]);
@@ -89,7 +90,7 @@ export default function TenantSettings({profile,section}:{profile:AccountProfile
    <div className="schedule-grid">{DAYS.map((label,i)=>{const v=s.weekly_schedule[String(i)];return <div key={label} className="schedule-row"><strong>{label}</strong><Select value={v.mode} onChange={e=>day(String(i),{mode:e.target.value as Day['mode'],...(e.target.value==='working_hours'?{start:v.start||'09:00',end:v.end||'18:00'}:{})})}><option value="working_day">{t('allDay')}</option><option value="day_off">{t('doesNotAnswer')}</option><option value="working_hours">{t('setHours')}</option></Select>{v.mode==='working_hours'?<div className="time-range"><input aria-label={`${label} start`} type="time" value={v.start||''} onChange={e=>day(String(i),{start:e.target.value})}/><span>—</span><input aria-label={`${label} end`} type="time" value={v.end||''} onChange={e=>day(String(i),{end:e.target.value})}/></div>:<span className="schedule-spacer"/>}</div>})}</div>
    <div className="settings-subsection"><h3>{t('ownerSummary')}</h3><p className="field-help">{t('summaryHelp')}</p><div className="summary-controls"><Select value={s.summary_frequency} onChange={e=>update('summary_frequency',e.target.value as S['summary_frequency'])}><option value="off">{t('off')}</option><option value="daily">{t('daily')}</option><option value="weekly">{t('weekly')}</option></Select><input aria-label={t('summaryTime')} type="time" value={s.summary_time} onChange={e=>update('summary_time',e.target.value)}/>{s.summary_frequency==='weekly'?<Select aria-label={t('summaryDay')} value={s.summary_weekday} onChange={e=>update('summary_weekday',Number(e.target.value))}>{DAYS.map((value,index)=><option key={value} value={index}>{value}</option>)}</Select>:null}</div></div>
    <Button tone="secondary" className="settings-save">{busy?t('saving'):t('saveSettings')}</Button></fieldset>{saved('schedule')}</form></>)}/>
-  <SettingsSectionBoundary render={()=>card('account',<><ProfilePanel profile={profile}/>
+  <SettingsSectionBoundary render={()=>card('account',<>{profile?<ProfilePanel profile={profile}/>:<ErrorState message={t('accountLoadError')} onRetry={()=>router.refresh()}/>}
    <label className="field-label settings-subsection">{t('cabinetLanguage')}<span className="field-help">{t('cabinetLanguageHelp')}</span><Select className="field-control" value={s.cabinet_language??locale} onChange={e=>{const next=e.target.value as Locale;update('cabinet_language',next);setLocale(next);}}><option value="ru">{t('russian')}</option><option value="en">{t('english')}</option><option value="he">{t('hebrew')}</option></Select></label>
    {u?<div className="settings-subsection billing-card"><p className="card-kicker">{t('yourPlan')}</p><h3>{planName}</h3><p className="field-help">{s.plan==='pilot'?t('pilotPaymentStatus'):t('tariffUsageHelp')}</p><div className="usage-grid"><p><span>{t('messages')}</span><strong>{format.number(u.messages_used)} / {format.number(s.messages_per_month)}</strong></p><p><span>{t('voice')}</span><strong>{format.number(Number(u.voice_minutes_used),{maximumFractionDigits:1})} / {format.number(s.voice_minutes_per_month)} {t('minutes')}</strong></p><p><span>{t('aiReplies')}</span><strong>{format.number(u.events.model_calls)}</strong></p><p><span>{t('resetDate')}</span><strong>{format.date(u.period_end)}</strong></p></div></div>:null}
    <FuturePlans/></>)}/>

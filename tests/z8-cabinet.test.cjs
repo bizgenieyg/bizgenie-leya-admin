@@ -64,7 +64,7 @@ test('Z8: one «Проверить ответы» per page (heading, end edge; f
 test('Z8: nothing data-dependent is rendered before the data — placeholders of the same shape instead', () => {
   const home = read('app/admin/page.tsx');
   assert.match(home, /state=\{home\?whatsappCardState\(home\.status\):'loading'\}/);
-  assert.match(home, /\{home\?<EmergencyStop launchGuide initialPaused=\{home\.paused\}\/>:null\}/);
+  assert.match(home, /paused=\{home\?\.paused\}/, 'Z8.1: replies on/off are part of the card, rendered with it');
   assert.match(home, /\{home&&\(home\.questions\|\|home\.improve\)\?/);
   const settings = read('components/tenant/tenant-settings.tsx');
   assert.match(settings, /if\(!s\|\|ownerPhone===undefined\)return <div className="settings-stack">[^;]*SETTINGS_SECTIONS\.map\(id=><div key=\{id\} className="surface-card settings-section skeleton-card"/);
@@ -204,6 +204,7 @@ test('Z8 review: a new ?section= on an open «Настройки» page opens th
     };
     if (name === '@/lib/i18n') return { useI18n: () => ({ t: k => k, locale: 'ru', setLocale() {} }), useFormat: () => ({ number: String, date: String, month: String }) };
     if (name === '@/lib/tenant-settings/normalize') return { normalizeTenantSettings: () => ({ business_name: 'B', owner_name: 'O', owner_language: 'ru', business_sector: '', instruction_answers: true, supported_time_zones: [], weekly_schedule: Object.fromEntries([0,1,2,3,4,5,6].map(i => [String(i), { mode: 'day_off' }])), exceptions: [], enabled_agents: [], time_zone: 'Asia/Jerusalem' }), normalizeUsage: () => ({ events: {} }) };
+    if (name === 'next/navigation') return { useRouter: () => ({ refresh() {} }) };
     if (name === '@/lib/tenant/labels') return { SETTINGS_SECTIONS: ['whatsapp', 'phone', 'business', 'assistant', 'schedule', 'account'] };
     if (name === '@/lib/i18n/api-error') return { translatedApiError: () => 'e' };
     if (name === '@/lib/tenant-settings/time-zone') return { timeZoneOptionLabel: z => z };

@@ -310,3 +310,26 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .mobile-user-menu .profile-shortcut{inline-size:var(--touch);block-size:var(--touch);min-block-size:var(--touch);display:grid;place-items:center;padding:0;border:0.0625rem solid var(--border);border-radius:50%;background:var(--canvas-alt);font-weight:800}
 /* Dark theme: --danger-text is a pale tint there (made for text on --danger); a red text button uses --danger. */
 :root[data-theme="dark"] .button.danger-text{color:var(--danger)}
+/* ---- Z8.1: columns by the width of the content area, not the window (the open simulator takes ~26rem) ---- */
+.page-wrap>.content-stack{container:page / inline-size}
+@media(min-width:40rem){.kp-topics,.kp-compare{grid-template-columns:minmax(0,1fr)}}
+@media(min-width:56.25rem){.kp-topics{grid-template-columns:minmax(0,1fr)}}
+@container page (min-width:34rem){.kp-topics,.kp-compare{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container page (min-width:52rem){.kp-topics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr)}.wa-card-numbers{border-inline-start:0;padding-inline-start:0}}
+@container page (min-width:37.5rem){.wa-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-5)}.wa-card-numbers{border-inline-start:0.0625rem solid var(--border);padding-inline-start:var(--space-5)}}
+@media(min-width:40rem){.settings-fields,.contact-controls{grid-template-columns:minmax(0,1fr)}}
+@container page (min-width:36rem){.settings-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.usage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@container page (min-width:44rem){.usage-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* A topic card grows with its content: the title wraps, «фактов: N · …» stays one line with an ellipsis, the date is its own line. */
+.kp-topic{block-size:auto;inline-size:100%;overflow:hidden}
+.kp-topic strong{max-inline-size:100%;overflow-wrap:anywhere}
+.kp-topic-summary{display:block;inline-size:100%;min-block-size:1.25em}
+.kp-topic small{display:block;max-inline-size:100%;overflow-wrap:anywhere}
+/* ---- Z8.1: «Ответы клиентам» strip of the WhatsApp card; stopped replies = amber card ---- */
+.wa-card-replies{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3);padding-block-start:var(--space-3);border-block-start:0.0625rem solid var(--border);color:var(--muted)}
+.button.warning{background:transparent;border-color:var(--warning);color:var(--warning)}
+.button.warning:hover{background:var(--warning-soft)}
+.wa-paused{--wa-dot:var(--warning);border-color:var(--warning);border-inline-start:0.1875rem solid var(--warning);background:var(--warning-soft)}
+.wa-lost{border-inline-start:0.1875rem solid var(--danger)}

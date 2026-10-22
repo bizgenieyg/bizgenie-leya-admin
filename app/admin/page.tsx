@@ -2,7 +2,6 @@
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import OwnerSummary from '@/components/tenant/owner-summary';
-import EmergencyStop from '@/components/tenant/emergency-stop';
 import WhatsAppHomeCard from '@/components/tenant/whatsapp-home-card';
 import FeedbackCard from '@/components/tenant/feedback-card';
 import AppShell from '@/components/ui/app-shell';
@@ -20,7 +19,9 @@ type Home={status:string;businessPhone:string|null;ownerPhone:string;paused:bool
  */
 export default function AdminPage(){
  const{t}=useI18n();
- const[home,setHome]=useState<Home|null>(null);
+ const[home,setHome]=useState<Home|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ // Z8.1: stop / resume all client replies from the WhatsApp card (the stop is confirmed in the card).
+ async function setPaused(paused:boolean){setBusy(true);setError('');try{const r=await fetch('/api/tenant-settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({auto_replies_paused:paused})});if(!r.ok)throw new Error();setHome(h=>h?{...h,paused}:h);}catch{setError(t('emergencySaveError'));}finally{setBusy(false);}}
  useEffect(()=>{
   const controller=new AbortController();
   const json=(path:string)=>fetch(path,{cache:'no-store',signal:controller.signal}).then(r=>r.ok?r.json():null).catch(()=>null);
@@ -34,12 +35,12 @@ export default function AdminPage(){
  },[]);
  return <AppShell><main className="page-wrap"><div className="content-stack">
   <PageHeading title={t('helloTitle')}/>
-  <WhatsAppHomeCard state={home?whatsappCardState(home.status):'loading'} businessPhone={home?.businessPhone??null} ownerPhone={home?.ownerPhone??''}/>
+  <WhatsAppHomeCard state={home?whatsappCardState(home.status):'loading'} businessPhone={home?.businessPhone??null} ownerPhone={home?.ownerPhone??''} paused={home?.paused} busy={busy} onStop={()=>void setPaused(true)} onResume={()=>void setPaused(false)}/>
+  {error?<p role="alert" className="error-copy">{error}</p>:null}
   {home&&(home.questions||home.improve)?<div className="home-badges">
    {home.questions?<Link className="soft-badge attention" href="/admin/knowledge#kp-questions-title">{t('homeQuestions',{count:home.questions})}</Link>:null}
    {home.improve?<Link className="soft-badge" href="/admin/knowledge#kp-audit-title">{t('homeImprove',{count:home.improve})}</Link>:null}
   </div>:null}
-  {home?<EmergencyStop launchGuide initialPaused={home.paused}/>:null}
   <OwnerSummary/><FeedbackCard/>
  </div></main></AppShell>;
 }

@@ -1,3 +1,4 @@
-import {getAccountProfile} from '@/lib/auth/profile';
+import {getAccountState} from '@/lib/auth/profile';
 export const dynamic='force-dynamic';
-export async function GET(){const profile=await getAccountProfile();return profile?Response.json(profile):Response.json({error:'Unauthorized'},{status:401});}
+/** 401 only without a user; a signed-in user whose profile is unavailable gets 503 (not a sign-out). */
+export async function GET(){const state=await getAccountState();if(!state.signedIn)return Response.json({code:'connectionSessionExpired'},{status:401});return state.profile?Response.json(state.profile):Response.json({code:'serviceUnavailable'},{status:503});}
