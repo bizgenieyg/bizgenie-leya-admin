@@ -7,6 +7,7 @@ import { buttonClass } from '@/app/onboarding/step-frame';
 import {useI18n} from '@/lib/i18n';
 import {Button,ConfirmDialog,ErrorState,Spinner} from '@/components/ui/primitives';
 import {formatPhone} from '@/lib/tenant/phone';
+import PairingCodePanel from './pairing-code-panel';
 
 export default function WhatsAppConnection({ cabinet = false, canEdit = true, onStatusChange }: { cabinet?: boolean; canEdit?: boolean; onStatusChange?: (status: string) => void }) {
   const {t}=useI18n();
@@ -21,6 +22,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true, on
   const [qrError, setQrError] = useState(false);
   const [attempt, setAttempt] = useState<{ mode: 'read' | 'connect' | 'disconnect' }>({ mode: 'read' });
   const [confirmDisconnect,setConfirmDisconnect]=useState(false);
+  const [pairing,setPairing]=useState(false);
   const [confirmNumberChange,setConfirmNumberChange]=useState(false);
   const [numberChangeError,setNumberChangeError]=useState('');
   const numberChangeAsked = useRef(false);
@@ -133,7 +135,10 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true, on
       {cabinet && isConnected(state.status) && state.phone ? <> · <bdi dir="ltr">{formatPhone(state.phone)}</bdi></> : null}
     </p>
     {state.status === 'FAILED' && state.reason ? <p className="mb-4 text-sm error-copy">{t(state.reason==='wahaStatusUnavailable'?state.reason:'statusFailed')}</p> : null}
-    {scanning ? <section className="qr-scan">
+    {/* Z10: the QR stays the main way; from the same phone — a code (on phones a visible button right under the heading). */}
+    {scanning && pairing ? <PairingCodePanel onBack={() => setPairing(false)}/> : null}
+    {scanning && !pairing ? <section className="qr-scan">
+      <Button type="button" tone="secondary" className="pair-phone-top" onClick={() => setPairing(true)}>{t('pairingThisPhone')}</Button>
       <h2>{t('howConnect')}</h2>
       <ol>
         <li>{t('waStep1')}</li><li>{t('waStep2')}</li><li>{t('waStep3')}</li>
@@ -143,6 +148,7 @@ export default function WhatsAppConnection({ cabinet = false, canEdit = true, on
       {qrError ? <p role="alert" className="mb-3 text-sm error-copy">{t('qrUnavailable')}</p> : null}
       <p className="mb-3 text-sm muted">{t('qrRefreshHelp')}</p>
       <Button type="button" tone="secondary" onClick={() => { setQrTimestamp(Date.now()); setQrError(false); }}>{t('refreshCode')}</Button>
+      <button type="button" className="text-link-inline pair-phone-link" onClick={() => setPairing(true)}>{t('pairingThisPhone')}</button>
     </section> : null}
     {error ? <ErrorState message={error} onRetry={()=>run('read')}/> : null}
     {numberChangeError ? <ErrorState message={numberChangeError} onRetry={()=>{setNumberChangeError('');setConfirmNumberChange(true);}}/> : null}
