@@ -406,3 +406,17 @@ input.business-sector-input::-webkit-list-button{display:none!important}
 .pairing-form{display:grid;gap:var(--space-2);inline-size:100%}
 .pairing-code{margin:0;font:800 clamp(2rem,9vw,2.75rem)/1.1 var(--font-mono),monospace;letter-spacing:.08em;color:var(--text)}
 .pairing-steps{margin:0;padding-inline-start:1.25rem;display:grid;gap:var(--space-1);color:var(--muted)}
+/* Z11: the owner's rules, «Поняла так …», several addresses, «Исправить» in the simulator. */
+.owner-rules,.address-question{display:grid;gap:var(--space-3)}
+.owner-rules h2,.address-question h2{margin:0;font-size:1.0625rem}
+.owner-rules-list{margin:0;padding:0;list-style:none;display:grid;gap:var(--space-2)}
+.owner-rule-number{margin-inline-end:var(--space-1)}
+.owner-rules-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2)}
+.owner-rules .row-actions,.address-question .row-actions,.rule-flow .row-actions,.simulator-correct .row-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);inline-size:auto}
+.owner-rules .row-actions>*,.address-question .row-actions>*,.rule-flow .row-actions>*,.simulator-correct .row-actions>*{flex:0 0 auto;inline-size:auto;width:auto}
+.owner-rules .button,.address-question .button,.rule-flow .button,.simulator-correct .button{inline-size:auto;width:auto;min-block-size:2.25rem;padding-block:0}
+.rule-flow{display:grid;gap:var(--space-2);inline-size:100%}
+.rule-reply{margin:0;padding:var(--space-3);border-radius:var(--radius-control);background:var(--surface-soft)}
+.voice-to-text{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
+.simulator-correct{display:grid;gap:var(--space-2);margin-block-start:var(--space-2)}
+.simulator-correct-link{margin-block-start:var(--space-1);border:0;background:transparent;padding:0;color:var(--accent);font-size:.8125rem;font-weight:700;cursor:pointer}

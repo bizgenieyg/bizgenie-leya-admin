@@ -1,4 +1,5 @@
 'use client';
+import {RuleFlow} from './owner-rules';
 import { type FormEvent, useState } from 'react';
 import { Button, EmptyState, ErrorState } from '@/components/ui/primitives';
 import { useFormat, useI18n } from '@/lib/i18n';
@@ -23,7 +24,10 @@ export default function ConversationSimulator({ dirtyWarning = false, suggestion
   const [error, setError] = useState('');
   const [ownerAnswer, setOwnerAnswer] = useState('');
   const [sessionId, setSessionId] = useState(()=>crypto.randomUUID());
-  const clear = () => { setMessages([]); setText(''); setOwnerAnswer(''); setError(''); setSessionId(crypto.randomUUID()); };
+  // Z11: «Исправить» under an assistant reply — which one is being corrected, and «Спросить ещё раз» after saving.
+  const [correcting, setCorrecting] = useState<number | null>(null);
+  const [corrected, setCorrected] = useState<{ index: number; reply: string } | null>(null);
+  const clear = () => { setCorrecting(null); setCorrected(null); setMessages([]); setText(''); setOwnerAnswer(''); setError(''); setSessionId(crypto.randomUUID()); };
 
   async function send(event: FormEvent) {
     event.preventDefault();
@@ -81,6 +85,14 @@ export default function ConversationSimulator({ dirtyWarning = false, suggestion
       {message.text ? <p dir="auto">{message.text}</p> : null}
       {message.notices?.map((notice, noticeIndex) => <p className="simulator-note" key={noticeIndex}>{notice}</p>)}
       <small>{format.time(message.at)}</small>
+      {message.role === 'leya' && message.text && !busy ? (() => {
+        // The client message this reply answered: the last owner-side (client) bubble before it.
+        const asked = [...messages.slice(0, index)].reverse().find(row => row.role === 'owner')?.text ?? '';
+        if (corrected?.index === index) return <div className="simulator-correct" role="status"><p dir="auto">{corrected.reply}</p>{asked ? <Button type="button" tone="secondary" className="small" onClick={() => { setCorrected(null); void sendText(asked); }}>{t('simulatorAskAgain')}</Button> : null}</div>;
+        if (correcting === index) return <div className="simulator-correct"><p className="field-label">{t('simulatorCorrectQuestion')}</p>
+          <RuleFlow placeholder={t('simulatorCorrectPlaceholder')} context={`Клиент написал: ${asked}\nАссистент ответил: ${message.text}\nВладелец объясняет, как надо было ответить.`} onCancel={() => setCorrecting(null)} onSaved={reply => { setCorrecting(null); setCorrected({ index, reply }); }}/></div>;
+        return <button type="button" className="text-link-inline simulator-correct-link" onClick={() => { setCorrected(null); setCorrecting(index); }}>{t('simulatorCorrect')}</button>;
+      })() : null}
       {message.awaitingOwner ? <form className="simulator-owner-answer" onSubmit={answerAsOwner}><label className="field-label" htmlFor={`simulator-owner-answer-${index}`}>{t('simulatorOwnerAnswerLabel')}</label><div className="field-action-row"><input id={`simulator-owner-answer-${index}`} dir="auto" value={ownerAnswer} onChange={event => setOwnerAnswer(event.target.value)} maxLength={2000} placeholder={t('simulatorOwnerAnswerPlaceholder')} /><Button disabled={busy || !ownerAnswer.trim()}>{t('simulatorOwnerAnswerSend')}</Button></div></form> : null}
     </div>)}{busy ? <div className="chat-bubble leya typing"><span/><span/><span/><i>{t('simulatorThinking', { name: assistantName })}</i></div> : null}</div>
     {error ? <ErrorState message={error} /> : null}

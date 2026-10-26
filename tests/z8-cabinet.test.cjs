@@ -169,9 +169,9 @@ test('Z8: «Что знает» — counter equals the cards; empty topic says �
   assert.equal(value(block('taskZ8Ru='), 'kpSubtitle'), 'Отсюда ассистент берёт ответы клиентам');
 });
 
-test('Z8 sectors: the grouped suggestions match the backend list (43 in ru/he/en) and stay free input', () => {
+test('Z8 sectors: the grouped suggestions match the backend list (45 in ru/he/en; Z11: + equipment and car rental) and stay free input', () => {
   const groups = locale => [...labels.SECTOR_GROUPS].map(g => value(block(`taskZ8${locale}`), `sectorItems_${g}`).split('|'));
-  for (const locale of ['Ru=', 'En', 'He']) assert.equal(groups(locale).flat().length, 43, locale);
+  for (const locale of ['Ru=', 'En', 'He']) assert.equal(groups(locale).flat().length, 45, locale);
   const backend = '../bizgenie-leya/src/config/instruction-templates.ts';
   if (fs.existsSync(backend)) {
     const src = read(backend);

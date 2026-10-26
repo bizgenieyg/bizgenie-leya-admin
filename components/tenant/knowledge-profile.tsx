@@ -1,4 +1,5 @@
 'use client';
+import OwnerRules,{AddressModeQuestion,VoiceToText} from './owner-rules';
 import Link from 'next/link';
 import {type FormEvent,useCallback,useEffect,useRef,useState} from 'react';
 import {Button,ErrorState,LoadingState} from '@/components/ui/primitives';
@@ -10,7 +11,7 @@ type Fact={id:string;topic:string;text:string;quote:string|null;source_id:string
 type Topic={topic:string;required:boolean;facts:Fact[];updated_at:string|null};
 type Card={id:string;kind:'audit'|'gap';check_type:string;topic:string;before_text:string|null;suggested_text:string|null;question:string|null;reason:string|null};
 type OwnerQuestion={id:string;question:string;priority:'launch'|'normal';topic:string|null;status:string};
-type Profile={voice_max_seconds?:number;owner_questions?:OwnerQuestion[];offering?:'services'|'goods'|'rental';topics:Topic[];filled:number;required:number;audit:Card[];waiting_questions:number;assistant_name:string|null;sources:Array<{id:string;kind:string;title:string|null;url:string|null}>};
+type Profile={address_question?:boolean;voice_max_seconds?:number;owner_questions?:OwnerQuestion[];offering?:'services'|'goods'|'rental';topics:Topic[];filled:number;required:number;audit:Card[];waiting_questions:number;assistant_name:string|null;sources:Array<{id:string;kind:string;title:string|null;url:string|null}>};
 type Source={id:string;status:'processing'|'ready'|'failed';error:string|null;drafts:Fact[];conflicts:Array<{id:string}>};
 type Tab='text'|'voice'|'file'|'link'|'photo';
 
@@ -62,6 +63,9 @@ export default function KnowledgeProfile({onboarding=false}:{onboarding?:boolean
      </button>)}
   </div>
   {current?<TopicFacts topic={current} sources={profile.sources} offering={offering} onChanged={load}/>:null}
+  {/* Z11: several addresses — how they work is the owner's to say; then the owner's rules for the assistant. */}
+  {profile.address_question?<AddressModeQuestion onDone={()=>void load()}/>:null}
+  {onboarding?null:<OwnerRules/>}
   {profile.audit.length?<section className="kp-audit" aria-labelledby="kp-audit-title">
    <h2 id="kp-audit-title">{t('kpImprove',{count:profile.audit.length})}</h2>
    {profile.audit.map(card=><AuditCard key={card.id} card={card} offering={offering} onDone={load}/>)}
@@ -175,7 +179,7 @@ function OwnerQuestionCard({question,offering,onDone}:{question:OwnerQuestion;of
   <p dir="auto">{question.question}</p>
   <label className="sr-only" htmlFor={`oq-${question.id}`}>{t('kpYourAnswer')}</label>
   <textarea id={`oq-${question.id}`} className="field-control" dir="auto" rows={2} maxLength={5000} placeholder={t('kpYourAnswer')} value={text} onChange={e=>setText(e.target.value)}/>
-  <div className="kp-actions"><Button tone="secondary" disabled={busy||!text.trim()} onClick={()=>void decide('answer')}>{t('save')}</Button><Button tone="secondary" disabled={busy} onClick={()=>void decide('skip')}>{t('kpSkip')}</Button></div>
+  <div className="kp-actions"><Button tone="secondary" disabled={busy||!text.trim()} onClick={()=>void decide('answer')}>{t('save')}</Button><VoiceToText onText={value=>setText(current=>current?`${current} ${value}`:value)}/><Button tone="secondary" disabled={busy} onClick={()=>void decide('skip')}>{t('kpSkip')}</Button></div>
   {error?<p role="alert" className="error-copy">{error}</p>:null}
  </article>;
 }
