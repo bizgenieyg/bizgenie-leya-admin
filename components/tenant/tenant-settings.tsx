@@ -91,7 +91,7 @@ export default function TenantSettings({profile,section}:{profile:AccountProfile
  const legacy=!s.instruction_answers;
  const night=draft.dnd&&draft.quiet_start&&draft.quiet_end&&draft.quiet_start>draft.quiet_end;
  const showBar=isDirty||status.kind==='saving'||status.kind==='saved'||status.kind==='error';
- return <div className={`settings-stack ${showBar?'has-save-bar':''}`}>{error?<p role="alert" className="error-copy">{error}</p>:null}
+ return <div className={`settings-stack ${showBar?'has-save-bar':''}`}>{error?<p role="alert" className="error-copy">{error}</p>:null}<p className="setting-help">{t('settingsChatHint').replace('{name}',(saved.assistant_name||'').trim()||'Leya')}</p>
   <SettingsSectionBoundary render={()=>card('assistant',<>
    <Row label={t('assistantName')} help={t('assistantNameHelp')} htmlFor="settings-assistant-name"><input id="settings-assistant-name" className="field-control field-text" dir="auto" maxLength={60} value={draft.assistant_name} onChange={e=>set('assistant_name',e.target.value)}/></Row>
    <div className="setting-row"><Switch label={t('z9Polish')} checked={draft.polish_owner_answer} onChange={checked=>set('polish_owner_answer',checked)}/><span className="setting-help">{t('z9PolishHelp')}</span></div>
